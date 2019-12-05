@@ -114,6 +114,6 @@ func (watcher *closeWatcher) HandleClose(ch channel2.Channel) {
 }
 
 type mgmt struct {
-	ch channel2.Channel
+	ch     channel2.Channel
 	server *Server
 }

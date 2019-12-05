@@ -1,11 +1,11 @@
 package cli
 
 import (
-	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/zitilab"
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/zitilab"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"

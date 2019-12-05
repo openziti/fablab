@@ -17,9 +17,9 @@
 package host
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"fmt"
 )
 
 func GroupKill(regionSpec, hostSpec, match string) kernel.Action {

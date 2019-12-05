@@ -1,16 +1,16 @@
 package metrics
 
 import (
-	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/ziti-foundation/channel2"
-	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
-	"github.com/netfoundry/ziti-foundation/identity/dotziti"
-	"github.com/netfoundry/ziti-foundation/transport"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/michaelquigley/pfxlog"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
+	"github.com/netfoundry/ziti-foundation/channel2"
+	"github.com/netfoundry/ziti-foundation/identity/dotziti"
+	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
@@ -74,39 +74,39 @@ func (metrics *metrics) ContentType() int32 {
 
 func (metrics *metrics) HandleReceive(msg *channel2.Message, ch channel2.Channel) {
 	response := &mgmt_pb.StreamMetricsEvent{}
-	err := 	proto.Unmarshal(msg.Body, response)
+	err := proto.Unmarshal(msg.Body, response)
 	if err != nil {
 		panic(err)
 	}
 
 	/*
-	fmt.Printf("%v - source(%v)\n", formattedTimestamp(response.Timestamp), response.SourceId)
-	fmt.Printf("\tTags: %v\n", response.Tags)
+		fmt.Printf("%v - source(%v)\n", formattedTimestamp(response.Timestamp), response.SourceId)
+		fmt.Printf("\tTags: %v\n", response.Tags)
 
-	var keys []string
-	var outputMap = make(map[string]string)
-	for name, value := range response.IntMetrics {
-		outputMap[name] = fmt.Sprintf("%v=%v", name, value)
-		keys = append(keys, name)
-	}
-
-	for name, value := range response.FloatMetrics {
-		outputMap[name] = fmt.Sprintf("%v=%v", name, value)
-		keys = append(keys, name)
-	}
-
-	sort.Strings(keys)
-
-	for _, key := range keys {
-		fmt.Println(outputMap[key])
-	}
-
-	for _, bucket := range response.IntervalMetrics {
-		fmt.Printf("%v: (%v) -> (%v)\n", bucket.Name, formattedTimestamp(bucket.IntervalStartUTC), formattedTimestamp(bucket.IntervalEndUTC))
-		for name, value := range bucket.Values {
-			fmt.Printf("\t%v=%v\n", name, value)
+		var keys []string
+		var outputMap = make(map[string]string)
+		for name, value := range response.IntMetrics {
+			outputMap[name] = fmt.Sprintf("%v=%v", name, value)
+			keys = append(keys, name)
 		}
-	}
+
+		for name, value := range response.FloatMetrics {
+			outputMap[name] = fmt.Sprintf("%v=%v", name, value)
+			keys = append(keys, name)
+		}
+
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			fmt.Println(outputMap[key])
+		}
+
+		for _, bucket := range response.IntervalMetrics {
+			fmt.Printf("%v: (%v) -> (%v)\n", bucket.Name, formattedTimestamp(bucket.IntervalStartUTC), formattedTimestamp(bucket.IntervalEndUTC))
+			for name, value := range bucket.Values {
+				fmt.Printf("\t%v=%v\n", name, value)
+			}
+		}
 	*/
 
 	logrus.Infof("source = [%s]", response.SourceId)

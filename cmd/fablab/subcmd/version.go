@@ -17,9 +17,9 @@
 package subcmd
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -28,9 +28,9 @@ func init() {
 }
 
 var versionCmd = &cobra.Command{
-	Use: "version",
+	Use:   "version",
 	Short: "display fablab version information",
-	Run: version,
+	Run:   version,
 }
 
 func version(_ *cobra.Command, _ []string) {

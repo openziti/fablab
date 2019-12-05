@@ -1,10 +1,10 @@
 package pki
 
 import (
-	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/zitilab"
 	"bytes"
 	"fmt"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/zitilab"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"

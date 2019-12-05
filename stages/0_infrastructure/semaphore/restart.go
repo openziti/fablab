@@ -17,9 +17,9 @@
 package semaphore
 
 import (
+	"errors"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"errors"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"

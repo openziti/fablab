@@ -17,9 +17,9 @@
 package action
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"fmt"
 )
 
 func Activation(actions ...string) kernel.ActivationStage {
@@ -32,7 +32,7 @@ func (actionActivation *actionActivation) Activate(m *kernel.Model) error {
 		if !found {
 			return fmt.Errorf("no [%s] action", actionName)
 		}
-		lib.FigletMini("action: "+actionName)
+		lib.FigletMini("action: " + actionName)
 		if err := action.Execute(m); err != nil {
 			return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
 		}

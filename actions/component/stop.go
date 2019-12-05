@@ -17,9 +17,9 @@
 package component
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"fmt"
 )
 
 func Stop(regionSpec, hostSpec, componentSpec string) kernel.Action {

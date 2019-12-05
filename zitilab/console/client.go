@@ -39,7 +39,7 @@ func (client *Client) listenWrite() {
 				logrus.Errorf("error sending to client [#%d] (%w)", client.id, err)
 			}
 
-		case <- client.doneCh:
+		case <-client.doneCh:
 			client.server.Del(client)
 			close(client.doneCh)
 			return

@@ -1,8 +1,8 @@
 package pki
 
 import (
-	"github.com/netfoundry/fablab/kernel"
 	"fmt"
+	"github.com/netfoundry/fablab/kernel"
 	"github.com/sirupsen/logrus"
 )
 

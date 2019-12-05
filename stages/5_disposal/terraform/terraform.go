@@ -17,9 +17,9 @@
 package terraform
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
-	"fmt"
 	"path/filepath"
 )
 
