@@ -2,7 +2,7 @@ package subcmd
 
 import (
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/console"
+	"github.com/netfoundry/fablab/zitilab/console"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"net/http"
@@ -38,7 +38,7 @@ func doConsole(_ *cobra.Command, _ []string) {
 		server := console.NewServer()
 		go server.Listen()
 
-		http.Handle("/", http.FileServer(http.Dir("console/webroot")))
+		http.Handle("/", http.FileServer(http.Dir("zitilab/console/webroot")))
 		logrus.Fatal(http.ListenAndServe(":8080", nil))
 
 	} else {

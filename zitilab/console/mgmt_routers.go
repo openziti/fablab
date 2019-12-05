@@ -1,9 +1,9 @@
 package console
 
 import (
-	"github.com/netfoundry/ziti-foundation/channel2"
-	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/golang/protobuf/proto"
+	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
+	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/sirupsen/logrus"
 )
 
