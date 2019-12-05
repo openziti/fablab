@@ -1,3 +1,5 @@
+![logo](docs/fablab.png)
+
 # Welcome to the Fabulous Laboratory
 
 _(This is a work-in-progress document where sections may end randomly and abrubptly. Stay tuned)_
