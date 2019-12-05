@@ -17,14 +17,25 @@
 package main
 
 import (
+	"github.com/netfoundry/ziti-foundation/transport"
+	"github.com/netfoundry/ziti-foundation/transport/quic"
+	"github.com/netfoundry/ziti-foundation/transport/tls"
+	"github.com/netfoundry/ziti-foundation/transport/tcp"
 	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/zitilab"
+	_ "github.com/netfoundry/fablab/models"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("bitbucket.org/netfoundry/")
+	pfxlog.SetPrefix("github.com/netfoundry/")
+	transport.AddAddressParser(quic.AddressParser{})
+	transport.AddAddressParser(tls.AddressParser{})
+	transport.AddAddressParser(tcp.AddressParser{})
+	kernel.AddBootstrapExtension(&zitilab.Bootstrap{})
 }
 
 func main() {
