@@ -17,7 +17,7 @@
 package actions
 
 import (
-	"bitbucket.org/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel"
 	"fmt"
 )
 

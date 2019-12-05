@@ -17,7 +17,7 @@
 package main
 
 import (
-	"bitbucket.org/netfoundry/fablab/cmd/fablab/subcmd"
+	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/sirupsen/logrus"
 )

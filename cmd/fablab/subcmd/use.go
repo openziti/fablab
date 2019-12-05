@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"bitbucket.org/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

@@ -17,8 +17,8 @@
 package semaphore
 
 import (
-	"bitbucket.org/netfoundry/fablab/kernel"
-	"bitbucket.org/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/lib"
 	"errors"
 	"github.com/sirupsen/logrus"
 	"strings"

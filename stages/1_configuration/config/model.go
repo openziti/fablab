@@ -16,7 +16,7 @@
 
 package config
 
-import "bitbucket.org/netfoundry/fablab/kernel"
+import "github.com/netfoundry/fablab/kernel"
 
 type templateModel struct {
 	RegionId  string

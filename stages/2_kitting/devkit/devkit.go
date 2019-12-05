@@ -17,8 +17,8 @@
 package devkit
 
 import (
-	"bitbucket.org/netfoundry/fablab/kernel"
-	"bitbucket.org/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/lib"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"

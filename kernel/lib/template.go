@@ -17,7 +17,7 @@
 package lib
 
 import (
-	"bitbucket.org/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel"
 	"text/template"
 )
 
