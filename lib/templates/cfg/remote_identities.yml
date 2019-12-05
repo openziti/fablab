@@ -1,0 +1,5 @@
+default:
+  endpoint:   tls:{{ publicIp "loop" "loop-dialer" }}:10000
+  cert:       /home/fedora/fablab/pki/intermediate/certs/dotziti-client.cert
+  key:        /home/fedora/fablab/pki/intermediate/keys/dotziti.key
+  caCert:     /home/fedora/fablab/pki/intermediate/certs/dotziti-server.chain.pem
