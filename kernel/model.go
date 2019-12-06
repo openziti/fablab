@@ -18,6 +18,7 @@ package kernel
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 )
 
 func (m *Model) Express(l *Label) error {
@@ -86,7 +87,9 @@ func (m *Model) Activate(l *Label) error {
 }
 
 func (m *Model) Operate(l *Label) error {
+	logrus.Infof("operation stages [%d]", len(m.operationStages))
 	for _, stage := range m.operationStages {
+		logrus.Infof("operation stage [%p]", stage)
 		if err := stage.Operate(m); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}

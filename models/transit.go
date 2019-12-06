@@ -128,5 +128,6 @@ var transit = &kernel.Model{
 	Kitting:        commonKitting(),
 	Distribution:   commonDistribution(),
 	Activation:     commonActivation(),
+	Operation: 		commonOperation(),
 	Disposal:       commonDisposal(),
 }

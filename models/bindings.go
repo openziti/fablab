@@ -16,8 +16,10 @@ import (
 	"github.com/netfoundry/fablab/stages/2_kitting/devkit"
 	"github.com/netfoundry/fablab/stages/3_distribution/rsync"
 	"github.com/netfoundry/fablab/stages/4_activation/action"
-	terraform5 "github.com/netfoundry/fablab/stages/5_disposal/terraform"
+	operation "github.com/netfoundry/fablab/stages/5_operation"
+	terraform6 "github.com/netfoundry/fablab/stages/6_disposal/terraform"
 	"github.com/netfoundry/fablab/zitilab"
+	zitilab_5_operation "github.com/netfoundry/fablab/zitilab/stages/5_operation"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -86,9 +88,21 @@ func commonActivation() kernel.ActivationBinders {
 	}
 }
 
+func commonOperation() kernel.OperatingBinders {
+	logrus.Infof("binding")
+	c := make(chan struct{})
+	return kernel.OperatingBinders {
+		func(m *kernel.Model) kernel.OperatingStage {
+			logrus.Infof("binding metrics")
+			return zitilab_5_operation.Metrics(c)
+		},
+		func(m *kernel.Model) kernel.OperatingStage { return operation.Timer(30 * time.Second, c) },
+	}
+}
+
 func commonDisposal() kernel.DisposalBinders {
 	return kernel.DisposalBinders{
-		func(m *kernel.Model) kernel.DisposalStage { return terraform5.Dispose() },
+		func(m *kernel.Model) kernel.DisposalStage { return terraform6.Dispose() },
 	}
 }
 

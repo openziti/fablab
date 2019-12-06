@@ -98,6 +98,10 @@ func bootstrapModel() (*Model, error) {
 		for _, binder := range m.Activation {
 			m.activationStages = append(m.activationStages, binder(m))
 		}
+		m.operationStages = nil
+		for _, binder := range m.Operation {
+			m.operationStages = append(m.operationStages, binder(m))
+		}
 		m.disposalStages = nil
 		for _, binder := range m.Disposal {
 			m.disposalStages = append(m.disposalStages, binder(m))
