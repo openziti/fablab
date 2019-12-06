@@ -59,7 +59,8 @@ func (metrics *metrics) Operate(m *kernel.Model) error {
 		return fmt.Errorf("timeout")
 	}
 
-	go metrics.runMetrics(m)
+	metrics.m = m
+	go metrics.runMetrics()
 
 	return nil
 }
@@ -75,16 +76,40 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		logrus.Error("error handling metrics receive (%w)", err)
 	}
 
-	logrus.Infof("<= [%s]", response.SourceId)
+	host, err := metrics.m.GetHostById(response.SourceId)
+	if err == nil {
+		if host.Data == nil {
+			host.Data = make(map[string]interface{})
+		}
+
+		var responses []*mgmt_pb.StreamMetricsEvent
+		if value, found := host.Data["fabric_metrics"]; !found {
+			responses = make([]*mgmt_pb.StreamMetricsEvent, 0)
+		} else {
+			var ok bool
+			responses, ok = value.([]*mgmt_pb.StreamMetricsEvent)
+			if !ok {
+				logrus.Error("invalid host data")
+				return
+			}
+		}
+		responses = append(responses, response)
+		host.Data["fabric_metrics"] = responses
+		logrus.Infof("<= [%s]", response.SourceId)
+
+	} else {
+		logrus.Errorf("unable to find host (%w)", err)
+	}
 }
 
-func (metrics *metrics) runMetrics(m *kernel.Model) {
+func (metrics *metrics) runMetrics() {
 	logrus.Infof("starting")
 	defer logrus.Infof("exiting")
 
 	for {
 		select {
 		case <-metrics.closer:
+			_ = metrics.ch.Close()
 			return
 		}
 	}
@@ -92,5 +117,6 @@ func (metrics *metrics) runMetrics(m *kernel.Model) {
 
 type metrics struct {
 	ch     channel2.Channel
+	m      *kernel.Model
 	closer chan struct{}
 }

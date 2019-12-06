@@ -17,6 +17,7 @@
 package kernel
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
@@ -138,6 +139,21 @@ func (m *Model) GetHostByTags(regionTag, hostTag string) *Host {
 	}
 	logrus.Warnf("no resolution for tags [%s/%s]", regionTag, hostTag)
 	return nil
+}
+
+func (m *Model) GetHostById(selectId string) (*Host, error) {
+	hosts := make([]*Host, 0)
+	for _, region := range m.Regions {
+		for hostId, host := range region.Hosts {
+			if hostId == selectId {
+				hosts = append(hosts, host)
+			}
+		}
+	}
+	if len(hosts) != 1 {
+		return nil, fmt.Errorf("found [%d] hosts with id [%s]", len(hosts), selectId)
+	}
+	return hosts[0], nil
 }
 
 func (m *Model) GetComponentsByTag(componentTag string) []*Component {

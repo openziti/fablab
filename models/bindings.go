@@ -91,12 +91,15 @@ func commonActivation() kernel.ActivationBinders {
 func commonOperation() kernel.OperatingBinders {
 	logrus.Infof("binding")
 	c := make(chan struct{})
-	return kernel.OperatingBinders {
+	return kernel.OperatingBinders{
+		func(m *kernel.Model) kernel.OperatingStage { return zitilab_5_operation.Metrics(c) },
 		func(m *kernel.Model) kernel.OperatingStage {
-			logrus.Infof("binding metrics")
-			return zitilab_5_operation.Metrics(c)
+			minutes, found := m.GetVariable("sample_minutes")
+			if !found {
+				minutes = 1
+			}
+			return operation.Timer(time.Duration(minutes.(int))*time.Minute, c)
 		},
-		func(m *kernel.Model) kernel.OperatingStage { return operation.Timer(30 * time.Second, c) },
 	}
 }
 
@@ -245,6 +248,7 @@ var kernelScope = kernel.Scope{
 				"username": &kernel.Variable{Default: "fedora"},
 			},
 		},
+		"sample_minutes": &kernel.Variable{Default: 1},
 	},
 }
 
