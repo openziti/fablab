@@ -100,6 +100,7 @@ func commonOperation() kernel.OperatingBinders {
 			}
 			return operation.Timer(time.Duration(minutes.(int))*time.Minute, c)
 		},
+		func(m *kernel.Model) kernel.OperatingStage { return operation.Persist() },
 	}
 }
 
