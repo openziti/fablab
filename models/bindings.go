@@ -89,7 +89,6 @@ func commonActivation() kernel.ActivationBinders {
 }
 
 func commonOperation() kernel.OperatingBinders {
-	logrus.Infof("binding")
 	c := make(chan struct{})
 	return kernel.OperatingBinders{
 		func(m *kernel.Model) kernel.OperatingStage { return zitilab_5_operation.Metrics(c) },

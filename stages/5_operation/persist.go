@@ -18,7 +18,9 @@ package operation
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -52,11 +54,12 @@ func (persist *persist) Operate(m *kernel.Model) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile("data.json", data, os.ModePerm); err != nil {
+	filename := fmt.Sprintf("%s/data-%d.json", kernel.ActiveInstancePath(), info.NowInMilliseconds())
+	if err := ioutil.WriteFile(filename, data, os.ModePerm); err != nil {
 		return err
 	}
 
-	logrus.Infof("data saved")
+	logrus.Infof("data saved to [%s]", filename)
 	return nil
 }
 
