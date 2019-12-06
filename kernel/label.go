@@ -164,6 +164,7 @@ const (
 	Kitted
 	Distributed
 	Activated
+	Operating
 	Disposed
 )
 
@@ -175,6 +176,7 @@ func (instanceState InstanceState) String() string {
 		"Kitted",
 		"Distributed",
 		"Activated",
+		"Operating",
 		"Disposed",
 	}
 	if instanceState < Created || instanceState > Disposed {

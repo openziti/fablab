@@ -85,6 +85,19 @@ func (m *Model) Activate(l *Label) error {
 	return nil
 }
 
+func (m *Model) Operate(l *Label) error {
+	for _, stage := range m.operationStages {
+		if err := stage.Operate(m); err != nil {
+			return fmt.Errorf("error operating (%w)", err)
+		}
+	}
+	l.State = Operating
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
 func (m *Model) Dispose(l *Label) error {
 	for _, stage := range m.disposalStages {
 		if err := stage.Dispose(m); err != nil {
@@ -108,6 +121,7 @@ type Model struct {
 	Kitting        KittingBinders
 	Distribution   DistributionBinders
 	Activation     ActivationBinders
+	Operation 	   OperatingBinders
 	Disposal       DisposalBinders
 
 	infrastructureStages []InfrastructureStage
@@ -115,6 +129,7 @@ type Model struct {
 	kittingStages        []KittingStage
 	distributionStages   []DistributionStage
 	activationStages     []ActivationStage
+	operationStages		 []OperatingStage
 	disposalStages       []DisposalStage
 	actions              map[string]Action
 }
@@ -176,6 +191,10 @@ type ActivationStage interface {
 	Activate(m *Model) error
 }
 
+type OperatingStage interface {
+	Operate(m *Model) error
+}
+
 type DisposalStage interface {
 	Dispose(m *Model) error
 }
@@ -194,6 +213,9 @@ type DistributionBinders []DistributionBinder
 
 type ActivationBinder func(m *Model) ActivationStage
 type ActivationBinders []ActivationBinder
+
+type OperatingBinder func(m *Model) OperatingStage
+type OperatingBinders []OperatingBinder
 
 type DisposalBinder func(m *Model) DisposalStage
 type DisposalBinders []DisposalBinder

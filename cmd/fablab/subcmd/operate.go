@@ -23,17 +23,17 @@ import (
 )
 
 func init() {
-	RootCmd.AddCommand(activateCmd)
+	RootCmd.AddCommand(operateCmd)
 }
 
-var activateCmd = &cobra.Command{
-	Use:   "activate",
-	Short: "activate a model",
-	Args:  cobra.ExactArgs(0),
-	Run:   activate,
+var operateCmd = &cobra.Command{
+	Use: "operate",
+	Short: "operate a model",
+	Args: cobra.ExactArgs(0),
+	Run: operate,
 }
 
-func activate(_ *cobra.Command, _ []string) {
+func operate(_ *cobra.Command, _ []string) {
 	if err := kernel.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
@@ -49,8 +49,8 @@ func activate(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		if err := m.Activate(l); err != nil {
-			logrus.Fatalf("error synchronizing all hosts (%w)", err)
+		if err := m.Operate(l); err != nil {
+			logrus.Fatalf("error operating model (%w)", err)
 		}
 	}
 }
