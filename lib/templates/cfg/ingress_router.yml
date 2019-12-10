@@ -15,6 +15,9 @@ ctrl:
 listeners:
   - binding:            transport
     address:            tls:0.0.0.0:7001
+  - binding:            proxy
+    address:            tls:0.0.0.0:7002
+    service:            iperf
 
 dialers:
   - binding:            transport

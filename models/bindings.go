@@ -123,6 +123,15 @@ func doBootstrap(m *kernel.Model) kernel.Action {
 		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(kernel.PkiBuild(), cert)))
 	}
 
+	iperfServer := m.GetHostByTags("iperf-server", "iperf-server")
+	if iperfServer != nil {
+		terminatingRouters := m.GetComponentsByTag("terminator")
+		if len(terminatingRouters) < 1 {
+			logrus.Fatal("need at least 1 terminating router!")
+		}
+		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7002", terminatingRouters[0].PublicIdentity))
+	}
+
 	components := m.GetComponentsByTag("terminator")
 	serviceActions, err := createServiceActions(m, components[0].PublicIdentity)
 	if err != nil {

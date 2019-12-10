@@ -27,6 +27,14 @@ func FablabRoot() string {
 	return fablabRoot
 }
 
+func ScriptSrc() string {
+	return filepath.Join(fablabRoot, "lib/templates/bin")
+}
+
+func ScriptBuild() string {
+	return filepath.Join(ActiveInstancePath(), "bin")
+}
+
 func ConfigSrc() string {
 	return filepath.Join(fablabRoot, "lib/templates/cfg")
 }

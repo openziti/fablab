@@ -9,7 +9,7 @@ var transit = &kernel.Model{
 	Regions: kernel.Regions{
 		"initiator": {
 			Scope: kernel.Scope{
-				Tags: kernel.Tags{"initiator", "ctrl", "router"},
+				Tags: kernel.Tags{"initiator", "ctrl", "router", "iperf-client"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
@@ -44,13 +44,6 @@ var transit = &kernel.Model{
 					Scope: kernel.Scope{
 						Tags:      kernel.Tags{"iperf-client"},
 						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
-					},
-					Components: kernel.Components{
-						"iperf-client": {
-							ScriptSrc:  "iperf-client",
-							ScriptName: "iperf-client",
-							BinaryName: "iperf-client",
-						},
 					},
 				},
 			},
@@ -109,7 +102,7 @@ var transit = &kernel.Model{
 		},
 		"terminator": {
 			Scope: kernel.Scope{
-				Tags: kernel.Tags{"router", "terminator"},
+				Tags: kernel.Tags{"router", "terminator", "iperf-server"},
 			},
 			Id: "us-west-2",
 			Az: "us-west-2b",
@@ -135,13 +128,6 @@ var transit = &kernel.Model{
 					Scope: kernel.Scope{
 						Tags:      kernel.Tags{"iperf-server"},
 						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
-					},
-					Components: kernel.Components{
-						"iperf-server": {
-							ScriptSrc:  "iperf-server",
-							ScriptName: "iperf-server",
-							BinaryName: "iperf-server",
-						},
 					},
 				},
 			},

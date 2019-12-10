@@ -17,7 +17,11 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"os"
 	"text/template"
 )
 
@@ -31,4 +35,35 @@ func TemplateFuncMap(m *kernel.Model) template.FuncMap {
 			return ""
 		},
 	}
+}
+
+func RenderTemplate(src, dst string, m *kernel.Model, data interface{}) error {
+	tData, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("error reading template [%s] (%w)", src, err)
+	}
+
+	t, err := template.New("config").Funcs(TemplateFuncMap(m)).Parse(string(tData))
+	if err != nil {
+		return fmt.Errorf("error parsing template [%s] (%w)", src, err)
+	}
+
+	if err := os.MkdirAll(dst, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating output parent directories [%s] (%w)", dst, err)
+	}
+
+	dstF, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating output [%s] (%w)", dst, err)
+	}
+	defer func() { _ = dstF.Close() }()
+
+	err = t.Execute(dstF, data)
+	if err != nil {
+		return fmt.Errorf("error rendering template [%s] (%w)", src, err)
+	}
+
+	logrus.Infof("[%s] => [%s]", src, dst)
+
+	return nil
 }

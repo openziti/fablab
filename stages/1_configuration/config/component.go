@@ -21,20 +21,17 @@ import (
 	"github.com/netfoundry/fablab/kernel"
 	"github.com/netfoundry/fablab/kernel/lib"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
-	"os"
 	"path/filepath"
-	"text/template"
 )
 
 func Component() kernel.ConfigurationStage {
 	return &componentConfig{}
 }
 
-func (c *componentConfig) Configure(m *kernel.Model) error {
-	for regionId, region := range m.Regions {
-		for hostId, host := range region.Hosts {
-			if err := c.generateComponentForHost(regionId, hostId, host, m); err != nil {
+func (componentConfig *componentConfig) Configure(m *kernel.Model) error {
+	for regionId, r := range m.Regions {
+		for hostId, h := range r.Hosts {
+			if err := componentConfig.generateComponentForHost(regionId, hostId, m, h); err != nil {
 				return fmt.Errorf("error generating config for host [%s/%s] (%s)", regionId, hostId, err)
 			}
 		}
@@ -42,10 +39,15 @@ func (c *componentConfig) Configure(m *kernel.Model) error {
 	return nil
 }
 
-func (c *componentConfig) generateComponentForHost(regionId, hostId string, host *kernel.Host, model *kernel.Model) error {
-	for componentName, component := range host.Components {
-		if component.ConfigSrc != "" {
-			if err := c.generateConfigForHost(regionId, hostId, componentName, model, host, component); err != nil {
+func (componentConfig *componentConfig) generateComponentForHost(regionId, hostId string, m *kernel.Model, h *kernel.Host) error {
+	for componentId, c := range h.Components {
+		if c.ScriptSrc != "" && c.ScriptName != "" {
+			if err := componentConfig.generateScriptForComponent(regionId, hostId, componentId, m, h, c); err != nil {
+				return err
+			}
+		}
+		if c.ConfigSrc != "" && c.ConfigName != "" {
+			if err := componentConfig.generateConfigForComponent(regionId, hostId, componentId, m, h, c); err != nil {
 				return err
 			}
 		}
@@ -53,43 +55,44 @@ func (c *componentConfig) generateComponentForHost(regionId, hostId string, host
 	return nil
 }
 
-func (c *componentConfig) generateConfigForHost(regionId, hostId, componentName string, model *kernel.Model, host *kernel.Host, component *kernel.Component) error {
-	logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentName)
+func (componentConfig *componentConfig) generateScriptForComponent(regionId, hostId, componentId string, m *kernel.Model, h *kernel.Host, c *kernel.Component) error {
+	logrus.Debugf("generating script for component [%s/%s/%s]", regionId, hostId, componentId)
 
-	tPath := filepath.Join(kernel.ConfigSrc(), component.ConfigSrc)
-	tData, err := ioutil.ReadFile(tPath)
-	if err != nil {
-		return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
-	}
-
-	t, err := template.New("config").Funcs(lib.TemplateFuncMap(model)).Parse(string(tData))
-	if err != nil {
-		return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
-	}
-
-	outputPath := filepath.Join(kernel.ConfigBuild(), component.ConfigName)
-	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
-		return fmt.Errorf("error creating directories [%s] (%w)", outputPath, err)
-	}
-
-	outputF, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("error creating config [%s] (%w)", outputPath, err)
-	}
-	defer func() { _ = outputF.Close() }()
-
-	err = t.Execute(outputF, &templateModel{
-		RegionId:  regionId,
-		HostId:    hostId,
-		Host:      host,
-		Component: component,
-		Model:     model,
+	src := filepath.Join(kernel.ScriptSrc(), c.ScriptSrc)
+	dst := filepath.Join(kernel.ScriptBuild(), c.ScriptName)
+	err := lib.RenderTemplate(src, dst, m, &templateModel{
+		RegionId: regionId,
+		HostId: hostId,
+		Host: h,
+		Component: c,
+		Model: m,
 	})
 	if err != nil {
-		return fmt.Errorf("error rendering template [%s] (%w)", outputPath, err)
+		return fmt.Errorf("error rendering template (%w)", err)
 	}
 
-	logrus.Infof("config [%s] => [%s]", component.ConfigSrc, component.ConfigName)
+	logrus.Infof("script [%s] => [%s]", c.ScriptSrc, c.ScriptName)
+
+	return nil
+}
+
+func (componentConfig *componentConfig) generateConfigForComponent(regionId, hostId, componentId string, m *kernel.Model, h *kernel.Host, c *kernel.Component) error {
+	logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentId)
+
+	src := filepath.Join(kernel.ConfigSrc(), c.ConfigSrc)
+	dst := filepath.Join(kernel.ConfigBuild(), c.ConfigName)
+	err := lib.RenderTemplate(src, dst, m, &templateModel{
+		RegionId:  regionId,
+		HostId:    hostId,
+		Host:      h,
+		Component: c,
+		Model:     m,
+	})
+	if err != nil {
+		return fmt.Errorf("error rendering template (%w)", err)
+	}
+
+	logrus.Infof("config [%s] => [%s]", c.ConfigSrc, c.ConfigName)
 
 	return nil
 }
