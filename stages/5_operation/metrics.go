@@ -1,4 +1,4 @@
-package zitilab_5_operation
+package operation
 
 import (
 	"fmt"

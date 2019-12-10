@@ -19,7 +19,6 @@ import (
 	operation "github.com/netfoundry/fablab/stages/5_operation"
 	terraform6 "github.com/netfoundry/fablab/stages/6_disposal/terraform"
 	"github.com/netfoundry/fablab/zitilab"
-	zitilab_5_operation "github.com/netfoundry/fablab/zitilab/stages/5_operation"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -90,8 +89,10 @@ func commonActivation() kernel.ActivationBinders {
 
 func commonOperation() kernel.OperatingBinders {
 	c := make(chan struct{})
-	return kernel.OperatingBinders{
-		func(m *kernel.Model) kernel.OperatingStage { return zitilab_5_operation.Metrics(c) },
+	binders := kernel.OperatingBinders{
+		func(m *kernel.Model) kernel.OperatingStage { return operation.Metrics(c) },
+		func(m *kernel.Model) kernel.OperatingStage { return operation.IperfServer() },
+		func(m *kernel.Model) kernel.OperatingStage { return operation.IperfClient() },
 		func(m *kernel.Model) kernel.OperatingStage {
 			minutes, found := m.GetVariable("sample_minutes")
 			if !found {
@@ -101,6 +102,7 @@ func commonOperation() kernel.OperatingBinders {
 		},
 		func(m *kernel.Model) kernel.OperatingStage { return operation.Persist() },
 	}
+	return binders
 }
 
 func commonDisposal() kernel.DisposalBinders {

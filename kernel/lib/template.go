@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -48,7 +49,7 @@ func RenderTemplate(src, dst string, m *kernel.Model, data interface{}) error {
 		return fmt.Errorf("error parsing template [%s] (%w)", src, err)
 	}
 
-	if err := os.MkdirAll(dst, os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating output parent directories [%s] (%w)", dst, err)
 	}
 
