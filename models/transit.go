@@ -40,6 +40,19 @@ var transit = &kernel.Model{
 						},
 					},
 				},
+				"iperf-client": {
+					Scope: kernel.Scope{
+						Tags:      kernel.Tags{"iperf-client"},
+						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					},
+					Components: kernel.Components{
+						"iperf-client": {
+							ScriptSrc:  "iperf-client",
+							ScriptName: "iperf-client",
+							BinaryName: "iperf-client",
+						},
+					},
+				},
 			},
 		},
 		"transitA": {
@@ -118,6 +131,19 @@ var transit = &kernel.Model{
 						},
 					},
 				},
+				"iperf-server": {
+					Scope: kernel.Scope{
+						Tags:      kernel.Tags{"iperf-server"},
+						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					},
+					Components: kernel.Components{
+						"iperf-server": {
+							ScriptSrc:  "iperf-server",
+							ScriptName: "iperf-server",
+							BinaryName: "iperf-server",
+						},
+					},
+				},
 			},
 		},
 	},
@@ -128,6 +154,6 @@ var transit = &kernel.Model{
 	Kitting:        commonKitting(),
 	Distribution:   commonDistribution(),
 	Activation:     commonActivation(),
-	Operation: 		commonOperation(),
+	Operation:      commonOperation(),
 	Disposal:       commonDisposal(),
 }

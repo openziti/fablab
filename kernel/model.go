@@ -155,11 +155,13 @@ type Hosts map[string]*Host
 
 type Component struct {
 	Scope
+	ScriptSrc		string
+	ScriptName		string
 	ConfigSrc       string
 	ConfigName      string
+	BinaryName      string
 	PublicIdentity  string
 	PrivateIdentity string
-	BinaryName      string
 }
 
 type Components map[string]*Component

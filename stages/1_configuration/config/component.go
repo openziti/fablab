@@ -34,7 +34,7 @@ func Component() kernel.ConfigurationStage {
 func (c *componentConfig) Configure(m *kernel.Model) error {
 	for regionId, region := range m.Regions {
 		for hostId, host := range region.Hosts {
-			if err := c.generateConfigForHost(regionId, hostId, host, m); err != nil {
+			if err := c.generateComponentForHost(regionId, hostId, host, m); err != nil {
 				return fmt.Errorf("error generating config for host [%s/%s] (%s)", regionId, hostId, err)
 			}
 		}
@@ -42,45 +42,54 @@ func (c *componentConfig) Configure(m *kernel.Model) error {
 	return nil
 }
 
-func (c *componentConfig) generateConfigForHost(regionId, hostId string, host *kernel.Host, model *kernel.Model) error {
+func (c *componentConfig) generateComponentForHost(regionId, hostId string, host *kernel.Host, model *kernel.Model) error {
 	for componentName, component := range host.Components {
-		logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentName)
-
-		tPath := filepath.Join(kernel.ConfigSrc(), component.ConfigSrc)
-		tData, err := ioutil.ReadFile(tPath)
-		if err != nil {
-			return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
+		if component.ConfigSrc != "" {
+			if err := c.generateConfigForHost(regionId, hostId, componentName, model, host, component); err != nil {
+				return err
+			}
 		}
-
-		t, err := template.New("config").Funcs(lib.TemplateFuncMap(model)).Parse(string(tData))
-		if err != nil {
-			return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
-		}
-
-		outputPath := filepath.Join(kernel.ConfigBuild(), component.ConfigName)
-		if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
-			return fmt.Errorf("error creating directories [%s] (%w)", outputPath, err)
-		}
-
-		outputF, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("error creating config [%s] (%w)", outputPath, err)
-		}
-		defer func() { _ = outputF.Close() }()
-
-		err = t.Execute(outputF, &templateModel{
-			RegionId:  regionId,
-			HostId:    hostId,
-			Host:      host,
-			Component: component,
-			Model:     model,
-		})
-		if err != nil {
-			return fmt.Errorf("error rendering template [%s] (%w)", outputPath, err)
-		}
-
-		logrus.Infof("config [%s] => [%s]", component.ConfigSrc, component.ConfigName)
 	}
+	return nil
+}
+
+func (c *componentConfig) generateConfigForHost(regionId, hostId, componentName string, model *kernel.Model, host *kernel.Host, component *kernel.Component) error {
+	logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentName)
+
+	tPath := filepath.Join(kernel.ConfigSrc(), component.ConfigSrc)
+	tData, err := ioutil.ReadFile(tPath)
+	if err != nil {
+		return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
+	}
+
+	t, err := template.New("config").Funcs(lib.TemplateFuncMap(model)).Parse(string(tData))
+	if err != nil {
+		return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
+	}
+
+	outputPath := filepath.Join(kernel.ConfigBuild(), component.ConfigName)
+	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
+		return fmt.Errorf("error creating directories [%s] (%w)", outputPath, err)
+	}
+
+	outputF, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating config [%s] (%w)", outputPath, err)
+	}
+	defer func() { _ = outputF.Close() }()
+
+	err = t.Execute(outputF, &templateModel{
+		RegionId:  regionId,
+		HostId:    hostId,
+		Host:      host,
+		Component: component,
+		Model:     model,
+	})
+	if err != nil {
+		return fmt.Errorf("error rendering template [%s] (%w)", outputPath, err)
+	}
+
+	logrus.Infof("config [%s] => [%s]", component.ConfigSrc, component.ConfigName)
 
 	return nil
 }
