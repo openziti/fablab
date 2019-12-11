@@ -70,7 +70,7 @@ resource "aws_security_group" "fablab" {
   }
   ingress {
     from_port   = 7001
-    to_port     = 7002
+    to_port     = 7005
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

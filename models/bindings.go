@@ -1,3 +1,19 @@
+/*
+	Copyright 2019 Netfoundry, Inc.
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	https://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 package models
 
 import (
@@ -91,15 +107,15 @@ func commonOperation() kernel.OperatingBinders {
 	c := make(chan struct{})
 	binders := kernel.OperatingBinders{
 		func(m *kernel.Model) kernel.OperatingStage { return operation.Metrics(c) },
-		func(m *kernel.Model) kernel.OperatingStage { return operation.IperfServer() },
-		func(m *kernel.Model) kernel.OperatingStage { return operation.IperfClient() },
 		func(m *kernel.Model) kernel.OperatingStage {
 			minutes, found := m.GetVariable("sample_minutes")
 			if !found {
 				minutes = 1
 			}
-			return operation.Timer(time.Duration(minutes.(int))*time.Minute, c)
+			sampleDuration := time.Duration(minutes.(int)) * time.Minute
+			return operation.Iperf(int(sampleDuration.Seconds()))
 		},
+		func(m *kernel.Model) kernel.OperatingStage { return operation.Closer(c) },
 		func(m *kernel.Model) kernel.OperatingStage { return operation.Persist() },
 	}
 	return binders
@@ -131,7 +147,7 @@ func doBootstrap(m *kernel.Model) kernel.Action {
 		if len(terminatingRouters) < 1 {
 			logrus.Fatal("need at least 1 terminating router!")
 		}
-		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7002", terminatingRouters[0].PublicIdentity))
+		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
 	}
 
 	components := m.GetComponentsByTag("terminator")
