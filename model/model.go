@@ -121,7 +121,7 @@ type Model struct {
 	Kitting        KittingBinders
 	Distribution   DistributionBinders
 	Activation     ActivationBinders
-	Operation 	   OperatingBinders
+	Operation      OperatingBinders
 	Disposal       DisposalBinders
 
 	infrastructureStages []InfrastructureStage
@@ -129,7 +129,7 @@ type Model struct {
 	kittingStages        []KittingStage
 	distributionStages   []DistributionStage
 	activationStages     []ActivationStage
-	operationStages		 []OperatingStage
+	operationStages      []OperatingStage
 	disposalStages       []DisposalStage
 	actions              map[string]Action
 }
@@ -155,8 +155,8 @@ type Hosts map[string]*Host
 
 type Component struct {
 	Scope
-	ScriptSrc		string
-	ScriptName		string
+	ScriptSrc       string
+	ScriptName      string
 	ConfigSrc       string
 	ConfigName      string
 	BinaryName      string

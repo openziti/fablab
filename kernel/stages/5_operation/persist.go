@@ -65,5 +65,3 @@ func (persist *persist) Operate(m *model.Model) error {
 
 type persist struct {
 }
-
-

@@ -36,5 +36,5 @@ func (timer *timer) Operate(_ *model.Model) error {
 
 type timer struct {
 	duration time.Duration
-	close chan struct{}
+	close    chan struct{}
 }

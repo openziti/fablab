@@ -27,10 +27,10 @@ func init() {
 }
 
 var operateCmd = &cobra.Command{
-	Use: "operate",
+	Use:   "operate",
 	Short: "operate a model",
-	Args: cobra.ExactArgs(0),
-	Run: operate,
+	Args:  cobra.ExactArgs(0),
+	Run:   operate,
 }
 
 func operate(_ *cobra.Command, _ []string) {

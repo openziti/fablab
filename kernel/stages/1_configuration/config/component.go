@@ -61,11 +61,11 @@ func (componentConfig *componentConfig) generateScriptForComponent(regionId, hos
 	src := filepath.Join(model.ScriptSrc(), c.ScriptSrc)
 	dst := filepath.Join(model.ScriptBuild(), c.ScriptName)
 	err := kernel.RenderTemplate(src, dst, m, &templateModel{
-		RegionId: regionId,
-		HostId: hostId,
-		Host: h,
+		RegionId:  regionId,
+		HostId:    hostId,
+		Host:      h,
 		Component: c,
-		Model: m,
+		Model:     m,
 	})
 	if err != nil {
 		return fmt.Errorf("error rendering template (%w)", err)
