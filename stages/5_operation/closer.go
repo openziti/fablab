@@ -17,15 +17,15 @@
 package operation
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 )
 
-func Closer(ch chan struct{}) kernel.OperatingStage {
+func Closer(ch chan struct{}) model.OperatingStage {
 	return &closer{close: ch}
 }
 
-func (closer *closer) Operate(_ *kernel.Model) error {
+func (closer *closer) Operate(_ *model.Model) error {
 	logrus.Info("closing")
 	close(closer.close)
 	return nil

@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -34,24 +34,24 @@ var cleanCmd = &cobra.Command{
 }
 
 func clean(_ *cobra.Command, _ []string) {
-	if err := kernel.BootstrapInstance(); err != nil {
+	if err := model.BootstrapInstance(); err != nil {
 		logrus.Fatalf("error bootstrapping instance (%w)", err)
 	}
 
-	instanceIds, err := kernel.ListInstances()
+	instanceIds, err := model.ListInstances()
 	if err != nil {
 		logrus.Fatalf("error listing instances (%w)", err)
 	}
 
-	activeInstanceId := kernel.ActiveInstanceId()
+	activeInstanceId := model.ActiveInstanceId()
 	for _, instanceId := range instanceIds {
-		if l, err := kernel.LoadLabelForInstance(instanceId); err == nil {
-			if l.State == kernel.Created || l.State == kernel.Disposed {
-				if err := kernel.RemoveInstance(instanceId); err != nil {
+		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
+			if l.State == model.Created || l.State == model.Disposed {
+				if err := model.RemoveInstance(instanceId); err != nil {
 					logrus.Fatalf("error removing instance [%s] (%w)", instanceId, err)
 				}
 				if instanceId == activeInstanceId {
-					if err := kernel.ClearActiveInstance(); err != nil {
+					if err := model.ClearActiveInstance(); err != nil {
 						logrus.Errorf("error clearing active instance (%w)", err)
 					}
 				}

@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -34,17 +34,17 @@ var execCmd = &cobra.Command{
 }
 
 func exec(_ *cobra.Command, args []string) {
-	if err := kernel.Bootstrap(); err != nil {
+	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	label := kernel.GetLabel()
+	label := model.GetLabel()
 	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", kernel.ActiveInstancePath())
+		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
 	}
 
 	if label != nil {
-		m, found := kernel.GetModel(label.Model)
+		m, found := model.GetModel(label.Model)
 		if !found {
 			logrus.Fatalf("no such model [%s]", label.Model)
 		}

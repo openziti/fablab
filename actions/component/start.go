@@ -19,10 +19,10 @@ package component
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 )
 
-func Start(regionSpec, hostSpec, componentSpec string) kernel.Action {
+func Start(regionSpec, hostSpec, componentSpec string) model.Action {
 	return &start{
 		regionSpec:    regionSpec,
 		hostSpec:      hostSpec,
@@ -30,13 +30,13 @@ func Start(regionSpec, hostSpec, componentSpec string) kernel.Action {
 	}
 }
 
-func (start *start) Execute(m *kernel.Model) error {
+func (start *start) Execute(m *model.Model) error {
 	hosts := m.GetHosts(start.regionSpec, start.hostSpec)
 	for _, h := range hosts {
 		components := h.GetComponents(start.componentSpec)
 		for _, c := range components {
 			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := lib.LaunchService(sshUsername, h.PublicIp, c.BinaryName, c.ConfigName); err != nil {
+			if err := kernel.LaunchService(sshUsername, h.PublicIp, c.BinaryName, c.ConfigName); err != nil {
 				return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

@@ -19,7 +19,7 @@ package terraform
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
@@ -27,11 +27,11 @@ import (
 	"text/template"
 )
 
-func Express() kernel.InfrastructureStage {
+func Express() model.InfrastructureStage {
 	return &terraform{}
 }
 
-func (t *terraform) Express(m *kernel.Model, l *kernel.Label) error {
+func (t *terraform) Express(m *model.Model, l *model.Label) error {
 	if err := t.generate(m); err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -47,7 +47,7 @@ func (t *terraform) Express(m *kernel.Model, l *kernel.Label) error {
 	return nil
 }
 
-func (t *terraform) generate(m *kernel.Model) error {
+func (t *terraform) generate(m *model.Model) error {
 	visitor := &terraformVisitor{model: m}
 	if err := filepath.Walk(terraformSrc(), visitor.visit); err != nil {
 		return fmt.Errorf("error generating terraform (%w)", err)
@@ -56,9 +56,9 @@ func (t *terraform) generate(m *kernel.Model) error {
 }
 
 func (t *terraform) init() error {
-	prc := lib.NewProcess("terraform", "init")
+	prc := kernel.NewProcess("terraform", "init")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	prc.WithTail(kernel.StdoutTail)
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform init' (%w)", err)
 	}
@@ -66,16 +66,16 @@ func (t *terraform) init() error {
 }
 
 func (t *terraform) apply() error {
-	prc := lib.NewProcess("terraform", "apply", "-auto-approve")
+	prc := kernel.NewProcess("terraform", "apply", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	prc.WithTail(kernel.StdoutTail)
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform apply' (%w)", err)
 	}
 	return nil
 }
 
-func (t *terraform) bind(m *kernel.Model, l *kernel.Label) error {
+func (t *terraform) bind(m *model.Model, l *model.Label) error {
 	for regionId, region := range m.Regions {
 		for hostId := range region.Hosts {
 			publicIpOutput := fmt.Sprintf("%s_host_%s_public_ip", regionId, hostId)
@@ -96,7 +96,7 @@ func (t *terraform) bind(m *kernel.Model, l *kernel.Label) error {
 		}
 	}
 	if err := l.Save(); err != nil {
-		logrus.Fatalf("unable to save updated instance label [%s] (%w)", kernel.ActiveInstancePath(), err)
+		logrus.Fatalf("unable to save updated instance label [%s] (%w)", model.ActiveInstancePath(), err)
 	}
 	m.BindLabel(l)
 	return nil
@@ -134,7 +134,7 @@ func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
 		defer func() { _ = outputF.Close() }()
 
 		err = tp.Execute(outputF, struct {
-			Model        *kernel.Model
+			Model        *model.Model
 			TerraformLib string
 		}{
 			Model:        t.model,
@@ -150,11 +150,11 @@ func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
 }
 
 type terraformVisitor struct {
-	model *kernel.Model
+	model *model.Model
 }
 
 func terraformOutput(name string) (string, error) {
-	prc := lib.NewProcess("terraform", "output", name)
+	prc := kernel.NewProcess("terraform", "output", name)
 	prc.Cmd.Dir = terraformRun()
 	if err := prc.Run(); err != nil {
 		return "", fmt.Errorf("error executing 'terraform output' (%w)", err)
@@ -163,13 +163,13 @@ func terraformOutput(name string) (string, error) {
 }
 
 func terraformSrc() string {
-	return filepath.Join(kernel.FablabRoot(), "lib/templates/tf")
+	return filepath.Join(model.FablabRoot(), "lib/templates/tf")
 }
 
 func terraformLib() string {
-	return filepath.Join(kernel.FablabRoot(), "lib/tf")
+	return filepath.Join(model.FablabRoot(), "lib/tf")
 }
 
 func terraformRun() string {
-	return filepath.Join(kernel.ActiveInstancePath(), "tf")
+	return filepath.Join(model.ActiveInstancePath(), "tf")
 }

@@ -16,9 +16,20 @@
 
 package kernel
 
-var modelRegistry map[string]*Model
-var label *Label
-var bindings Bindings
-var bootstrapExtensions []BootstrapExtension
-var instanceId string
-var fablabRoot string
+import "github.com/michaelquigley/figlet/figletlib"
+
+func Figlet(text string) {
+	font, err := figletlib.ReadFontFromBytes(standardFont[:])
+	if err != nil {
+		panic(err)
+	}
+	figletlib.PrintMsg(text, font, 96, font.Settings(), "left")
+}
+
+func FigletMini(text string) {
+	font, err := figletlib.ReadFontFromBytes(miniFont[:])
+	if err != nil {
+		panic(err)
+	}
+	figletlib.PrintMsg(text, font, 96, font.Settings(), "left")
+}

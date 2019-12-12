@@ -19,11 +19,11 @@ package host
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 )
 
-func GroupExec(regionSpec, hostSpec, cmd string) kernel.Action {
+func GroupExec(regionSpec, hostSpec, cmd string) model.Action {
 	return &groupExec{
 		regionSpec: regionSpec,
 		hostSpec:   hostSpec,
@@ -31,11 +31,11 @@ func GroupExec(regionSpec, hostSpec, cmd string) kernel.Action {
 	}
 }
 
-func (groupExec *groupExec) Execute(m *kernel.Model) error {
+func (groupExec *groupExec) Execute(m *model.Model) error {
 	hosts := m.GetHosts(groupExec.regionSpec, groupExec.hostSpec)
 	for _, h := range hosts {
 		sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-		if o, err := lib.RemoteExec(sshUsername, h.PublicIp, groupExec.cmd); err != nil {
+		if o, err := kernel.RemoteExec(sshUsername, h.PublicIp, groupExec.cmd); err != nil {
 			logrus.Errorf("output [%s]", o)
 			return fmt.Errorf("error executing process [%s] on [%s] (%s)", groupExec.cmd, h.PublicIp, err)
 		}

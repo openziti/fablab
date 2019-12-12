@@ -19,18 +19,18 @@ package operation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 )
 
-func Persist() kernel.OperatingStage {
+func Persist() model.OperatingStage {
 	return &persist{}
 }
 
-func (persist *persist) Operate(m *kernel.Model) error {
+func (persist *persist) Operate(m *model.Model) error {
 	all := make(map[string]interface{})
 
 	for k, v := range m.Data {
@@ -54,7 +54,7 @@ func (persist *persist) Operate(m *kernel.Model) error {
 		return err
 	}
 
-	filename := fmt.Sprintf("%s/data-%d.json", kernel.ActiveInstancePath(), info.NowInMilliseconds())
+	filename := fmt.Sprintf("%s/data-%d.json", model.ActiveInstancePath(), info.NowInMilliseconds())
 	if err := ioutil.WriteFile(filename, data, os.ModePerm); err != nil {
 		return err
 	}

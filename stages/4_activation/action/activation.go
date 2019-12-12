@@ -19,20 +19,20 @@ package action
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 )
 
-func Activation(actions ...string) kernel.ActivationStage {
+func Activation(actions ...string) model.ActivationStage {
 	return &actionActivation{actions: actions}
 }
 
-func (actionActivation *actionActivation) Activate(m *kernel.Model) error {
+func (actionActivation *actionActivation) Activate(m *model.Model) error {
 	for _, actionName := range actionActivation.actions {
 		action, found := m.GetAction(actionName)
 		if !found {
 			return fmt.Errorf("no [%s] action", actionName)
 		}
-		lib.FigletMini("action: " + actionName)
+		kernel.FigletMini("action: " + actionName)
 		if err := action.Execute(m); err != nil {
 			return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
 		}

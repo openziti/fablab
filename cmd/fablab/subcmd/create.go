@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -34,24 +34,24 @@ var createCmd = &cobra.Command{
 }
 
 func create(_ *cobra.Command, args []string) {
-	instanceId, err := kernel.NewInstance()
+	instanceId, err := model.NewInstance()
 	if err != nil {
 		logrus.Fatalf("unable to allocate instance (%w)", err)
 	}
 	logrus.Infof("allocated new instance [%s]", instanceId)
 
 	modelName := args[0]
-	if err := kernel.CreateLabel(instanceId, modelName); err != nil {
+	if err := model.CreateLabel(instanceId, modelName); err != nil {
 		logrus.Fatalf("unable to create instance label [%s] (%w)", instanceId, err)
 	}
 
-	_, found := kernel.GetModel(modelName)
+	_, found := model.GetModel(modelName)
 	if !found {
 		logrus.Fatalf("no model [%s]", modelName)
 	}
 	logrus.Infof("using model [%s]", modelName)
 
-	if err := kernel.SetActiveInstance(instanceId); err != nil {
+	if err := model.SetActiveInstance(instanceId); err != nil {
 		logrus.Fatalf("unable to set active instance (%w)", err)
 	}
 }

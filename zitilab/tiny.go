@@ -14,32 +14,32 @@
 	limitations under the License.
 */
 
-package models
+package zitilab
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 )
 
-var tiny = &kernel.Model{
+var tiny = &model.Model{
 	Scope: kernelScope,
 
-	Regions: kernel.Regions{
+	Regions: model.Regions{
 		"tiny": {
-			Scope: kernel.Scope{
-				Tags: kernel.Tags{"ctrl", "router", "loop", "initiator", "terminator"},
+			Scope: model.Scope{
+				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "terminator"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1c",
-			Hosts: kernel.Hosts{
+			Hosts: model.Hosts{
 				"loop0": {
-					Scope: kernel.Scope{
-						Tags: kernel.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"},
+					Scope: model.Scope{
+						Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"},
 					},
 					InstanceType: "m5.large",
-					Components: kernel.Components{
+					Components: model.Components{
 						"ctrl": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"ctrl"},
+							Scope: model.Scope{
+								Tags: model.Tags{"ctrl"},
 							},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl.yml",
@@ -47,8 +47,8 @@ var tiny = &kernel.Model{
 							PublicIdentity: "ctrl",
 						},
 						"001": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"router", "terminator"},
+							Scope: model.Scope{
+								Tags: model.Tags{"router", "terminator"},
 							},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",

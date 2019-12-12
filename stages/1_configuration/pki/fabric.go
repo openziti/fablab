@@ -2,16 +2,16 @@ package pki
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"os"
 )
 
-func Fabric() kernel.ConfigurationStage {
+func Fabric() model.ConfigurationStage {
 	return &fabric{}
 }
 
-func (f *fabric) Configure(m *kernel.Model) error {
+func (f *fabric) Configure(m *model.Model) error {
 	if err := generateCa(); err != nil {
 		return fmt.Errorf("error generating ca (%s)", err)
 	}
@@ -37,7 +37,7 @@ func (f *fabric) Configure(m *kernel.Model) error {
 }
 
 func hasExisitingPki() (bool, error) {
-	if _, err := os.Stat(kernel.PkiBuild()); err != nil {
+	if _, err := os.Stat(model.PkiBuild()); err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}

@@ -18,20 +18,20 @@ package actions
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 )
 
-func Workflow(actions ...kernel.Action) *workflow {
+func Workflow(actions ...model.Action) *workflow {
 	return &workflow{
 		actions: actions,
 	}
 }
 
-func (workflow *workflow) AddAction(action kernel.Action) {
+func (workflow *workflow) AddAction(action model.Action) {
 	workflow.actions = append(workflow.actions, action)
 }
 
-func (workflow *workflow) Execute(m *kernel.Model) error {
+func (workflow *workflow) Execute(m *model.Model) error {
 	for _, action := range workflow.actions {
 		if err := action.Execute(m); err != nil {
 			return fmt.Errorf("error executing action (%s)", err)
@@ -41,5 +41,5 @@ func (workflow *workflow) Execute(m *kernel.Model) error {
 }
 
 type workflow struct {
-	actions []kernel.Action
+	actions []model.Action
 }

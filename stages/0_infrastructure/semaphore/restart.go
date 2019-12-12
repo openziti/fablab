@@ -19,17 +19,17 @@ package semaphore
 import (
 	"errors"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
 
-func Restart(preDelay time.Duration) kernel.InfrastructureStage {
+func Restart(preDelay time.Duration) model.InfrastructureStage {
 	return &restartStage{preDelay: preDelay}
 }
 
-func (restartStage *restartStage) Express(m *kernel.Model, l *kernel.Label) error {
+func (restartStage *restartStage) Express(m *model.Model, l *model.Label) error {
 	logrus.Infof("waiting for expressed hosts to restart (pre-delay: %s)", restartStage.preDelay.String())
 	time.Sleep(restartStage.preDelay)
 
@@ -40,7 +40,7 @@ func (restartStage *restartStage) Express(m *kernel.Model, l *kernel.Label) erro
 		for _, h := range r.Hosts {
 			success := false
 			for tries := 0; tries < 5; tries++ {
-				if output, err := lib.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
+				if output, err := kernel.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
 					logrus.Warnf("host not restarted [%s] (%w)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {

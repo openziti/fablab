@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,16 +35,16 @@ var statusCmd = &cobra.Command{
 }
 
 func status(_ *cobra.Command, _ []string) {
-	if err := kernel.Bootstrap(); err != nil {
+	if err := model.Bootstrap(); err != nil {
 		logrus.Fatal("unable to bootstrap (%w)", err)
 	}
 
 	fmt.Println()
-	if kernel.ActiveInstanceId() != "" {
-		fmt.Printf("%-20s %s\n", "Active Instance", kernel.ActiveInstanceId())
+	if model.ActiveInstanceId() != "" {
+		fmt.Printf("%-20s %s\n", "Active Instance", model.ActiveInstanceId())
 	}
 
-	l := kernel.GetLabel()
+	l := model.GetLabel()
 	if l == nil {
 		fmt.Printf("%-20s no label\n", "Label")
 	} else {

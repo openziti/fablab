@@ -3,7 +3,7 @@ package operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/netfoundry/ziti-foundation/identity/dotziti"
@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func Metrics(closer chan struct{}) kernel.OperatingStage {
+func Metrics(closer chan struct{}) model.OperatingStage {
 	return &metrics{closer: closer}
 }
 
-func (metrics *metrics) Operate(m *kernel.Model) error {
+func (metrics *metrics) Operate(m *model.Model) error {
 	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
@@ -117,6 +117,6 @@ func (metrics *metrics) runMetrics() {
 
 type metrics struct {
 	ch     channel2.Channel
-	m      *kernel.Model
+	m      *model.Model
 	closer chan struct{}
 }

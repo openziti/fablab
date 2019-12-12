@@ -14,6 +14,6 @@
 	limitations under the License.
 */
 
-package kernel
+package model
 
 const Version = "0.3.0 (g3n3ral1z3r)"

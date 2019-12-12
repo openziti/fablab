@@ -17,16 +17,16 @@
 package semaphore
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
-func Sleep(duration time.Duration) kernel.Action {
+func Sleep(duration time.Duration) model.Action {
 	return &sleep{duration: duration}
 }
 
-func (sleep *sleep) Execute(_ *kernel.Model) error {
+func (sleep *sleep) Execute(_ *model.Model) error {
 	logrus.Infof("sleeping for [%s]", sleep.duration)
 	time.Sleep(sleep.duration)
 	return nil

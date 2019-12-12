@@ -19,16 +19,16 @@ package rsync
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
 
-func Rsync() kernel.DistributionStage {
+func Rsync() model.DistributionStage {
 	return &rsyncStage{}
 }
 
-func (rsync *rsyncStage) Distribute(m *kernel.Model) error {
+func (rsync *rsyncStage) Distribute(m *model.Model) error {
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 	for regionId, r := range m.Regions {
 		for hostId, host := range r.Hosts {
@@ -43,8 +43,8 @@ func (rsync *rsyncStage) Distribute(m *kernel.Model) error {
 type rsyncStage struct {
 }
 
-func synchronizeHost(h *kernel.Host, sshUsername string) error {
-	if output, err := lib.RemoteExec(sshUsername, h.PublicIp, "mkdir -p /home/fedora/fablab"); err == nil {
+func synchronizeHost(h *model.Host, sshUsername string) error {
+	if output, err := kernel.RemoteExec(sshUsername, h.PublicIp, "mkdir -p /home/fedora/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -52,7 +52,7 @@ func synchronizeHost(h *kernel.Host, sshUsername string) error {
 		return err
 	}
 
-	if err := rsync(kernel.KitBuild()+"/", fmt.Sprintf("fedora@%s:/home/fedora/fablab", h.PublicIp)); err != nil {
+	if err := rsync(model.KitBuild()+"/", fmt.Sprintf("fedora@%s:/home/fedora/fablab", h.PublicIp)); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 
@@ -60,8 +60,8 @@ func synchronizeHost(h *kernel.Host, sshUsername string) error {
 }
 
 func rsync(sourcePath, targetPath string) error {
-	rsync := lib.NewProcess("rsync", "-avz", "-e", "ssh -o \"StrictHostKeyChecking no\"", "--delete", sourcePath, targetPath)
-	rsync.WithTail(lib.StdoutTail)
+	rsync := kernel.NewProcess("rsync", "-avz", "-e", "ssh -o \"StrictHostKeyChecking no\"", "--delete", sourcePath, targetPath)
+	rsync.WithTail(kernel.StdoutTail)
 	if err := rsync.Run(); err != nil {
 		return fmt.Errorf("rsync failed (%w)", err)
 	}

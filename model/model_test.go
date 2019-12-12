@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package kernel
+package model
 
 import (
 	"github.com/stretchr/testify/assert"

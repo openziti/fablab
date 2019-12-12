@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,56 +35,56 @@ var upCmd = &cobra.Command{
 }
 
 func up(_ *cobra.Command, _ []string) {
-	if err := kernel.Bootstrap(); err != nil {
+	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%w)", err)
 	}
 
-	l := kernel.GetLabel()
+	l := model.GetLabel()
 	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", kernel.ActiveInstancePath())
+		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
 	}
 
 	if l != nil {
-		m, found := kernel.GetModel(l.Model)
+		m, found := model.GetModel(l.Model)
 		if !found {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		lib.Figlet("infrastructure")
+		kernel.Figlet("infrastructure")
 
 		if err := m.Express(l); err != nil {
 			logrus.Fatalf("error expressing (%w)", err)
 		}
 
-		if err := kernel.Bootstrap(); err != nil {
+		if err := model.Bootstrap(); err != nil {
 			logrus.Fatalf("error re-bootstrapping (%w)", err)
 		}
 
-		lib.Figlet("configuration")
+		kernel.Figlet("configuration")
 
 		if err := m.Build(l); err != nil {
 			logrus.Fatalf("error building (%w)", err)
 		}
 
-		lib.Figlet("kitting")
+		kernel.Figlet("kitting")
 
 		if err := m.Kit(l); err != nil {
 			logrus.Fatalf("error kitting (%w)", err)
 		}
 
-		lib.Figlet("distribution")
+		kernel.Figlet("distribution")
 
 		if err := m.Sync(l); err != nil {
 			logrus.Fatalf("error distributing (%w)", err)
 		}
 
-		lib.Figlet("activation")
+		kernel.Figlet("activation")
 
 		if err := m.Activate(l); err != nil {
 			logrus.Fatalf("error activating (%w)", err)
 		}
 
-		lib.Figlet("FABUL0US!1!")
+		kernel.Figlet("FABUL0US!1!")
 
 	} else {
 		logrus.Fatalf("no label for run")

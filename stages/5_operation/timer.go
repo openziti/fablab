@@ -17,16 +17,16 @@
 package operation
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) kernel.OperatingStage {
+func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
 	return &timer{duration: duration, close: closer}
 }
 
-func (timer *timer) Operate(_ *kernel.Model) error {
+func (timer *timer) Operate(_ *model.Model) error {
 	logrus.Infof("waiting for %s", timer.duration)
 	time.Sleep(timer.duration)
 	logrus.Infof("closing")

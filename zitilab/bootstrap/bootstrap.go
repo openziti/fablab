@@ -1,13 +1,13 @@
-package zitilab
+package zitilab_bootstrap
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"os"
 )
 
-func (bootstrap *Bootstrap) Bootstrap(m *kernel.Model) error {
+func (bootstrap *Bootstrap) Bootstrap(m *model.Model) error {
 	zitiRoot = os.Getenv("ZITI_ROOT")
 	if zitiRoot == "" {
 		return fmt.Errorf("please set 'ZITI_ROOT'")

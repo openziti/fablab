@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package models
+package zitilab
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ import (
 	"github.com/netfoundry/fablab/actions/host"
 	"github.com/netfoundry/fablab/actions/metrics"
 	"github.com/netfoundry/fablab/actions/semaphore"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	semaphore0 "github.com/netfoundry/fablab/stages/0_infrastructure/semaphore"
 	terraform0 "github.com/netfoundry/fablab/stages/0_infrastructure/terraform"
 	"github.com/netfoundry/fablab/stages/1_configuration/config"
@@ -34,20 +34,20 @@ import (
 	"github.com/netfoundry/fablab/stages/4_activation/action"
 	operation "github.com/netfoundry/fablab/stages/5_operation"
 	terraform6 "github.com/netfoundry/fablab/stages/6_disposal/terraform"
-	"github.com/netfoundry/fablab/zitilab"
+	"github.com/netfoundry/fablab/zitilab/bootstrap"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
 )
 
 func init() {
-	kernel.RegisterModel("diamondback", diamondback)
-	kernel.RegisterModel("tiny", tiny)
-	kernel.RegisterModel("transit", transit)
+	model.RegisterModel("diamondback", diamondback)
+	model.RegisterModel("tiny", tiny)
+	model.RegisterModel("transit", transit)
 }
 
-func commonActions() kernel.ActionBinders {
-	return kernel.ActionBinders{
+func commonActions() model.ActionBinders {
+	return model.ActionBinders{
 		"bootstrap": doBootstrap,
 		"start":     doStart,
 		"stop":      doStop,
@@ -55,18 +55,18 @@ func commonActions() kernel.ActionBinders {
 	}
 }
 
-func commonInfrastructure() kernel.InfrastructureBinders {
-	return kernel.InfrastructureBinders{
-		func(m *kernel.Model) kernel.InfrastructureStage { return terraform0.Express() },
-		func(m *kernel.Model) kernel.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
+func commonInfrastructure() model.InfrastructureBinders {
+	return model.InfrastructureBinders{
+		func(m *model.Model) model.InfrastructureStage { return terraform0.Express() },
+		func(m *model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
 	}
 }
 
-func commonConfiguration() kernel.ConfigurationBinders {
-	return kernel.ConfigurationBinders{
-		func(m *kernel.Model) kernel.ConfigurationStage { return pki.Group(pki.Fabric(), pki.DotZiti()) },
-		func(m *kernel.Model) kernel.ConfigurationStage { return config.Component() },
-		func(m *kernel.Model) kernel.ConfigurationStage {
+func commonConfiguration() model.ConfigurationBinders {
+	return model.ConfigurationBinders{
+		func(m *model.Model) model.ConfigurationStage { return pki.Group(pki.Fabric(), pki.DotZiti()) },
+		func(m *model.Model) model.ConfigurationStage { return config.Component() },
+		func(m *model.Model) model.ConfigurationStage {
 			configs := []config.StaticConfig{
 				{Src: "loop/10-ambient.loop2.yml", Name: "10-ambient.loop2.yml"},
 				{Src: "loop/4k-chatter.loop2.yml", Name: "4k-chatter.loop2.yml"},
@@ -77,37 +77,37 @@ func commonConfiguration() kernel.ConfigurationBinders {
 	}
 }
 
-func commonKitting() kernel.KittingBinders {
-	return kernel.KittingBinders{
-		func(m *kernel.Model) kernel.KittingStage {
+func commonKitting() model.KittingBinders {
+	return model.KittingBinders{
+		func(m *model.Model) model.KittingStage {
 			zitiBinaries := []string{
 				"ziti-controller",
 				"ziti-fabric",
 				"ziti-fabric-test",
 				"ziti-router",
 			}
-			return devkit.DevKit(filepath.Join(zitilab.ZitiRoot(), "bin"), zitiBinaries)
+			return devkit.DevKit(filepath.Join(zitilab_bootstrap.ZitiRoot(), "bin"), zitiBinaries)
 		},
 	}
 }
 
-func commonDistribution() kernel.DistributionBinders {
-	return kernel.DistributionBinders{
-		func(m *kernel.Model) kernel.DistributionStage { return rsync.Rsync() },
+func commonDistribution() model.DistributionBinders {
+	return model.DistributionBinders{
+		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 }
 
-func commonActivation() kernel.ActivationBinders {
-	return kernel.ActivationBinders{
-		func(m *kernel.Model) kernel.ActivationStage { return action.Activation("bootstrap", "start") },
+func commonActivation() model.ActivationBinders {
+	return model.ActivationBinders{
+		func(m *model.Model) model.ActivationStage { return action.Activation("bootstrap", "start") },
 	}
 }
 
-func commonOperation() kernel.OperatingBinders {
+func commonOperation() model.OperatingBinders {
 	c := make(chan struct{})
-	binders := kernel.OperatingBinders{
-		func(m *kernel.Model) kernel.OperatingStage { return operation.Metrics(c) },
-		func(m *kernel.Model) kernel.OperatingStage {
+	binders := model.OperatingBinders{
+		func(m *model.Model) model.OperatingStage { return operation.Metrics(c) },
+		func(m *model.Model) model.OperatingStage {
 			minutes, found := m.GetVariable("sample_minutes")
 			if !found {
 				minutes = 1
@@ -115,19 +115,19 @@ func commonOperation() kernel.OperatingBinders {
 			sampleDuration := time.Duration(minutes.(int)) * time.Minute
 			return operation.Iperf(int(sampleDuration.Seconds()))
 		},
-		func(m *kernel.Model) kernel.OperatingStage { return operation.Closer(c) },
-		func(m *kernel.Model) kernel.OperatingStage { return operation.Persist() },
+		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
+		func(m *model.Model) model.OperatingStage { return operation.Persist() },
 	}
 	return binders
 }
 
-func commonDisposal() kernel.DisposalBinders {
-	return kernel.DisposalBinders{
-		func(m *kernel.Model) kernel.DisposalStage { return terraform6.Dispose() },
+func commonDisposal() model.DisposalBinders {
+	return model.DisposalBinders{
+		func(m *model.Model) model.DisposalStage { return terraform6.Dispose() },
 	}
 }
 
-func doBootstrap(m *kernel.Model) kernel.Action {
+func doBootstrap(m *model.Model) model.Action {
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 
 	workflow := actions.Workflow()
@@ -138,7 +138,7 @@ func doBootstrap(m *kernel.Model) kernel.Action {
 
 	for _, router := range m.GetComponentsByTag("router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
-		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(kernel.PkiBuild(), cert)))
+		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
 	iperfServer := m.GetHostByTags("iperf-server", "iperf-server")
@@ -170,7 +170,7 @@ func doBootstrap(m *kernel.Model) kernel.Action {
 	return workflow
 }
 
-func doStart(m *kernel.Model) kernel.Action {
+func doStart(m *model.Model) model.Action {
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 
 	listenerCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/ziti-fabric-test loop2 listener -b tcp:0.0.0.0:8171 > /home/%s/ziti-fabric-test.log 2>&1 &", sshUsername, sshUsername)
@@ -199,7 +199,7 @@ func doStart(m *kernel.Model) kernel.Action {
 	return workflow
 }
 
-func doStop(_ *kernel.Model) kernel.Action {
+func doStop(_ *model.Model) model.Action {
 	return actions.Workflow(
 		host.GroupKill("@loop", "@loop-dialer", "ziti-fabric-test"),
 		host.GroupKill("@loop", "@loop-listener", "ziti-fabric-test"),
@@ -208,11 +208,11 @@ func doStop(_ *kernel.Model) kernel.Action {
 	)
 }
 
-func doMetrics(_ *kernel.Model) kernel.Action {
+func doMetrics(_ *model.Model) model.Action {
 	return metrics.Metrics()
 }
 
-func loopScenario(m *kernel.Model) string {
+func loopScenario(m *model.Model) string {
 	loopScenario := "10-ambient.loop2.yml"
 	if initiator := m.GetRegionByTag("initiator"); initiator != nil {
 		if len(initiator.Hosts) > 1 {
@@ -222,7 +222,7 @@ func loopScenario(m *kernel.Model) string {
 	return loopScenario
 }
 
-func createDialerActions(m *kernel.Model, endpoint string) ([]kernel.Action, error) {
+func createDialerActions(m *model.Model, endpoint string) ([]model.Action, error) {
 	initiatorRegion := m.GetRegionByTag("initiator")
 	if initiatorRegion == nil {
 		return nil, fmt.Errorf("unable to find 'initiator' region")
@@ -230,7 +230,7 @@ func createDialerActions(m *kernel.Model, endpoint string) ([]kernel.Action, err
 
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 	loopScenario := loopScenario(m)
-	dialerActions := make([]kernel.Action, 0)
+	dialerActions := make([]model.Action, 0)
 	for hostId, h := range initiatorRegion.Hosts {
 		for _, tag := range h.Tags {
 			if tag == "loop-dialer" {
@@ -243,13 +243,13 @@ func createDialerActions(m *kernel.Model, endpoint string) ([]kernel.Action, err
 	return dialerActions, nil
 }
 
-func createServiceActions(m *kernel.Model, terminatorId string) ([]kernel.Action, error) {
+func createServiceActions(m *model.Model, terminatorId string) ([]model.Action, error) {
 	terminatorRegion := m.GetRegionByTag("terminator")
 	if terminatorRegion == nil {
 		return nil, fmt.Errorf("unable to find 'terminator' region")
 	}
 
-	serviceActions := make([]kernel.Action, 0)
+	serviceActions := make([]model.Action, 0)
 	for hostId, host := range terminatorRegion.Hosts {
 		for _, tag := range host.Tags {
 			if tag == "loop-listener" {
@@ -261,31 +261,31 @@ func createServiceActions(m *kernel.Model, terminatorId string) ([]kernel.Action
 	return serviceActions, nil
 }
 
-var kernelScope = kernel.Scope{
-	Variables: kernel.Variables{
-		"environment": &kernel.Variable{Required: true},
-		"credentials": kernel.Variables{
-			"aws": kernel.Variables{
-				"access_key":   &kernel.Variable{Required: true},
-				"secret_key":   &kernel.Variable{Required: true},
-				"ssh_key_name": &kernel.Variable{Required: true},
+var kernelScope = model.Scope{
+	Variables: model.Variables{
+		"environment": &model.Variable{Required: true},
+		"credentials": model.Variables{
+			"aws": model.Variables{
+				"access_key":   &model.Variable{Required: true},
+				"secret_key":   &model.Variable{Required: true},
+				"ssh_key_name": &model.Variable{Required: true},
 			},
-			"ssh": kernel.Variables{
-				"key_path": &kernel.Variable{Required: true},
-				"username": &kernel.Variable{Default: "fedora"},
+			"ssh": model.Variables{
+				"key_path": &model.Variable{Required: true},
+				"username": &model.Variable{Default: "fedora"},
 			},
 		},
-		"sample_minutes": &kernel.Variable{Default: 1},
+		"sample_minutes": &model.Variable{Default: 1},
 	},
 }
 
-var instanceType = func(def string) *kernel.Variable {
-	return &kernel.Variable{
+var instanceType = func(def string) *model.Variable {
+	return &model.Variable{
 		Scoped:         true,
 		GlobalFallback: true,
 		Default:        def,
-		Binder: func(v *kernel.Variable, i interface{}, path ...string) {
-			if h, ok := i.(*kernel.Host); ok {
+		Binder: func(v *model.Variable, i interface{}, path ...string) {
+			if h, ok := i.(*model.Host); ok {
 				h.InstanceType = v.Value.(string)
 				logrus.Debugf("setting instance type of host %v = [%s]", path, h.InstanceType)
 			}

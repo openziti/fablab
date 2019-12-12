@@ -19,10 +19,10 @@ package component
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 )
 
-func Stop(regionSpec, hostSpec, componentSpec string) kernel.Action {
+func Stop(regionSpec, hostSpec, componentSpec string) model.Action {
 	return &stop{
 		regionSpec:    regionSpec,
 		hostSpec:      hostSpec,
@@ -30,13 +30,13 @@ func Stop(regionSpec, hostSpec, componentSpec string) kernel.Action {
 	}
 }
 
-func (stop *stop) Execute(m *kernel.Model) error {
+func (stop *stop) Execute(m *model.Model) error {
 	hosts := m.GetHosts(stop.regionSpec, stop.hostSpec)
 	for _, h := range hosts {
 		components := h.GetComponents(stop.componentSpec)
 		for _, c := range components {
 			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := lib.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
+			if err := kernel.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
 				return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

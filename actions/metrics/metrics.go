@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/michaelquigley/pfxlog"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/netfoundry/ziti-foundation/identity/dotziti"
@@ -16,11 +16,11 @@ import (
 	"time"
 )
 
-func Metrics() kernel.Action {
+func Metrics() model.Action {
 	return &metrics{}
 }
 
-func (metrics *metrics) Execute(m *kernel.Model) error {
+func (metrics *metrics) Execute(m *model.Model) error {
 	var mgmt channel2.Channel
 	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {

@@ -19,16 +19,16 @@ package config
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 )
 
-func Component() kernel.ConfigurationStage {
+func Component() model.ConfigurationStage {
 	return &componentConfig{}
 }
 
-func (componentConfig *componentConfig) Configure(m *kernel.Model) error {
+func (componentConfig *componentConfig) Configure(m *model.Model) error {
 	for regionId, r := range m.Regions {
 		for hostId, h := range r.Hosts {
 			if err := componentConfig.generateComponentForHost(regionId, hostId, m, h); err != nil {
@@ -39,7 +39,7 @@ func (componentConfig *componentConfig) Configure(m *kernel.Model) error {
 	return nil
 }
 
-func (componentConfig *componentConfig) generateComponentForHost(regionId, hostId string, m *kernel.Model, h *kernel.Host) error {
+func (componentConfig *componentConfig) generateComponentForHost(regionId, hostId string, m *model.Model, h *model.Host) error {
 	for componentId, c := range h.Components {
 		if c.ScriptSrc != "" && c.ScriptName != "" {
 			if err := componentConfig.generateScriptForComponent(regionId, hostId, componentId, m, h, c); err != nil {
@@ -55,12 +55,12 @@ func (componentConfig *componentConfig) generateComponentForHost(regionId, hostI
 	return nil
 }
 
-func (componentConfig *componentConfig) generateScriptForComponent(regionId, hostId, componentId string, m *kernel.Model, h *kernel.Host, c *kernel.Component) error {
+func (componentConfig *componentConfig) generateScriptForComponent(regionId, hostId, componentId string, m *model.Model, h *model.Host, c *model.Component) error {
 	logrus.Debugf("generating script for component [%s/%s/%s]", regionId, hostId, componentId)
 
-	src := filepath.Join(kernel.ScriptSrc(), c.ScriptSrc)
-	dst := filepath.Join(kernel.ScriptBuild(), c.ScriptName)
-	err := lib.RenderTemplate(src, dst, m, &templateModel{
+	src := filepath.Join(model.ScriptSrc(), c.ScriptSrc)
+	dst := filepath.Join(model.ScriptBuild(), c.ScriptName)
+	err := kernel.RenderTemplate(src, dst, m, &templateModel{
 		RegionId: regionId,
 		HostId: hostId,
 		Host: h,
@@ -76,12 +76,12 @@ func (componentConfig *componentConfig) generateScriptForComponent(regionId, hos
 	return nil
 }
 
-func (componentConfig *componentConfig) generateConfigForComponent(regionId, hostId, componentId string, m *kernel.Model, h *kernel.Host, c *kernel.Component) error {
+func (componentConfig *componentConfig) generateConfigForComponent(regionId, hostId, componentId string, m *model.Model, h *model.Host, c *model.Component) error {
 	logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentId)
 
-	src := filepath.Join(kernel.ConfigSrc(), c.ConfigSrc)
-	dst := filepath.Join(kernel.ConfigBuild(), c.ConfigName)
-	err := lib.RenderTemplate(src, dst, m, &templateModel{
+	src := filepath.Join(model.ConfigSrc(), c.ConfigSrc)
+	dst := filepath.Join(model.ConfigBuild(), c.ConfigName)
+	err := kernel.RenderTemplate(src, dst, m, &templateModel{
 		RegionId:  regionId,
 		HostId:    hostId,
 		Host:      h,

@@ -19,7 +19,7 @@ package config
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -27,26 +27,26 @@ import (
 	"text/template"
 )
 
-func Static(configs []StaticConfig) kernel.ConfigurationStage {
+func Static(configs []StaticConfig) model.ConfigurationStage {
 	return &staticConfig{configs: configs}
 }
 
-func (staticConfig *staticConfig) Configure(m *kernel.Model) error {
+func (staticConfig *staticConfig) Configure(m *model.Model) error {
 	for _, config := range staticConfig.configs {
 		logrus.Debugf("generating static configuration [%s] => [%s]", config.Src, config.Name)
 
-		tPath := filepath.Join(kernel.ConfigSrc(), config.Src)
+		tPath := filepath.Join(model.ConfigSrc(), config.Src)
 		tData, err := ioutil.ReadFile(tPath)
 		if err != nil {
 			return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
 		}
 
-		t, err := template.New("config").Funcs(lib.TemplateFuncMap(m)).Parse(string(tData))
+		t, err := template.New("config").Funcs(kernel.TemplateFuncMap(m)).Parse(string(tData))
 		if err != nil {
 			return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
 		}
 
-		outputPath := filepath.Join(kernel.ConfigBuild(), config.Name)
+		outputPath := filepath.Join(model.ConfigBuild(), config.Name)
 		if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 			return fmt.Errorf("error creating directories [%s] (%w)", filepath.Dir(outputPath), err)
 		}

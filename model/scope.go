@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package kernel
+package model
 
 type Scope struct {
 	Variables Variables

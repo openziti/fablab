@@ -19,16 +19,16 @@ package operation
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
-func Iperf(seconds int) kernel.OperatingStage {
+func Iperf(seconds int) model.OperatingStage {
 	return &iperf{seconds: seconds}
 }
 
-func (iperf *iperf) Operate(m *kernel.Model) error {
+func (iperf *iperf) Operate(m *model.Model) error {
 	serverHosts := m.GetHosts("@iperf-server", "@iperf-server")
 	clientHosts := m.GetHosts("@iperf-client", "@iperf-client")
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
@@ -39,13 +39,13 @@ func (iperf *iperf) Operate(m *kernel.Model) error {
 
 		time.Sleep(10 * time.Second)
 
-		if err := lib.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
+		if err := kernel.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
 		initiator := m.GetHosts("@initiator", "@initiator")[0]
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7002 -t %d --json", initiator.PublicIp, iperf.seconds)
-		output, err := lib.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
+		output, err := kernel.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
 			logrus.Infof("iperf3 client completed, output [%s]", output)
 		} else {
@@ -58,13 +58,13 @@ func (iperf *iperf) Operate(m *kernel.Model) error {
 	return nil
 }
 
-func (iperf *iperf) runServer(h *kernel.Host, sshUser string) {
-	if err := lib.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
+func (iperf *iperf) runServer(h *model.Host, sshUser string) {
+	if err := kernel.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 clients (%w)", err)
 		return
 	}
 
-	output, err := lib.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off --json")
+	output, err := kernel.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off --json")
 	if err == nil {
 		logrus.Infof("iperf3 server completed, output [%s]", output)
 	} else {

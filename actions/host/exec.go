@@ -19,20 +19,20 @@ package host
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 )
 
-func Exec(h *kernel.Host, cmd string) kernel.Action {
+func Exec(h *model.Host, cmd string) model.Action {
 	return &exec{
 		h:   h,
 		cmd: cmd,
 	}
 }
 
-func (exec *exec) Execute(m *kernel.Model) error {
+func (exec *exec) Execute(m *model.Model) error {
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-	if o, err := lib.RemoteExec(sshUsername, exec.h.PublicIp, exec.cmd); err != nil {
+	if o, err := kernel.RemoteExec(sshUsername, exec.h.PublicIp, exec.cmd); err != nil {
 		logrus.Errorf("output [%s]", o)
 		return fmt.Errorf("error executing process [%s] on [%s] (%s)", exec.cmd, exec.h.PublicIp, err)
 	}
@@ -40,6 +40,6 @@ func (exec *exec) Execute(m *kernel.Model) error {
 }
 
 type exec struct {
-	h   *kernel.Host
+	h   *model.Host
 	cmd string
 }

@@ -3,7 +3,7 @@ package pki
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -12,11 +12,11 @@ import (
 	"text/template"
 )
 
-func DotZiti() kernel.ConfigurationStage {
+func DotZiti() model.ConfigurationStage {
 	return &dotZiti{}
 }
 
-func (d *dotZiti) Configure(m *kernel.Model) error {
+func (d *dotZiti) Configure(m *model.Model) error {
 	if err := generateCert("dotziti", "127.0.0.1"); err != nil {
 		return fmt.Errorf("error generating cert for [dotziti] (%s)", err)
 	}
@@ -32,19 +32,19 @@ func (d *dotZiti) Configure(m *kernel.Model) error {
 type dotZiti struct {
 }
 
-func generateLocalIdentities(m *kernel.Model) error {
-	tPath := filepath.Join(kernel.ConfigSrc(), "local_identities.yml")
+func generateLocalIdentities(m *model.Model) error {
+	tPath := filepath.Join(model.ConfigSrc(), "local_identities.yml")
 	tData, err := ioutil.ReadFile(tPath)
 	if err != nil {
 		return fmt.Errorf("error reading template [%s] (%s)", tPath, err)
 	}
 
-	t, err := template.New("config").Funcs(lib.TemplateFuncMap(m)).Parse(string(tData))
+	t, err := template.New("config").Funcs(kernel.TemplateFuncMap(m)).Parse(string(tData))
 	if err != nil {
 		return fmt.Errorf("error parsing template [%s] (%s)", tPath, err)
 	}
 
-	outputPath := filepath.Join(kernel.PkiBuild(), "local_identities.yml")
+	outputPath := filepath.Join(model.PkiBuild(), "local_identities.yml")
 	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating directories [%s] (%s)", outputPath, err)
 	}
@@ -58,7 +58,7 @@ func generateLocalIdentities(m *kernel.Model) error {
 	err = t.Execute(outputF, struct {
 		RunPath string
 	}{
-		RunPath: kernel.ActiveInstancePath(),
+		RunPath: model.ActiveInstancePath(),
 	})
 	if err != nil {
 		return fmt.Errorf("error rendering template [%s] (%s)", outputPath, err)
@@ -106,7 +106,7 @@ func mergeLocalIdentities() error {
 	}
 
 	var localIdentities map[interface{}]interface{}
-	localIdPath := filepath.Join(kernel.PkiBuild(), "local_identities.yml")
+	localIdPath := filepath.Join(model.PkiBuild(), "local_identities.yml")
 	data, err := ioutil.ReadFile(localIdPath)
 	if err != nil {
 		return fmt.Errorf("error reading local identities [%s] (%s)", localIdPath, err)

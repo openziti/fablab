@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -42,12 +42,12 @@ var listInstancesCmd = &cobra.Command{
 }
 
 func listInstances(_ *cobra.Command, _ []string) {
-	if err := kernel.BootstrapInstance(); err != nil {
+	if err := model.BootstrapInstance(); err != nil {
 		logrus.Fatalf("unable to bootstrap config (%w)", err)
 	}
 
-	activeInstanceId := kernel.ActiveInstanceId()
-	instanceIds, err := kernel.ListInstances()
+	activeInstanceId := model.ActiveInstanceId()
+	instanceIds, err := model.ListInstances()
 	if err != nil {
 		logrus.Fatalf("unable to list instances (%w)", err)
 	}
@@ -59,7 +59,7 @@ func listInstances(_ *cobra.Command, _ []string) {
 		if instanceId == activeInstanceId {
 			idLabel += "*"
 		}
-		if l, err := kernel.LoadLabelForInstance(instanceId); err == nil {
+		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
 			fmt.Printf("%-12s %-24s [%s]\n", idLabel, l.Model, l.State)
 		} else {
 			fmt.Printf("%-12s %s\n", idLabel, err)
@@ -78,11 +78,11 @@ var listModelsCmd = &cobra.Command{
 }
 
 func listModels(_ *cobra.Command, _ []string) {
-	if err := kernel.Bootstrap(); err != nil {
+	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%w)", err)
 	}
 
-	models := kernel.ListModels()
+	models := model.ListModels()
 	fmt.Printf("\nfound [%d] models:\n\n", len(models))
 	for _, modelName := range models {
 		fmt.Printf("\t" + modelName + "\n")

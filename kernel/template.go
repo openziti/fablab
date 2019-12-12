@@ -14,11 +14,11 @@
 	limitations under the License.
 */
 
-package lib
+package kernel
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -26,7 +26,7 @@ import (
 	"text/template"
 )
 
-func TemplateFuncMap(m *kernel.Model) template.FuncMap {
+func TemplateFuncMap(m *model.Model) template.FuncMap {
 	return template.FuncMap{
 		"publicIp": func(regionTag, hostTag string) string {
 			host := m.GetHostByTags(regionTag, hostTag)
@@ -38,7 +38,7 @@ func TemplateFuncMap(m *kernel.Model) template.FuncMap {
 	}
 }
 
-func RenderTemplate(src, dst string, m *kernel.Model, data interface{}) error {
+func RenderTemplate(src, dst string, m *model.Model, data interface{}) error {
 	tData, err := ioutil.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("error reading template [%s] (%w)", src, err)

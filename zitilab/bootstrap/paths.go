@@ -1,4 +1,4 @@
-package zitilab
+package zitilab_bootstrap
 
 import "path/filepath"
 

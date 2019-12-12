@@ -19,18 +19,18 @@ package terraform
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/kernel/lib"
+	"github.com/netfoundry/fablab/model"
 	"path/filepath"
 )
 
-func Dispose() kernel.DisposalStage {
+func Dispose() model.DisposalStage {
 	return &terraform{}
 }
 
-func (terraform *terraform) Dispose(m *kernel.Model) error {
-	prc := lib.NewProcess("terraform", "destroy", "-auto-approve")
+func (terraform *terraform) Dispose(m *model.Model) error {
+	prc := kernel.NewProcess("terraform", "destroy", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	prc.WithTail(kernel.StdoutTail)
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform destroy' (%w)", err)
 	}
@@ -41,5 +41,5 @@ type terraform struct {
 }
 
 func terraformRun() string {
-	return filepath.Join(kernel.ActiveInstancePath(), "tf")
+	return filepath.Join(model.ActiveInstancePath(), "tf")
 }

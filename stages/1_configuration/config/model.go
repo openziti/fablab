@@ -16,12 +16,14 @@
 
 package config
 
-import "github.com/netfoundry/fablab/kernel"
+import (
+	"github.com/netfoundry/fablab/model"
+)
 
 type templateModel struct {
 	RegionId  string
 	HostId    string
-	Host      *kernel.Host
-	Component *kernel.Component
-	Model     *kernel.Model
+	Host      *model.Host
+	Component *model.Component
+	Model     *model.Model
 }

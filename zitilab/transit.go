@@ -14,31 +14,31 @@
 	limitations under the License.
 */
 
-package models
+package zitilab
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/model"
 )
 
-var transit = &kernel.Model{
+var transit = &model.Model{
 	Scope: kernelScope,
-	Regions: kernel.Regions{
+	Regions: model.Regions{
 		"initiator": {
-			Scope: kernel.Scope{
-				Tags: kernel.Tags{"initiator", "ctrl", "router", "iperf-client"},
+			Scope: model.Scope{
+				Tags: model.Tags{"initiator", "ctrl", "router", "iperf-client"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
-			Hosts: kernel.Hosts{
+			Hosts: model.Hosts{
 				"001": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"ctrl", "router", "initiator"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"ctrl", "router", "initiator"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
-					Components: kernel.Components{
+					Components: model.Components{
 						"ctrl": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"ctrl"},
+							Scope: model.Scope{
+								Tags: model.Tags{"ctrl"},
 							},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl.yml",
@@ -46,8 +46,8 @@ var transit = &kernel.Model{
 							PublicIdentity: "ctrl",
 						},
 						"001": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"router"},
+							Scope: model.Scope{
+								Tags: model.Tags{"router"},
 							},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
@@ -57,29 +57,29 @@ var transit = &kernel.Model{
 					},
 				},
 				"iperf-client": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"iperf-client"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"iperf-client"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
 			},
 		},
 		"transitA": {
-			Scope: kernel.Scope{
-				Tags: kernel.Tags{"router"},
+			Scope: model.Scope{
+				Tags: model.Tags{"router"},
 			},
 			Id: "us-west-1",
 			Az: "us-west-1b",
-			Hosts: kernel.Hosts{
+			Hosts: model.Hosts{
 				"002": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"router"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"router"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
-					Components: kernel.Components{
+					Components: model.Components{
 						"002": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"router"},
+							Scope: model.Scope{
+								Tags: model.Tags{"router"},
 							},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "transit_router.yml",
@@ -91,21 +91,21 @@ var transit = &kernel.Model{
 			},
 		},
 		"transitB": {
-			Scope: kernel.Scope{
-				Tags: kernel.Tags{"router"},
+			Scope: model.Scope{
+				Tags: model.Tags{"router"},
 			},
 			Id: "us-east-2",
 			Az: "us-east-2c",
-			Hosts: kernel.Hosts{
+			Hosts: model.Hosts{
 				"004": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"router"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"router"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
-					Components: kernel.Components{
+					Components: model.Components{
 						"004": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"router"},
+							Scope: model.Scope{
+								Tags: model.Tags{"router"},
 							},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "transit_router.yml",
@@ -117,21 +117,21 @@ var transit = &kernel.Model{
 			},
 		},
 		"terminator": {
-			Scope: kernel.Scope{
-				Tags: kernel.Tags{"router", "terminator", "iperf-server"},
+			Scope: model.Scope{
+				Tags: model.Tags{"router", "terminator", "iperf-server"},
 			},
 			Id: "us-west-2",
 			Az: "us-west-2b",
-			Hosts: kernel.Hosts{
+			Hosts: model.Hosts{
 				"003": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"router"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"router"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
-					Components: kernel.Components{
+					Components: model.Components{
 						"003": {
-							Scope: kernel.Scope{
-								Tags: kernel.Tags{"router", "terminator"},
+							Scope: model.Scope{
+								Tags: model.Tags{"router", "terminator"},
 							},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "egress_router.yml",
@@ -141,9 +141,9 @@ var transit = &kernel.Model{
 					},
 				},
 				"iperf-server": {
-					Scope: kernel.Scope{
-						Tags:      kernel.Tags{"iperf-server"},
-						Variables: kernel.Variables{"instance_type": instanceType("t2.micro")},
+					Scope: model.Scope{
+						Tags:      model.Tags{"iperf-server"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
 			},

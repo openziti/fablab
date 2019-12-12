@@ -4,26 +4,26 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
-	"github.com/netfoundry/fablab/zitilab"
+	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/zitilab/bootstrap"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"
 )
 
-func Fabric(args ...string) kernel.Action {
+func Fabric(args ...string) model.Action {
 	return &fabric{
 		args: args,
 	}
 }
 
-func (a *fabric) Execute(m *kernel.Model) error {
+func (a *fabric) Execute(m *model.Model) error {
 	if !m.IsBound() {
 		return errors.New("model not bound")
 	}
 
 	allArgs := append(a.args, "-i", "fablab")
-	cli := exec.Command(zitilab.ZitiFabricCli(), allArgs...)
+	cli := exec.Command(zitilab_bootstrap.ZitiFabricCli(), allArgs...)
 	var cliOut bytes.Buffer
 	cli.Stdout = &cliOut
 	var cliErr bytes.Buffer
