@@ -47,7 +47,14 @@ func (iperf *iperf) Operate(m *model.Model) error {
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7002 -t %d --json", initiator.PublicIp, iperf.seconds)
 		output, err := kernel.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
-			logrus.Infof("iperf3 client completed, output [%s]", output)
+			if summary, err := kernel.SummarizeIperf([]byte(output)); err == nil {
+				if clientHost.Data == nil {
+					clientHost.Data = make(map[string]interface{})
+				}
+				clientHost.Data["iperf_metrics"] = summary
+			} else {
+				logrus.Errorf("error summarizing client iperf data [%w]", err)
+			}
 		} else {
 			logrus.Errorf("iperf3 client failure [%s] (%w)", output, err)
 		}

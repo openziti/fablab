@@ -8,6 +8,7 @@ require (
 	github.com/michaelquigley/pfxlog v0.0.0-20190813191113-2be43bd0dccc
 	github.com/netfoundry/ziti-fabric v0.0.0-20191204194843-932014abd752
 	github.com/netfoundry/ziti-foundation v0.0.0-20191204161457-1913130f80f6
+	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.2.2
