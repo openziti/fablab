@@ -22,7 +22,6 @@ import (
 	"github.com/netfoundry/fablab/kernel/actions/cli"
 	"github.com/netfoundry/fablab/kernel/actions/component"
 	"github.com/netfoundry/fablab/kernel/actions/host"
-	"github.com/netfoundry/fablab/kernel/actions/metrics"
 	"github.com/netfoundry/fablab/kernel/actions/semaphore"
 	"github.com/netfoundry/fablab/kernel/model"
 	semaphore0 "github.com/netfoundry/fablab/kernel/stages/0_infrastructure/semaphore"
@@ -51,7 +50,6 @@ func commonActions() model.ActionBinders {
 		"bootstrap": doBootstrap,
 		"start":     doStart,
 		"stop":      doStop,
-		"metrics":   doMetrics,
 	}
 }
 
@@ -207,10 +205,6 @@ func doStop(_ *model.Model) model.Action {
 		component.Stop("@router", "@router", "@router"),
 		component.Stop("@ctrl", "@ctrl", "@ctrl"),
 	)
-}
-
-func doMetrics(_ *model.Model) model.Action {
-	return metrics.Metrics()
 }
 
 func loopScenario(m *model.Model) string {
