@@ -2,7 +2,7 @@ package pki
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
 

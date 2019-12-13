@@ -3,7 +3,7 @@ package operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/netfoundry/ziti-foundation/identity/dotziti"

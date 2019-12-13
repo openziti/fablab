@@ -18,7 +18,7 @@ package actions
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 func Workflow(actions ...model.Action) *workflow {

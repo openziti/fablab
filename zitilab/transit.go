@@ -17,7 +17,7 @@
 package zitilab
 
 import (
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 var transit = &model.Model{

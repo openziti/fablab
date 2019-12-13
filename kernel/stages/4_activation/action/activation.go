@@ -19,7 +19,7 @@ package action
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/internal"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 func Activation(actions ...string) model.ActivationStage {

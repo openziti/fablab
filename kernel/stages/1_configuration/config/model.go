@@ -17,7 +17,7 @@
 package config
 
 import (
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 type templateModel struct {

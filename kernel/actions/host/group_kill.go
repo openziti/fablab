@@ -19,7 +19,7 @@ package host
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/internal"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 func GroupKill(regionSpec, hostSpec, match string) model.Action {

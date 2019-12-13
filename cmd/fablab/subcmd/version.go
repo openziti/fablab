@@ -19,7 +19,7 @@ package subcmd
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/actions/cli"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/spf13/cobra"
 )
 

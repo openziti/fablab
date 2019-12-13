@@ -19,7 +19,7 @@ package operation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"

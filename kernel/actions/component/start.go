@@ -19,7 +19,7 @@ package component
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/internal"
-	"github.com/netfoundry/fablab/model"
+	"github.com/netfoundry/fablab/kernel/model"
 )
 
 func Start(regionSpec, hostSpec, componentSpec string) model.Action {
