@@ -18,7 +18,7 @@ package component
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 )
 
@@ -36,7 +36,7 @@ func (start *start) Execute(m *model.Model) error {
 		components := h.GetComponents(start.componentSpec)
 		for _, c := range components {
 			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := kernel.LaunchService(sshUsername, h.PublicIp, c.BinaryName, c.ConfigName); err != nil {
+			if err := internal.LaunchService(sshUsername, h.PublicIp, c.BinaryName, c.ConfigName); err != nil {
 				return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

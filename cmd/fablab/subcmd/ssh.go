@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/actions/host"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,7 +60,7 @@ func ssh(_ *cobra.Command, args []string) {
 		}
 
 		sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-		if err := kernel.RemoteShell(sshUsername, hosts[0].PublicIp); err != nil {
+		if err := host.RemoteShell(sshUsername, hosts[0].PublicIp); err != nil {
 			logrus.Fatalf("error executing remote shell (%w)", err)
 		}
 	}

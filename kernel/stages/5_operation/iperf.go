@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -39,15 +39,15 @@ func (iperf *iperf) Operate(m *model.Model) error {
 
 		time.Sleep(10 * time.Second)
 
-		if err := kernel.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
+		if err := internal.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
 		initiator := m.GetHosts("@initiator", "@initiator")[0]
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7002 -t %d --json", initiator.PublicIp, iperf.seconds)
-		output, err := kernel.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
+		output, err := internal.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
-			if summary, err := kernel.SummarizeIperf([]byte(output)); err == nil {
+			if summary, err := internal.SummarizeIperf([]byte(output)); err == nil {
 				if clientHost.Data == nil {
 					clientHost.Data = make(map[string]interface{})
 				}
@@ -66,12 +66,12 @@ func (iperf *iperf) Operate(m *model.Model) error {
 }
 
 func (iperf *iperf) runServer(h *model.Host, sshUser string) {
-	if err := kernel.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
+	if err := internal.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 clients (%w)", err)
 		return
 	}
 
-	output, err := kernel.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off --json")
+	output, err := internal.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off --json")
 	if err == nil {
 		logrus.Infof("iperf3 server completed, output [%s]", output)
 	} else {

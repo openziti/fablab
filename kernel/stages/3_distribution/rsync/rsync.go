@@ -18,7 +18,7 @@ package rsync
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"strings"
@@ -44,7 +44,7 @@ type rsyncStage struct {
 }
 
 func synchronizeHost(h *model.Host, sshUsername string) error {
-	if output, err := kernel.RemoteExec(sshUsername, h.PublicIp, "mkdir -p /home/fedora/fablab"); err == nil {
+	if output, err := internal.RemoteExec(sshUsername, h.PublicIp, "mkdir -p /home/fedora/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -60,8 +60,8 @@ func synchronizeHost(h *model.Host, sshUsername string) error {
 }
 
 func rsync(sourcePath, targetPath string) error {
-	rsync := kernel.NewProcess("rsync", "-avz", "-e", "ssh -o \"StrictHostKeyChecking no\"", "--delete", sourcePath, targetPath)
-	rsync.WithTail(kernel.StdoutTail)
+	rsync := internal.NewProcess("rsync", "-avz", "-e", "ssh -o \"StrictHostKeyChecking no\"", "--delete", sourcePath, targetPath)
+	rsync.WithTail(internal.StdoutTail)
 	if err := rsync.Run(); err != nil {
 		return fmt.Errorf("rsync failed (%w)", err)
 	}

@@ -1,4 +1,4 @@
-package kernel
+package internal
 
 import (
 	"encoding/json"

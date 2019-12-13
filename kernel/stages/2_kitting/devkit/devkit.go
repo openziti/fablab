@@ -18,7 +18,7 @@ package devkit
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -30,10 +30,10 @@ func DevKit(root string, binaries []string) model.KittingStage {
 }
 
 func (devKit *devKit) Kit(m *model.Model) error {
-	if err := kernel.CopyTree(model.ConfigBuild(), filepath.Join(model.KitBuild(), "cfg")); err != nil {
+	if err := internal.CopyTree(model.ConfigBuild(), filepath.Join(model.KitBuild(), "cfg")); err != nil {
 		return fmt.Errorf("error copying configuration tree (%s)", err)
 	}
-	if err := kernel.CopyTree(model.PkiBuild(), filepath.Join(model.KitBuild(), "pki")); err != nil {
+	if err := internal.CopyTree(model.PkiBuild(), filepath.Join(model.KitBuild(), "pki")); err != nil {
 		return fmt.Errorf("error copying pki tree (%s)", err)
 	}
 	if err := os.MkdirAll(filepath.Join(model.KitBuild(), "bin"), os.ModePerm); err != nil {
@@ -42,7 +42,7 @@ func (devKit *devKit) Kit(m *model.Model) error {
 	for _, binary := range devKit.binaries {
 		srcPath := filepath.Join(devKit.root, binary)
 		dstPath := filepath.Join(model.KitBuild(), "bin", binary)
-		if _, err := kernel.CopyFile(srcPath, dstPath); err == nil {
+		if _, err := internal.CopyFile(srcPath, dstPath); err == nil {
 			logrus.Infof("[%s] => [%s]", srcPath, dstPath)
 		} else {
 			return fmt.Errorf("error copying binary [%s] => [%s] (%w)", srcPath, dstPath, err)

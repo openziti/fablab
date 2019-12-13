@@ -18,7 +18,7 @@ package component
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 )
 
@@ -36,7 +36,7 @@ func (stop *stop) Execute(m *model.Model) error {
 		components := h.GetComponents(stop.componentSpec)
 		for _, c := range components {
 			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := kernel.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
+			if err := internal.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
 				return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

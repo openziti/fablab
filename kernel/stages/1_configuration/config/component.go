@@ -18,7 +18,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
@@ -60,7 +60,7 @@ func (componentConfig *componentConfig) generateScriptForComponent(regionId, hos
 
 	src := filepath.Join(model.ScriptSrc(), c.ScriptSrc)
 	dst := filepath.Join(model.ScriptBuild(), c.ScriptName)
-	err := kernel.RenderTemplate(src, dst, m, &templateModel{
+	err := internal.RenderTemplate(src, dst, m, &templateModel{
 		RegionId:  regionId,
 		HostId:    hostId,
 		Host:      h,
@@ -81,7 +81,7 @@ func (componentConfig *componentConfig) generateConfigForComponent(regionId, hos
 
 	src := filepath.Join(model.ConfigSrc(), c.ConfigSrc)
 	dst := filepath.Join(model.ConfigBuild(), c.ConfigName)
-	err := kernel.RenderTemplate(src, dst, m, &templateModel{
+	err := internal.RenderTemplate(src, dst, m, &templateModel{
 		RegionId:  regionId,
 		HostId:    hostId,
 		Host:      h,

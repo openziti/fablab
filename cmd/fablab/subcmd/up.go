@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/actions/cli"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -50,7 +50,7 @@ func up(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		kernel.Figlet("infrastructure")
+		cli.Figlet("infrastructure")
 
 		if err := m.Express(l); err != nil {
 			logrus.Fatalf("error expressing (%w)", err)
@@ -60,31 +60,31 @@ func up(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("error re-bootstrapping (%w)", err)
 		}
 
-		kernel.Figlet("configuration")
+		cli.Figlet("configuration")
 
 		if err := m.Build(l); err != nil {
 			logrus.Fatalf("error building (%w)", err)
 		}
 
-		kernel.Figlet("kitting")
+		cli.Figlet("kitting")
 
 		if err := m.Kit(l); err != nil {
 			logrus.Fatalf("error kitting (%w)", err)
 		}
 
-		kernel.Figlet("distribution")
+		cli.Figlet("distribution")
 
 		if err := m.Sync(l); err != nil {
 			logrus.Fatalf("error distributing (%w)", err)
 		}
 
-		kernel.Figlet("activation")
+		cli.Figlet("activation")
 
 		if err := m.Activate(l); err != nil {
 			logrus.Fatalf("error activating (%w)", err)
 		}
 
-		kernel.Figlet("FABUL0US!1!")
+		cli.Figlet("FABUL0US!1!")
 
 	} else {
 		logrus.Fatalf("no label for run")

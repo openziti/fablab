@@ -2,7 +2,7 @@ package pki
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -39,7 +39,7 @@ func generateLocalIdentities(m *model.Model) error {
 		return fmt.Errorf("error reading template [%s] (%s)", tPath, err)
 	}
 
-	t, err := template.New("config").Funcs(kernel.TemplateFuncMap(m)).Parse(string(tData))
+	t, err := template.New("config").Funcs(internal.TemplateFuncMap(m)).Parse(string(tData))
 	if err != nil {
 		return fmt.Errorf("error parsing template [%s] (%s)", tPath, err)
 	}

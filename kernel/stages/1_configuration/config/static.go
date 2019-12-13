@@ -18,7 +18,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -41,7 +41,7 @@ func (staticConfig *staticConfig) Configure(m *model.Model) error {
 			return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
 		}
 
-		t, err := template.New("config").Funcs(kernel.TemplateFuncMap(m)).Parse(string(tData))
+		t, err := template.New("config").Funcs(internal.TemplateFuncMap(m)).Parse(string(tData))
 		if err != nil {
 			return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
 		}

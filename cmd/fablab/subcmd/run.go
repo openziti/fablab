@@ -23,17 +23,17 @@ import (
 )
 
 func init() {
-	RootCmd.AddCommand(operateCmd)
+	RootCmd.AddCommand(runCmd)
 }
 
-var operateCmd = &cobra.Command{
-	Use:   "operate",
+var runCmd = &cobra.Command{
+	Use:   "run",
 	Short: "operate a model",
 	Args:  cobra.ExactArgs(0),
-	Run:   operate,
+	Run:   run,
 }
 
-func operate(_ *cobra.Command, _ []string) {
+func run(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}

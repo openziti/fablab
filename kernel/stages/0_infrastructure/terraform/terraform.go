@@ -18,7 +18,7 @@ package terraform
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -56,9 +56,9 @@ func (t *terraform) generate(m *model.Model) error {
 }
 
 func (t *terraform) init() error {
-	prc := kernel.NewProcess("terraform", "init")
+	prc := internal.NewProcess("terraform", "init")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(kernel.StdoutTail)
+	prc.WithTail(internal.StdoutTail)
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform init' (%w)", err)
 	}
@@ -66,9 +66,9 @@ func (t *terraform) init() error {
 }
 
 func (t *terraform) apply() error {
-	prc := kernel.NewProcess("terraform", "apply", "-auto-approve")
+	prc := internal.NewProcess("terraform", "apply", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(kernel.StdoutTail)
+	prc.WithTail(internal.StdoutTail)
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform apply' (%w)", err)
 	}
@@ -154,7 +154,7 @@ type terraformVisitor struct {
 }
 
 func terraformOutput(name string) (string, error) {
-	prc := kernel.NewProcess("terraform", "output", name)
+	prc := internal.NewProcess("terraform", "output", name)
 	prc.Cmd.Dir = terraformRun()
 	if err := prc.Run(); err != nil {
 		return "", fmt.Errorf("error executing 'terraform output' (%w)", err)

@@ -18,7 +18,7 @@ package semaphore
 
 import (
 	"errors"
-	"github.com/netfoundry/fablab/kernel"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/model"
 	"github.com/sirupsen/logrus"
 	"strings"
@@ -40,7 +40,7 @@ func (restartStage *restartStage) Express(m *model.Model, l *model.Label) error 
 		for _, h := range r.Hosts {
 			success := false
 			for tries := 0; tries < 5; tries++ {
-				if output, err := kernel.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
+				if output, err := internal.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
 					logrus.Warnf("host not restarted [%s] (%w)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {
