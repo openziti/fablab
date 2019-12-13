@@ -1,5 +1,20 @@
 package model
 
+type ZitiFabricMeshSummary struct {
+	TimestampMs int64                   `json:"timestamp_ms"`
+	RouterIds   []string                `json:"router_ids"`
+	Links       []ZitiFabricLinkSummary `json:"links,omitempty"`
+}
+
+type ZitiFabricLinkSummary struct {
+	LinkId      string  `json:"link_id"`
+	State       string  `json:"state"`
+	SrcRouterId string  `json:"src_router_id"`
+	SrcLatency  float64 `json:"src_latency"`
+	DstRouterId string  `json:"dst_router_id"`
+	DstLatency  float64 `json:"dst_latency"`
+}
+
 type ZitiFabricRouterMetricsSummary struct {
 	SourceId             string                         `json:"source_id"`
 	TimestampMs          int64                          `json:"timestamp_ms"`

@@ -106,6 +106,7 @@ func commonActivation() model.ActivationBinders {
 func commonOperation() model.OperatingBinders {
 	c := make(chan struct{})
 	binders := model.OperatingBinders{
+		func(m *model.Model) model.OperatingStage { return operation.Mesh(c) },
 		func(m *model.Model) model.OperatingStage { return operation.Metrics(c) },
 		func(m *model.Model) model.OperatingStage {
 			minutes, found := m.GetVariable("sample_minutes")
