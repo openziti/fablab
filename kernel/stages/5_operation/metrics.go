@@ -83,13 +83,13 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 			host.Data = make(map[string]interface{})
 		}
 		if _, found := host.Data["fabric_metrics"]; !found {
-			summaries := make([]model.ZitiFabricMetricsSummary, 0)
+			summaries := make([]model.ZitiFabricRouterMetricsSummary, 0)
 			host.Data["fabric_metrics"] = summaries
 		}
 
 		summary, err := internal.SummarizeZitiFabricMetrics(response)
 		if err == nil {
-			summaries := host.Data["fabric_metrics"].([]model.ZitiFabricMetricsSummary)
+			summaries := host.Data["fabric_metrics"].([]model.ZitiFabricRouterMetricsSummary)
 			summaries = append(summaries, summary)
 			host.Data["fabric_metrics"] = summaries
 

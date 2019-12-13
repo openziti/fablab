@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func SummarizeZitiFabricMetrics(metrics *mgmt_pb.StreamMetricsEvent) (model.ZitiFabricMetricsSummary, error) {
-	summary := model.ZitiFabricMetricsSummary{
+func SummarizeZitiFabricMetrics(metrics *mgmt_pb.StreamMetricsEvent) (model.ZitiFabricRouterMetricsSummary, error) {
+	summary := model.ZitiFabricRouterMetricsSummary{
 		SourceId:    metrics.SourceId,
 		TimestampMs: TimeToMilliseconds(time.Unix(metrics.Timestamp.Seconds, int64(metrics.Timestamp.Nanos))),
 	}
