@@ -3,6 +3,7 @@ package operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/netfoundry/fablab/kernel/internal"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
@@ -81,21 +82,19 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		if host.Data == nil {
 			host.Data = make(map[string]interface{})
 		}
-
-		var responses []*mgmt_pb.StreamMetricsEvent
-		if value, found := host.Data["fabric_metrics"]; !found {
-			responses = make([]*mgmt_pb.StreamMetricsEvent, 0)
-		} else {
-			var ok bool
-			responses, ok = value.([]*mgmt_pb.StreamMetricsEvent)
-			if !ok {
-				logrus.Error("invalid host data")
-				return
-			}
+		if _, found := host.Data["fabric_metrics"]; !found {
+			summaries := make([]model.ZitiFabricMetricsSummary, 0)
+			host.Data["fabric_metrics"] = summaries
 		}
-		responses = append(responses, response)
-		host.Data["fabric_metrics"] = responses
-		logrus.Infof("<= [%s]", response.SourceId)
+
+		summary, err := internal.SummarizeZitiFabricMetrics(response)
+		if err == nil {
+			summaries := host.Data["fabric_metrics"].([]model.ZitiFabricMetricsSummary)
+			summaries = append(summaries, summary)
+			host.Data["fabric_metrics"] = summaries
+
+			logrus.Infof("<$= [%s]", response.SourceId)
+		}
 
 	} else {
 		logrus.Errorf("unable to find host (%w)", err)
