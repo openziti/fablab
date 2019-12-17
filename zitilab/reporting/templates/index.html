@@ -9,10 +9,22 @@
                 stroke: steelblue;
                 stroke-width: 2px;
             }
+            .dataset_report {
+            }
         </style>
     </head>
     <body>
         <script src="https://d3js.org/d3.v4.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+        <script id="dataset_template" type="x-tmpl-mustache">
+            <div class="dataset_report">
+                <h1>Dataset [<%=dataset%>]</h1>
+                <div id="dataset_<%=dataset%>">
+                    <h2>iPerf Throughput</h2>
+                    <svg id="throughput_<%=dataset%>"/>
+                </div>
+            </div>
+        </script>
         <script>
             {{ $datasets := .Datasets }}
             var data = {
@@ -23,15 +35,26 @@
 
             var parseTime = d3.timeParse("%Q");
 
+            var template = _.template(document.getElementById('dataset_template').innerHTML);
+
             Object.keys(data).forEach(function(key) {
                 var selected = data[key]["initiator.iperf-client.iperf_metrics"];
                 selected.forEach(function(d) {
                     d.timestamp = parseTime(d.timestamp_ms);
                 });
-                appendGraph(selected);
+
+                var datasetDiv = document.createElement("div");
+                datasetDiv.id = "dataset_" + key;
+                document.getElementsByTagName('body')[0].appendChild(datasetDiv);
+
+                var rendered = template({dataset: key});
+                console.log("rendered", rendered);
+                document.getElementById("dataset_" + key).innerHTML = rendered;
+
+                appendGraph(key, selected);
             });
 
-            function appendGraph(dataset) {
+            function appendGraph(name, dataset) {
                 var margin = {top: 20, right: 20, bottom: 30, left: 100},
                     width = 960 - margin.left - margin.right,
                     height = 500 - margin.top - margin.bottom;
@@ -43,7 +66,7 @@
                     .x(function(d) { return x(d.timestamp); })
                     .y(function(d) { return y(d.bits_per_second); });
 
-                var svg = d3.select("body").append("svg")
+                var svg = d3.select("#throughput_" + name)
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
                     .append("g")
