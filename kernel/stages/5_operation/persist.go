@@ -18,9 +18,7 @@ package operation
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -54,7 +52,7 @@ func (persist *persist) Operate(m *model.Model) error {
 		return err
 	}
 
-	filename := fmt.Sprintf("%s/data-%d.json", model.ActiveInstancePath(), info.NowInMilliseconds())
+	filename := model.AllocateDataset()
 	if err := ioutil.WriteFile(filename, data, os.ModePerm); err != nil {
 		return err
 	}

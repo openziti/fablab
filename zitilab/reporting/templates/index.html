@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+        <script>
+            {{ $datasets := .Datasets }}
+            var data = {
+                {{ range $index, $dataset := $datasets }}
+                "{{ $index }}": {{ $dataset }},
+                {{ end }}
+            };
+
+            (function() {
+                console.log(Object.keys(data));
+            })();
+        </script>
+    </body>
+</html>
