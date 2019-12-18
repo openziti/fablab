@@ -29,7 +29,7 @@ func init() {
 
 var upCmd = &cobra.Command{
 	Use:   "up",
-	Short: "execute all lifecycle stages (express -> build -> kit -> sync -> activate)",
+	Short: "progress through lifecycle runlevels (express -> build -> kit -> sync -> activate)",
 	Args:  cobra.ExactArgs(0),
 	Run:   up,
 }
