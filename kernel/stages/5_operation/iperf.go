@@ -29,8 +29,8 @@ func Iperf(seconds int) model.OperatingStage {
 }
 
 func (iperf *iperf) Operate(m *model.Model) error {
-	serverHosts := m.GetHosts("@iperf-server", "@iperf-server")
-	clientHosts := m.GetHosts("@iperf-client", "@iperf-client")
+	serverHosts := m.GetHosts("@iperf_server", "@iperf_server")
+	clientHosts := m.GetHosts("@iperf_client", "@iperf_client")
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]

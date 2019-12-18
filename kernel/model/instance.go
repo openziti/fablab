@@ -25,18 +25,27 @@ import (
 	"strings"
 )
 
-func NewInstance() (string, error) {
+func NewNamedInstance(name string) error {
 	root := userInstanceRoot()
-	if _, err := os.Stat(root); err != nil {
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(root, os.ModePerm); err != nil {
-				return "", fmt.Errorf("unable to create instance root [%s] (%w)", root, err)
-			}
-		} else {
-			return "", fmt.Errorf("unable to stat instance root [%s] (%w)", root, err)
-		}
+	dir := filepath.Join(root, name)
+
+	if err := createUserInstanceRoot(); err != nil {
+		return fmt.Errorf("unable to create instance root [%s] (%w)", dir, err)
 	}
 
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create instance root [%s] (%w)", dir, err)
+	}
+
+	return nil
+}
+
+func NewInstance() (string, error) {
+	if err := createUserInstanceRoot(); err != nil {
+		return "", fmt.Errorf("unable to create instance root (%w)", err)
+	}
+
+	root := userInstanceRoot()
 	dir, err := ioutil.TempDir(root, "")
 	if err != nil {
 		return "", fmt.Errorf("unable to allocate directory [%s] (%w)", root, err)
@@ -138,6 +147,20 @@ func instancePath(instanceId string) string {
 
 func activeInstance() string {
 	return filepath.Join(configRoot(), "active-instance")
+}
+
+func createUserInstanceRoot() error {
+	root := userInstanceRoot()
+	if _, err := os.Stat(root); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(root, os.ModePerm); err != nil {
+				return fmt.Errorf("unable to create instance root [%s] (%w)", root, err)
+			}
+		} else {
+			return fmt.Errorf("unable to stat instance root [%s] (%w)", root, err)
+		}
+	}
+	return nil
 }
 
 func userInstanceRoot() string {

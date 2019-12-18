@@ -23,6 +23,7 @@ import (
 )
 
 func init() {
+	createCmd.Flags().StringVarP(&createCmdName, "name", "n", "", "name for the new instance")
 	RootCmd.AddCommand(createCmd)
 }
 
@@ -32,11 +33,22 @@ var createCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run:   create,
 }
+var createCmdName string
 
 func create(_ *cobra.Command, args []string) {
-	instanceId, err := model.NewInstance()
-	if err != nil {
-		logrus.Fatalf("unable to allocate instance (%w)", err)
+	var instanceId string
+	if createCmdName != "" {
+		if err := model.NewNamedInstance(createCmdName); err == nil {
+			instanceId = createCmdName
+		} else {
+			logrus.Fatalf("error creating named instance [%s] (%w)", createCmdName, err)
+		}
+	} else {
+		if id, err := model.NewInstance(); err == nil {
+			instanceId = id
+		} else {
+			logrus.Fatalf("error creating instance (%w)", err)
+		}
 	}
 	logrus.Infof("allocated new instance [%s]", instanceId)
 

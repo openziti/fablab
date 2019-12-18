@@ -142,7 +142,7 @@ func doBootstrap(m *model.Model) model.Action {
 		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	iperfServer := m.GetHostByTags("iperf-server", "iperf-server")
+	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
 	if iperfServer != nil {
 		terminatingRouters := m.GetComponentsByTag("terminator")
 		if len(terminatingRouters) < 1 {

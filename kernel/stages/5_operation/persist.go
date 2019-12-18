@@ -32,17 +32,17 @@ func (persist *persist) Operate(m *model.Model) error {
 	all := make(map[string]interface{})
 
 	for k, v := range m.Data {
-		all["_."+k] = v
+		all["_"+k] = v
 	}
 
 	for regionId, region := range m.Regions {
 		for k, v := range region.Data {
-			all[regionId+"."+k] = v
+			all[regionId+"_"+k] = v
 		}
 
 		for hostId, host := range region.Hosts {
 			for k, v := range host.Data {
-				all[regionId+"."+hostId+"."+k] = v
+				all[regionId+"_"+hostId+"_"+k] = v
 			}
 		}
 	}

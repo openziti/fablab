@@ -25,7 +25,7 @@ var transit = &model.Model{
 	Regions: model.Regions{
 		"initiator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"initiator", "ctrl", "router", "iperf-client"},
+				Tags: model.Tags{"initiator", "ctrl", "router", "iperf_client"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
@@ -56,9 +56,9 @@ var transit = &model.Model{
 						},
 					},
 				},
-				"iperf-client": {
+				"iperf_client": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"iperf-client"},
+						Tags:      model.Tags{"iperf_client"},
 						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
@@ -118,7 +118,7 @@ var transit = &model.Model{
 		},
 		"terminator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"router", "terminator", "iperf-server"},
+				Tags: model.Tags{"router", "terminator", "iperf_server"},
 			},
 			Id: "us-west-2",
 			Az: "us-west-2b",
@@ -140,9 +140,9 @@ var transit = &model.Model{
 						},
 					},
 				},
-				"iperf-server": {
+				"iperf_server": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"iperf-server"},
+						Tags:      model.Tags{"iperf_server"},
 						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
