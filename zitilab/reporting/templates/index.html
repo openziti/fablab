@@ -6,22 +6,20 @@
         <style>
             .line {
                 fill: none;
-                stroke: steelblue;
+                stroke: purple;
                 stroke-width: 2px;
-            }
-            .dataset_report {
             }
         </style>
     </head>
     <body>
         <script src="https://d3js.org/d3.v4.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.1.0/mustache.min.js"></script>
         <script id="dataset_template" type="x-tmpl-mustache">
             <div class="dataset_report">
-                <h1>Dataset [<%=dataset%>]</h1>
-                <div id="dataset_<%=dataset%>">
+                <h1>Dataset [{{ "{{dataset}}" }}]</h1>
+                <div id="dataset_{{ "{{dataset}}" }}">
                     <h2>iPerf Throughput</h2>
-                    <svg id="throughput_<%=dataset%>"/>
+                    <svg id="throughput_{{ "{{dataset}}" }}"/>
                 </div>
             </div>
         </script>
@@ -34,8 +32,8 @@
             };
 
             var parseTime = d3.timeParse("%Q");
-
-            var template = _.template(document.getElementById('dataset_template').innerHTML);
+            var datasetTemplate = document.getElementById('dataset_template').innerHTML;
+            Mustache.parse(datasetTemplate);
 
             Object.keys(data).forEach(function(key) {
                 var selected = data[key]["initiator.iperf-client.iperf_metrics"];
@@ -47,8 +45,7 @@
                 datasetDiv.id = "dataset_" + key;
                 document.getElementsByTagName('body')[0].appendChild(datasetDiv);
 
-                var rendered = template({dataset: key});
-                console.log("rendered", rendered);
+                var rendered = Mustache.render(datasetTemplate, {dataset: key});
                 document.getElementById("dataset_" + key).innerHTML = rendered;
 
                 appendGraph(key, selected);
@@ -67,18 +64,18 @@
                     .y(function(d) { return y(d.bits_per_second); });
 
                 var svg = d3.select("#throughput_" + name)
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
                     .append("g")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
                 x.domain(d3.extent(dataset, function(d) { return d.timestamp; }));
                 y.domain([0, d3.max(dataset, function(d) { return d.bits_per_second; })]);
 
                 svg.append("path")
                     .data([dataset])
-                    .attr("class", "line")
-                    .attr("d", valueline);
+                        .attr("class", "line")
+                        .attr("d", valueline);
 
                 svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
                 svg.append("g").call(d3.axisLeft(y));
