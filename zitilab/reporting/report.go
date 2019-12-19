@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package actions
+package reporting
 
 import (
 	"fmt"

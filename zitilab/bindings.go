@@ -35,7 +35,7 @@ import (
 	terraform6 "github.com/netfoundry/fablab/kernel/runlevel/6_disposal/terraform"
 	"github.com/netfoundry/fablab/zitilab/bootstrap"
 	"github.com/netfoundry/fablab/zitilab/console"
-	actions2 "github.com/netfoundry/fablab/zitilab/reporting/actions"
+	"github.com/netfoundry/fablab/zitilab/reporting"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -216,7 +216,7 @@ func doConsole(_ *model.Model) model.Action {
 }
 
 func doReport(_ *model.Model) model.Action {
-	return actions2.Report()
+	return reporting.Report()
 }
 
 func loopScenario(m *model.Model) string {
