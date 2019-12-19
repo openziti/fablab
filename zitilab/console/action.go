@@ -19,6 +19,7 @@ package console
 import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"net/http"
+	"path/filepath"
 )
 
 func Console() model.Action {
@@ -29,7 +30,7 @@ func (consoleAction *console) Execute(m *model.Model) error {
 	server := NewServer()
 	go server.Listen()
 
-	http.Handle("/", http.FileServer(http.Dir("zitilab/console/webroot")))
+	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilab/console/webroot"))))
 	return http.ListenAndServe(":8080", nil)
 }
 
