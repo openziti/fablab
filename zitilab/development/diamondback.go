@@ -14,26 +14,26 @@
 	limitations under the License.
 */
 
-package zitilab
+package zitilab_development
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
-var transit = &model.Model{
+var diamondback = &model.Model{
 	Scope: kernelScope,
 	Regions: model.Regions{
 		"initiator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"initiator", "ctrl", "router", "iperf_client"},
+				Tags: model.Tags{"ctrl", "router", "loop", "initiator"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
 			Hosts: model.Hosts{
-				"001": {
+				"ctrl": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"ctrl", "router", "initiator"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+						Tags:      model.Tags{"ctrl"},
+						Variables: model.Variables{"instance_type": instanceType("m5.large")},
 					},
 					Components: model.Components{
 						"ctrl": {
@@ -45,6 +45,14 @@ var transit = &model.Model{
 							ConfigName:     "ctrl.yml",
 							PublicIdentity: "ctrl",
 						},
+					},
+				},
+				"001": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"router", "initiator"},
+						Variables: model.Variables{"instance_type": instanceType("m5.large")},
+					},
+					Components: model.Components{
 						"001": {
 							Scope: model.Scope{
 								Tags: model.Tags{"router"},
@@ -56,10 +64,28 @@ var transit = &model.Model{
 						},
 					},
 				},
-				"iperf_client": {
+				"loop0": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"iperf_client"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+						Tags:      model.Tags{"loop-dialer"},
+						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
+					},
+				},
+				"loop1": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-dialer"},
+						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
+					},
+				},
+				"loop2": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-dialer"},
+						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
+					},
+				},
+				"loop3": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-dialer"},
+						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
 					},
 				},
 			},
@@ -74,7 +100,7 @@ var transit = &model.Model{
 				"002": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+						Variables: model.Variables{"instance_type": instanceType("m5.large")},
 					},
 					Components: model.Components{
 						"002": {
@@ -100,7 +126,7 @@ var transit = &model.Model{
 				"004": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+						Variables: model.Variables{"instance_type": instanceType("m5.large")},
 					},
 					Components: model.Components{
 						"004": {
@@ -118,7 +144,7 @@ var transit = &model.Model{
 		},
 		"terminator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"router", "terminator", "iperf_server"},
+				Tags: model.Tags{"router", "loop", "terminator"},
 			},
 			Id: "us-west-2",
 			Az: "us-west-2b",
@@ -126,7 +152,7 @@ var transit = &model.Model{
 				"003": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+						Variables: model.Variables{"instance_type": instanceType("m5.large")},
 					},
 					Components: model.Components{
 						"003": {
@@ -140,9 +166,27 @@ var transit = &model.Model{
 						},
 					},
 				},
-				"iperf_server": {
+				"loop0": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"iperf_server"},
+						Tags:      model.Tags{"loop-listener"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+					},
+				},
+				"loop1": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-listener"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+					},
+				},
+				"loop2": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-listener"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
+					},
+				},
+				"loop3": {
+					Scope: model.Scope{
+						Tags:      model.Tags{"loop-listener"},
 						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
@@ -156,6 +200,5 @@ var transit = &model.Model{
 	Kitting:        commonKitting(),
 	Distribution:   commonDistribution(),
 	Activation:     commonActivation(),
-	Operation:      commonOperation(),
 	Disposal:       commonDisposal(),
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilab/bootstrap"
+	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"

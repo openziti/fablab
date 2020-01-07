@@ -14,26 +14,26 @@
 	limitations under the License.
 */
 
-package zitilab
+package zitilab_development
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
-var diamondback = &model.Model{
+var transit = &model.Model{
 	Scope: kernelScope,
 	Regions: model.Regions{
 		"initiator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"ctrl", "router", "loop", "initiator"},
+				Tags: model.Tags{"initiator", "ctrl", "router", "iperf_client"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
 			Hosts: model.Hosts{
-				"ctrl": {
+				"001": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"ctrl"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
+						Tags:      model.Tags{"ctrl", "router", "initiator"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 					Components: model.Components{
 						"ctrl": {
@@ -45,14 +45,6 @@ var diamondback = &model.Model{
 							ConfigName:     "ctrl.yml",
 							PublicIdentity: "ctrl",
 						},
-					},
-				},
-				"001": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"router", "initiator"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
-					Components: model.Components{
 						"001": {
 							Scope: model.Scope{
 								Tags: model.Tags{"router"},
@@ -64,28 +56,10 @@ var diamondback = &model.Model{
 						},
 					},
 				},
-				"loop0": {
+				"iperf_client": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
-				},
-				"loop1": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
-				},
-				"loop2": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
-				},
-				"loop3": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
+						Tags:      model.Tags{"iperf_client"},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
 			},
@@ -100,7 +74,7 @@ var diamondback = &model.Model{
 				"002": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 					Components: model.Components{
 						"002": {
@@ -126,7 +100,7 @@ var diamondback = &model.Model{
 				"004": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 					Components: model.Components{
 						"004": {
@@ -144,7 +118,7 @@ var diamondback = &model.Model{
 		},
 		"terminator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"router", "loop", "terminator"},
+				Tags: model.Tags{"router", "terminator", "iperf_server"},
 			},
 			Id: "us-west-2",
 			Az: "us-west-2b",
@@ -152,7 +126,7 @@ var diamondback = &model.Model{
 				"003": {
 					Scope: model.Scope{
 						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
+						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 					Components: model.Components{
 						"003": {
@@ -166,27 +140,9 @@ var diamondback = &model.Model{
 						},
 					},
 				},
-				"loop0": {
+				"iperf_server": {
 					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
-				},
-				"loop1": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
-				},
-				"loop2": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
-				},
-				"loop3": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
+						Tags:      model.Tags{"iperf_server"},
 						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
 					},
 				},
@@ -200,5 +156,6 @@ var diamondback = &model.Model{
 	Kitting:        commonKitting(),
 	Distribution:   commonDistribution(),
 	Activation:     commonActivation(),
+	Operation:      commonOperation(),
 	Disposal:       commonDisposal(),
 }

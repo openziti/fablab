@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilab
+package zitilab_development
 
 import (
 	"fmt"
@@ -33,18 +33,18 @@ import (
 	"github.com/netfoundry/fablab/kernel/runlevel/4_activation/action"
 	operation "github.com/netfoundry/fablab/kernel/runlevel/5_operation"
 	terraform6 "github.com/netfoundry/fablab/kernel/runlevel/6_disposal/terraform"
-	"github.com/netfoundry/fablab/zitilab/bootstrap"
-	"github.com/netfoundry/fablab/zitilab/console"
-	"github.com/netfoundry/fablab/zitilab/reporting"
+	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
+	"github.com/netfoundry/fablab/zitilab/development/console"
+	"github.com/netfoundry/fablab/zitilab/development/reporting"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
 )
 
 func init() {
-	model.RegisterModel("diamondback", diamondback)
-	model.RegisterModel("tiny", tiny)
-	model.RegisterModel("transit", transit)
+	model.RegisterModel("zitilab/development/diamondback", diamondback)
+	model.RegisterModel("zitilab/development/tiny", tiny)
+	model.RegisterModel("zitilab/development/transit", transit)
 }
 
 func commonActions() model.ActionBinders {
@@ -52,7 +52,7 @@ func commonActions() model.ActionBinders {
 		"bootstrap": doBootstrap,
 		"start":     doStart,
 		"stop":      doStop,
-		"console":	 doConsole,
+		"console":   doConsole,
 		"report":    doReport,
 	}
 }
