@@ -37,5 +37,5 @@ func version(_ *cobra.Command, _ []string) {
 	cli.Figlet("fablab")
 	fmt.Println("   the fabulous laboratory")
 	fmt.Println()
-	fmt.Printf("     version: %s\n\n", model.Version)
+	fmt.Printf(" version: %s\n\n", model.Version)
 }
