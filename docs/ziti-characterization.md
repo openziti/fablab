@@ -4,9 +4,9 @@ The `zitilab/characterization` package contains a set of scalable "characterizat
 
 ## Geolocation
 
-Define a model for a Ziti configuration, which includes a _local region_ (`us-east-1`) containing an `iperf3` service (server).
+Define a model for a Ziti configuration, which includes a _local region_ (`us-east-1`) containing an `iperf3` (server) service.
 
-The model will facilitate access to the _local region_ services from the following remote regions:
+The model will facilitate access to the _local region_ services from the following _remote regions:_
 
 * _Short distance region:_ `us-west-1`, N. California
 
@@ -18,7 +18,7 @@ The characterization model will expose this configuration, allowing the implemen
 
 ## Scenario
 
-The following scenarios will be executed from each of the remote regions, accessing the necessary services (`iperf3`) in the _local region_:
+The following scenarios will be executed from each of the _remote regions_, accessing the necessary services (`iperf3`) in the _local region_:
 
 * TCP maximum bandwidth testing, using `iperf3` to determine the maximum sustained throughput available to the client
 
@@ -30,7 +30,7 @@ The following scenarios will be executed from each of the remote regions, access
 
 The characterization implementation will include telemetry probes, which continually monitor the following metrics across the entire model:
 
-* _CPU and memory utilization:_ periodic snapshots of host performance
+* _CPU and memory utilization:_ periodic snapshots of host performance for all hosts
 
 * _Ziti overlay metrics:_ periodic snapshots capturing the configuration (and "shape") of the overlay mesh, along with the observed performance through the overlay
 
