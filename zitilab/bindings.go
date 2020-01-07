@@ -34,7 +34,8 @@ import (
 	operation "github.com/netfoundry/fablab/kernel/runlevel/5_operation"
 	terraform6 "github.com/netfoundry/fablab/kernel/runlevel/6_disposal/terraform"
 	"github.com/netfoundry/fablab/zitilab/bootstrap"
-	actions2 "github.com/netfoundry/fablab/zitilab/reporting/actions"
+	"github.com/netfoundry/fablab/zitilab/console"
+	"github.com/netfoundry/fablab/zitilab/reporting"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -51,6 +52,7 @@ func commonActions() model.ActionBinders {
 		"bootstrap": doBootstrap,
 		"start":     doStart,
 		"stop":      doStop,
+		"console":	 doConsole,
 		"report":    doReport,
 	}
 }
@@ -209,8 +211,12 @@ func doStop(_ *model.Model) model.Action {
 	)
 }
 
+func doConsole(_ *model.Model) model.Action {
+	return console.Console()
+}
+
 func doReport(_ *model.Model) model.Action {
-	return actions2.Report()
+	return reporting.Report()
 }
 
 func loopScenario(m *model.Model) string {
