@@ -112,9 +112,10 @@ func (m *Model) Dispose(l *Label) error {
 }
 
 type Model struct {
-	Regions Regions
 	Scope
+	Regions Regions
 
+	Factories      []Factory
 	Actions        map[string]ActionBinder
 	Infrastructure InfrastructureBinders
 	Configuration  ConfigurationBinders
@@ -124,6 +125,7 @@ type Model struct {
 	Operation      OperatingBinders
 	Disposal       DisposalBinders
 
+	actions              map[string]Action
 	infrastructureStages []InfrastructureStage
 	configurationStages  []ConfigurationStage
 	kittingStages        []KittingStage
@@ -131,7 +133,6 @@ type Model struct {
 	activationStages     []ActivationStage
 	operationStages      []OperatingStage
 	disposalStages       []DisposalStage
-	actions              map[string]Action
 }
 
 type Regions map[string]*Region
