@@ -20,6 +20,7 @@ import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
 	"github.com/netfoundry/fablab/kernel/model"
+	_ "github.com/netfoundry/fablab/zitilab/characterization"
 	_ "github.com/netfoundry/fablab/zitilab/development"
 	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
 	"github.com/netfoundry/ziti-foundation/transport"
