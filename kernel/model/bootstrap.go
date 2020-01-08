@@ -19,6 +19,7 @@ package model
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"reflect"
 )
 
 func AddBootstrapExtension(ext BootstrapExtension) {
@@ -77,6 +78,12 @@ func bootstrapModel() (*Model, error) {
 
 		m.BindLabel(l)
 		m.BindBindings(bindings)
+
+		for _, factory := range m.Factories {
+			if err := factory.Build(m); err != nil {
+				return nil, fmt.Errorf("error executing factory [%s] (%w)", reflect.TypeOf(factory), err)
+			}
+		}
 
 		m.infrastructureStages = nil
 		for _, binder := range m.Infrastructure {
