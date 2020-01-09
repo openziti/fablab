@@ -30,6 +30,9 @@ func (f *bindingsFactory) Build(m *model.Model) error {
 	if err := f.buildInfrastructure(m); err != nil {
 		return fmt.Errorf("error building infrastructure bindings (%w)", err)
 	}
+	if err := f.buildDisposal(m); err != nil {
+		return fmt.Errorf("error building disposal bindings (%w)", err)
+	}
 	return nil
 }
 
@@ -37,6 +40,11 @@ func (f *bindingsFactory) buildInfrastructure(m *model.Model) error {
 	m.Infrastructure = model.InfrastructureBinders{
 		func(m *model.Model) model.InfrastructureStage { return linked_0.Linked() },
 	}
+	return nil
+}
+
+func (f *bindingsFactory) buildDisposal(m *model.Model) error {
+	m.Disposal = nil
 	return nil
 }
 

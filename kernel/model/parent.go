@@ -29,6 +29,78 @@ func (m *Model) Merge(parent *Model) error {
 	if m.Regions, err = m.Regions.Merge(parent.Regions); err != nil {
 		return fmt.Errorf("error merging model regions (%w)", err)
 	}
+	if err = m.mergeActionsAndBinders(parent); err != nil {
+		return fmt.Errorf("error merging actions and binders (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) mergeActionsAndBinders(parent *Model) error {
+	mergedFactories := make([]Factory, 0)
+	if err := copier.Copy(&mergedFactories, parent.Factories); err != nil {
+		return fmt.Errorf("error copying parent factories (%w)", err)
+	}
+	mergedFactories = append(mergedFactories, m.Factories...)
+	m.Factories = mergedFactories
+
+	mergedActions := make(map[string]ActionBinder)
+	if err := copier.Copy(&mergedActions, parent.Actions); err != nil {
+		return fmt.Errorf("error copying parent action binders (%w)", err)
+	}
+	for k, v := range m.Actions {
+		mergedActions[k] = v
+	}
+	m.Actions = mergedActions
+
+	mergedInfrastructure := make(InfrastructureBinders, 0)
+	if err := copier.Copy(&mergedInfrastructure, parent.Infrastructure); err != nil {
+		return fmt.Errorf("error copying parent infrastructure binders (%w)", err)
+	}
+	mergedInfrastructure = append(mergedInfrastructure, m.Infrastructure...)
+	m.Infrastructure = mergedInfrastructure
+
+	mergedConfiguration := make(ConfigurationBinders, 0)
+	if err := copier.Copy(&mergedConfiguration, parent.Configuration); err != nil {
+		return fmt.Errorf("error copying parent configuration binders (%w)", err)
+	}
+	mergedConfiguration = append(mergedConfiguration, m.Configuration...)
+	m.Configuration = mergedConfiguration
+
+	mergedKitting := make(KittingBinders, 0)
+	if err := copier.Copy(&mergedKitting, parent.Kitting); err != nil {
+		return fmt.Errorf("error copying parent kitting binders (%w)", err)
+	}
+	mergedKitting = append(mergedKitting, m.Kitting...)
+	m.Kitting = mergedKitting
+
+	mergedDistribution := make(DistributionBinders, 0)
+	if err := copier.Copy(&mergedDistribution, parent.Distribution); err != nil {
+		return fmt.Errorf("error copying parent distribution binders (%w)", err)
+	}
+	mergedDistribution = append(mergedDistribution, m.Distribution...)
+	m.Distribution = mergedDistribution
+
+	mergedActivation := make(ActivationBinders, 0)
+	if err := copier.Copy(&mergedActions, parent.Activation); err != nil {
+		return fmt.Errorf("error copying parent activation binders (%w)", err)
+	}
+	mergedActivation = append(mergedActivation, m.Activation...)
+	m.Activation = mergedActivation
+
+	mergedOperation := make(OperatingBinders, 0)
+	if err := copier.Copy(&mergedOperation, parent.Operation); err != nil {
+		return fmt.Errorf("error copying parent operation binders (%w)", err)
+	}
+	mergedOperation = append(mergedOperation, m.Operation...)
+	m.Operation = mergedOperation
+
+	mergedDisposal := make(DisposalBinders, 0)
+	if err := copier.Copy(&mergedDisposal, parent.Disposal); err != nil {
+		return fmt.Errorf("error copying parent disposal binders (%w)", err)
+	}
+	mergedDisposal = append(mergedDisposal, m.Disposal...)
+	m.Disposal = mergedDisposal
+
 	return nil
 }
 
