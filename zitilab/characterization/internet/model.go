@@ -14,21 +14,20 @@
 	limitations under the License.
 */
 
-package characterization
+package zitilab_characterization_internet
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
+	zitilab_characterization_ziti "github.com/netfoundry/fablab/zitilab/characterization/ziti"
 )
 
-func newHostsFactory() *hostsFactory {
-	return &hostsFactory{}
+func init() {
+	model.RegisterModel("zitilab/characterization/internet", Model)
 }
 
-func (f *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro"
-	}
-	return nil
+var Model = &model.Model{
+	Parent: zitilab_characterization_ziti.Model,
+	Factories: []model.Factory{
+		newBindingsFactory(),
+	},
 }
-
-type hostsFactory struct{}

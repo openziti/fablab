@@ -14,17 +14,17 @@
 	limitations under the License.
 */
 
-package characterization
+package zitilab_characterization_ziti
 
 import "github.com/netfoundry/fablab/kernel/model"
 
 func init() {
-	model.RegisterModel("zitilab/characterization/ziti", ziti)
+	model.RegisterModel("zitilab/characterization/ziti", Model)
 }
 
-// Static model skeleton for zitilab/characterization/ziti
+// Static model skeleton for zitilab/characterization/Model
 //
-var ziti = &model.Model{
+var Model = &model.Model{
 	Factories: []model.Factory{
 		newModelScopeFactory(),
 		newHostsFactory(),

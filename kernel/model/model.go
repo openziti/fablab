@@ -115,6 +115,7 @@ type Model struct {
 	Scope
 	Regions Regions
 
+	Parent         *Model
 	Factories      []Factory
 	Actions        map[string]ActionBinder
 	Infrastructure InfrastructureBinders

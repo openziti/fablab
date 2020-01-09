@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package characterization
+package zitilab_characterization_ziti
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func newBindingsFactory() *bindingsFactory {
+func newBindingsFactory() model.Factory {
 	return &bindingsFactory{}
 }
 

@@ -76,6 +76,12 @@ func bootstrapModel() (*Model, error) {
 			return nil, fmt.Errorf("no such model [%s]", l.Model)
 		}
 
+		if m.Parent != nil {
+			if err := m.Merge(m.Parent); err != nil {
+				return nil, fmt.Errorf("error merging parent (%w)", err)
+			}
+		}
+
 		m.BindLabel(l)
 		for _, factory := range m.Factories {
 			if err := factory.Build(m); err != nil {

@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/golang/protobuf v1.3.2
+	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.0.0-20190813191113-2be43bd0dccc
 	github.com/netfoundry/ziti-fabric v0.0.0-20191204194843-932014abd752

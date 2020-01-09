@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package characterization
+package zitilab_characterization_ziti
 
 import "github.com/netfoundry/fablab/kernel/model"
 
