@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package semaphore
+package semaphore_0
 
 import (
 	"errors"

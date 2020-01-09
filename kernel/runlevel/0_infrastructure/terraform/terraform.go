@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package terraform
+package terraform_0
 
 import (
 	"fmt"
@@ -83,7 +83,7 @@ func (t *terraform) bind(m *model.Model, l *model.Label) error {
 				l.Bindings[publicIpOutput] = output
 				logrus.Infof("set public ip [%s] for [%s/%s]", output, regionId, hostId)
 			} else {
-				logrus.Fatalf("unable to get output [%s] (%s)", publicIpOutput, err)
+				return fmt.Errorf("unable to get output [%s] (%s)", publicIpOutput, err)
 			}
 
 			privateIpOutput := fmt.Sprintf("%s_host_%s_private_ip", regionId, hostId)
@@ -91,12 +91,12 @@ func (t *terraform) bind(m *model.Model, l *model.Label) error {
 				l.Bindings[privateIpOutput] = output
 				logrus.Infof("set private ip [%s] for [%s/%s]", output, regionId, hostId)
 			} else {
-				logrus.Fatalf("unable to get output [%s] (%s)", privateIpOutput, err)
+				return fmt.Errorf("unable to get output [%s] (%s)", privateIpOutput, err)
 			}
 		}
 	}
 	if err := l.Save(); err != nil {
-		logrus.Fatalf("unable to save updated instance label [%s] (%w)", model.ActiveInstancePath(), err)
+		return fmt.Errorf("unable to save updated instance label [%s] (%w)", model.ActiveInstancePath(), err)
 	}
 	m.BindLabel(l)
 	return nil
