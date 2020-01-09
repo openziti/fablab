@@ -46,9 +46,7 @@ func (s Scope) Merge(parent Scope) (Scope, error) {
 		merged.Data[k] = v
 	}
 
-	for k, v := range s.Tags {
-		merged.Tags[k] = v
-	}
+	merged.Tags = append(merged.Tags, s.Tags...)
 
 	return merged, nil
 }
@@ -118,7 +116,7 @@ func (h Hosts) Merge(parent Hosts) (Hosts, error) {
 		}
 	}
 
-	return nil, nil
+	return merged, nil
 }
 
 func (h *Host) Merge(parent *Host) (*Host, error) {
