@@ -112,10 +112,11 @@ func (m *Model) Dispose(l *Label) error {
 }
 
 type Model struct {
+	Parent         *Model
+
 	Scope
 	Regions Regions
 
-	Parent         *Model
 	Factories      []Factory
 	Actions        map[string]ActionBinder
 	Infrastructure InfrastructureBinders
