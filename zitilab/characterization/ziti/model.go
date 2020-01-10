@@ -22,7 +22,7 @@ func init() {
 	model.RegisterModel("zitilab/characterization/ziti", Model)
 }
 
-// Static model skeleton for zitilab/characterization/Model
+// Static model skeleton for zitilab/characterization/ziti
 //
 var Model = &model.Model{
 	Factories: []model.Factory{

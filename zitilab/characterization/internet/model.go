@@ -25,8 +25,13 @@ func init() {
 	model.RegisterModel("zitilab/characterization/internet", Model)
 }
 
+// Static model skeleton for zitilab/characterization/internet
+//
 var Model = &model.Model{
+	// Extends zitilab/characterization/ziti
+	//
 	Parent: zitilab_characterization_ziti.Model,
+
 	Factories: []model.Factory{
 		newBindingsFactory(),
 	},
