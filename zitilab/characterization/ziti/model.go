@@ -28,7 +28,12 @@ var Model = &model.Model{
 	Factories: []model.Factory{
 		newModelScopeFactory(),
 		newHostsFactory(),
-		newBindingsFactory(),
+		newInfrastructureFactory(),
+		newConfigurationFactory(),
+		newKittingFactory(),
+		newDistributionFactory(),
+		newActivationFactory(),
+		newOperationFactory(),
 	},
 
 	Regions: model.Regions{

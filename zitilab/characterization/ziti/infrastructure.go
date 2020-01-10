@@ -25,11 +25,11 @@ import (
 	"time"
 )
 
-func newBindingsFactory() model.Factory {
-	return &bindingsFactory{}
+func newInfrastructureFactory() model.Factory {
+	return &infrastructureFactory{}
 }
 
-func (f *bindingsFactory) Build(m *model.Model) error {
+func (f *infrastructureFactory) Build(m *model.Model) error {
 	if err := f.buildInfrastructure(m); err != nil {
 		return fmt.Errorf("error building infrastructure bindings (%w)", err)
 	}
@@ -39,7 +39,7 @@ func (f *bindingsFactory) Build(m *model.Model) error {
 	return nil
 }
 
-func (f *bindingsFactory) buildInfrastructure(m *model.Model) error {
+func (f *infrastructureFactory) buildInfrastructure(m *model.Model) error {
 	m.Infrastructure = model.InfrastructureBinders{
 		func(m *model.Model) model.InfrastructureStage { return terraform0.Express() },
 		func(m *model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
@@ -47,11 +47,11 @@ func (f *bindingsFactory) buildInfrastructure(m *model.Model) error {
 	return nil
 }
 
-func (f *bindingsFactory) buildDisposal(m *model.Model) error {
+func (f *infrastructureFactory) buildDisposal(m *model.Model) error {
 	m.Disposal = model.DisposalBinders{
 		func(m *model.Model) model.DisposalStage { return terraform6.Dispose() },
 	}
 	return nil
 }
 
-type bindingsFactory struct{}
+type infrastructureFactory struct{}
