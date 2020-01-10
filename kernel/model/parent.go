@@ -111,10 +111,16 @@ func (s Scope) Merge(parent Scope) (Scope, error) {
 	}
 
 	for k, v := range s.Variables {
+		if merged.Variables == nil {
+			merged.Variables = make(Variables)
+		}
 		merged.Variables[k] = v
 	}
 
 	for k, v := range s.Data {
+		if merged.Data == nil {
+			merged.Data = make(Data)
+		}
 		merged.Data[k] = v
 	}
 
