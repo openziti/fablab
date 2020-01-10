@@ -49,6 +49,11 @@ func TestParentBase(t *testing.T) {
 	aHost := value.(*Host)
 	assert.Equal(t, 1, len(aHost.Tags))
 	assert.Equal(t, "0", aHost.Tags[0])
+
+	assert.Equal(t, 1, len(m.Factories))
+	assert.Nil(t, m.Data["factory"])
+	m.Factories[0].Build(m)
+	assert.Equal(t, "base", m.Data["factory"])
 }
 
 func TestParentMerge(t *testing.T) {
@@ -68,6 +73,9 @@ func TestParentMerge(t *testing.T) {
 					},
 				},
 			},
+		},
+		Factories: []Factory{
+			&factory{name: "merge"},
 		},
 	}
 	assert.Nil(t, m.Merge(m.Parent))
@@ -98,6 +106,13 @@ func TestParentMerge(t *testing.T) {
 	assert.Equal(t, 2, len(aHost.Tags))
 	assert.Equal(t, "0", aHost.Tags[0])
 	assert.Equal(t, "1", aHost.Tags[1])
+
+	assert.Equal(t, 2, len(m.Factories))
+	assert.Nil(t, m.Data["factory"])
+	m.Factories[0].Build(m)
+	assert.Equal(t, "base", m.Data["factory"])
+	m.Factories[1].Build(m)
+	assert.Equal(t, "merge", m.Data["factory"])
 }
 
 func parentTestModel() *Model {
@@ -118,5 +133,20 @@ func parentTestModel() *Model {
 				},
 			},
 		},
+		Factories: []Factory{
+			&factory{name: "base"},
+		},
 	}
+}
+
+type factory struct{
+	name string
+}
+
+func (f *factory) Build(m *Model) error {
+	if m.Data == nil {
+		m.Data = make(Data)
+	}
+	m.Data["factory"] = f.name
+	return nil
 }
