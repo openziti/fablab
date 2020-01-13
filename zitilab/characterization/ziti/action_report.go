@@ -16,21 +16,18 @@
 
 package zitilab_characterization_ziti
 
-import "github.com/netfoundry/fablab/kernel/model"
+import (
+	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/fablab/zitilab/development/reporting"
+)
 
-func newActionsFactory() model.Factory {
-	return &actionsFactory{}
+func newReportAction() model.ActionBinder {
+	action := &reportAction{}
+	return action.bind
 }
 
-func (f *actionsFactory) Build(m *model.Model) error {
-	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"console":   newConsoleAction(),
-		"report":    newReportAction(),
-	}
-	return nil
+func (a *reportAction) bind(m *model.Model) model.Action {
+	return reporting.Report()
 }
 
-type actionsFactory struct{}
+type reportAction struct{}

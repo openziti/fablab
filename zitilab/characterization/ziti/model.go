@@ -55,7 +55,7 @@ var Model = &model.Model{
 						},
 					},
 				},
-				"terminator": {
+				"local": {
 					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
 					Components: model.Components{
 						"local": {
@@ -77,7 +77,7 @@ var Model = &model.Model{
 			Id: "us-west-1",
 			Az: "us-west-1c",
 			Hosts: model.Hosts{
-				"initiator": {
+				"short": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"short": {
@@ -99,7 +99,7 @@ var Model = &model.Model{
 			Id: "ap-south-1",
 			Az: "ap-south-1a",
 			Hosts: model.Hosts{
-				"initiator": {
+				"medium": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"medium": {
@@ -121,7 +121,7 @@ var Model = &model.Model{
 			Id: "ap-southeast-2",
 			Az: "ap-southeast-2c",
 			Hosts: model.Hosts{
-				"initiator": {
+				"long": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"long": {
