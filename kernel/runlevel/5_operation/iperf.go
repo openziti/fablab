@@ -24,17 +24,25 @@ import (
 	"time"
 )
 
-func Iperf(seconds int) model.OperatingStage {
-	return &iperf{seconds: seconds}
+func Iperf(endpoint, serverRegion, serverHost, clientRegion, clientHost string, seconds int) model.OperatingStage {
+	return &iperf{
+		endpoint:     endpoint,
+		serverRegion: serverRegion,
+		serverHost:   serverHost,
+		clientRegion: clientRegion,
+		clientHost:   clientHost,
+		seconds:      seconds,
+	}
 }
 
 func (iperf *iperf) Operate(m *model.Model) error {
-	serverHosts := m.GetHosts("@iperf_server", "@iperf_server")
-	clientHosts := m.GetHosts("@iperf_client", "@iperf_client")
+	serverHosts := m.GetHosts(iperf.serverRegion, iperf.serverHost)
+	clientHosts := m.GetHosts(iperf.clientRegion, iperf.clientHost)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
 		sshUser := m.MustVariable("credentials", "ssh", "username").(string)
+
 		go iperf.runServer(serverHost, sshUser)
 
 		time.Sleep(10 * time.Second)
@@ -43,8 +51,7 @@ func (iperf *iperf) Operate(m *model.Model) error {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
-		initiator := m.GetHosts("@initiator", "@initiator")[0]
-		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7002 -t %d --json", initiator.PublicIp, iperf.seconds)
+		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", iperf.endpoint, iperf.seconds)
 		output, err := internal.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
 			if summary, err := internal.SummarizeIperf([]byte(output)); err == nil {
@@ -80,5 +87,10 @@ func (iperf *iperf) runServer(h *model.Host, sshUser string) {
 }
 
 type iperf struct {
-	seconds int
+	endpoint     string
+	serverRegion string
+	serverHost   string
+	clientRegion string
+	clientHost   string
+	seconds      int
 }

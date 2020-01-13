@@ -39,7 +39,7 @@ var Model = &model.Model{
 
 	Regions: model.Regions{
 		"local": {
-			Scope: model.Scope{Tags: model.Tags{"ctrl", "router"}},
+			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "iperf_server"}},
 			Id: "us-east-1",
 			Az: "us-east-1a",
 			Hosts: model.Hosts{

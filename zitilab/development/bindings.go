@@ -116,7 +116,20 @@ func commonOperation() model.OperatingBinders {
 				minutes = 1
 			}
 			sampleDuration := time.Duration(minutes.(int)) * time.Minute
-			return operation.Iperf(int(sampleDuration.Seconds()))
+
+			values := m.GetHosts("@initiator", "@initiator")
+			if len(values) == 1 {
+				initiator := values[0].PublicIp
+				return operation.Iperf(
+					initiator,
+					"@iperf_server", "@iperf_server",
+					"@iperf_client", "@iperf_client",
+					int(sampleDuration.Seconds()),
+				)
+			}
+
+			logrus.Fatalf("need single @initiator:@initiator host, found [%d]", len(values))
+			return nil
 		},
 		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
 		func(m *model.Model) model.OperatingStage { return operation.Persist() },
