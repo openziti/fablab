@@ -19,7 +19,6 @@ package zitilab_characterization_ziti
 import (
 	"github.com/netfoundry/fablab/kernel/actions"
 	"github.com/netfoundry/fablab/kernel/actions/component"
-	"github.com/netfoundry/fablab/kernel/actions/host"
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
@@ -30,8 +29,6 @@ func newStopAction() model.ActionBinder {
 
 func (a *stopAction) bind(m *model.Model) model.Action {
 	return actions.Workflow(
-		host.GroupKill("@loop", "@loop-dialer", "ziti-fabric-test"),
-		host.GroupKill("@loop", "@loop-listener", "ziti-fabric-test"),
 		component.Stop("@router", "@router", "@router"),
 		component.Stop("@ctrl", "@ctrl", "@ctrl"),
 	)
