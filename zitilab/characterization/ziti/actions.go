@@ -29,6 +29,7 @@ func (f *actionsFactory) Build(m *model.Model) error {
 		"stop":      newStopAction(),
 		"console": 	 newConsoleAction(),
 	}
+	return nil
 }
 
 type actionsFactory struct{}
