@@ -59,7 +59,7 @@ var Model = &model.Model{
 					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
 					Components: model.Components{
 						"local": {
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
+							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "egress_router.yml",
 							ConfigName:     "local.yml",
