@@ -45,7 +45,7 @@ func (report *report) Execute(m *model.Model) error {
 			logrus.Infof("dataset = [%s] (%s)", dataset, info.ByteCount(int64(len(data))))
 		}
 
-		tPath := filepath.Join(model.FablabRoot(), "zitilab/reporting/templates/index.html")
+		tPath := filepath.Join(model.FablabRoot(), "zitilab/development/reporting/templates/index.html")
 		if err := report.renderTemplate(tPath, "index.html", tData); err != nil {
 			return fmt.Errorf("unable to render template (%w)", err)
 		}
