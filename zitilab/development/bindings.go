@@ -33,7 +33,7 @@ import (
 	"github.com/netfoundry/fablab/kernel/runlevel/4_activation/action"
 	operation "github.com/netfoundry/fablab/kernel/runlevel/5_operation"
 	terraform6 "github.com/netfoundry/fablab/kernel/runlevel/6_disposal/terraform"
-	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
+	zitilab_bootstrap "github.com/netfoundry/fablab/zitilab/development/bootstrap"
 	"github.com/netfoundry/fablab/zitilab/development/console"
 	"github.com/netfoundry/fablab/zitilab/development/reporting"
 	"github.com/sirupsen/logrus"
@@ -121,6 +121,7 @@ func commonOperation() model.OperatingBinders {
 			if len(values) == 1 {
 				initiator := values[0].PublicIp
 				return operation.Iperf(
+					"ziti",
 					initiator,
 					"@iperf_server", "@iperf_server",
 					"@iperf_client", "@iperf_client",

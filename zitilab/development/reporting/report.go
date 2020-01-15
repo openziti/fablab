@@ -21,10 +21,10 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/sirupsen/logrus"
-	"text/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"text/template"
 )
 
 func Report() model.Action {

@@ -116,7 +116,7 @@ func TestParentMerge(t *testing.T) {
 }
 
 func parentTestModel() *Model {
-	return &Model {
+	return &Model{
 		Scope: Scope{
 			Variables: Variables{
 				"a": &Variable{Default: "oh, wow!"},
@@ -139,7 +139,7 @@ func parentTestModel() *Model {
 	}
 }
 
-type factory struct{
+type factory struct {
 	name string
 }
 

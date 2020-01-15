@@ -168,7 +168,6 @@ func (r *Region) Merge(parent *Region) (*Region, error) {
 		merged.Az = r.Az
 	}
 
-
 	if merged.Hosts, err = r.Hosts.Merge(parent.Hosts); err != nil {
 		return nil, fmt.Errorf("error merging hosts (%w)", err)
 	}

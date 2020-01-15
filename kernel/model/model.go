@@ -112,7 +112,7 @@ func (m *Model) Dispose(l *Label) error {
 }
 
 type Model struct {
-	Parent         *Model
+	Parent *Model
 
 	Scope
 	Regions Regions

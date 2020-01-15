@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -24,19 +24,20 @@ import (
 	"time"
 )
 
-func Iperf(scenarioName, endpoint, serverRegion, serverHost, clientRegion, clientHost string, seconds int) model.OperatingStage {
-	return &iperf{
+func IperfUdp(scenarioName, endpoint, serverRegion, serverHost, clientRegion, clientHost, bandwidth string, seconds int) model.OperatingStage {
+	return &iperfUdp{
 		scenarioName: scenarioName,
 		endpoint:     endpoint,
 		serverRegion: serverRegion,
 		serverHost:   serverHost,
 		clientRegion: clientRegion,
 		clientHost:   clientHost,
+		bandwidth:    bandwidth,
 		seconds:      seconds,
 	}
 }
 
-func (i *iperf) Operate(m *model.Model) error {
+func (i *iperfUdp) Operate(m *model.Model) error {
 	serverHosts := m.GetHosts(i.serverRegion, i.serverHost)
 	clientHosts := m.GetHosts(i.clientRegion, i.clientHost)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
@@ -52,18 +53,19 @@ func (i *iperf) Operate(m *model.Model) error {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
-		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", i.endpoint, i.seconds)
+		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -u -t %d --json", i.endpoint, i.seconds)
 		output, err := internal.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
-			if summary, err := internal.SummarizeIperf([]byte(output)); err == nil {
+			if summary, err := internal.SummarizeIperfUdp([]byte(output)); err == nil {
 				if clientHost.Data == nil {
 					clientHost.Data = make(map[string]interface{})
 				}
-				metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
+				metricsKey := fmt.Sprintf("iperf_udp_%s_metrics", i.scenarioName)
 				clientHost.Data[metricsKey] = summary
 			} else {
 				return fmt.Errorf("error summarizing client i data [%w]", err)
 			}
+			logrus.Infof("output = [%s]", output)
 		} else {
 			return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
 		}
@@ -74,7 +76,7 @@ func (i *iperf) Operate(m *model.Model) error {
 	return nil
 }
 
-func (i *iperf) runServer(h *model.Host, sshUser string) {
+func (i *iperfUdp) runServer(h *model.Host, sshUser string) {
 	if err := internal.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 clients (%w)", err)
 		return
@@ -88,12 +90,13 @@ func (i *iperf) runServer(h *model.Host, sshUser string) {
 	}
 }
 
-type iperf struct {
+type iperfUdp struct {
 	scenarioName string
 	endpoint     string
 	serverRegion string
 	serverHost   string
 	clientRegion string
 	clientHost   string
+	bandwidth    string
 	seconds      int
 }

@@ -13,11 +13,16 @@ ctrl:
   endpoint:             tls:{{ publicIp "ctrl" "ctrl" }}:6262
 
 listeners:
-  - binding:            transport
-    address:            tls:0.0.0.0:7002
   - binding:            proxy
     address:            tcp:0.0.0.0:7001
     service:            iperf
+
+  - binding:            proxy_udp
+    address:            udp:0.0.0.0:7001
+    service:            iperf_udp
+
+  - binding:            transport
+    address:            tls:0.0.0.0:7002
 
 dialers:
   - binding:            transport

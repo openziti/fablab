@@ -40,8 +40,8 @@ var Model = &model.Model{
 	Regions: model.Regions{
 		"local": {
 			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "iperf_server"}},
-			Id: "us-east-1",
-			Az: "us-east-1a",
+			Id:    "us-east-1",
+			Az:    "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
@@ -74,8 +74,8 @@ var Model = &model.Model{
 		},
 		"short": {
 			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id: "us-west-1",
-			Az: "us-west-1c",
+			Id:    "us-west-1",
+			Az:    "us-west-1c",
 			Hosts: model.Hosts{
 				"short": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -96,8 +96,8 @@ var Model = &model.Model{
 		},
 		"medium": {
 			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id: "ap-south-1",
-			Az: "ap-south-1a",
+			Id:    "ap-south-1",
+			Az:    "ap-south-1a",
 			Hosts: model.Hosts{
 				"medium": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -118,8 +118,8 @@ var Model = &model.Model{
 		},
 		"long": {
 			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id: "ap-southeast-2",
-			Az: "ap-southeast-2c",
+			Id:    "ap-southeast-2",
+			Az:    "ap-southeast-2c",
 			Hosts: model.Hosts{
 				"long": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
