@@ -35,7 +35,12 @@ var versionCmd = &cobra.Command{
 
 func version(_ *cobra.Command, _ []string) {
 	cli.Figlet("fablab")
-	fmt.Println("   the fabulous laboratory")
+	fmt.Println(center("the fabulous laboratory", 30))
 	fmt.Println()
-	fmt.Printf(" version: %s\n\n", model.Version)
+	fmt.Println(center(model.Version, 30))
+	fmt.Println()
+}
+
+func center(s string, w int) string {
+	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
 }
