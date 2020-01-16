@@ -14,3 +14,7 @@ ctrl:
 
 dialers:
   - binding:            transport
+
+link:
+  listener:             tls:0.0.0.0:6000
+  advertise:            tls:{{ .Host.PublicIp }}:6000

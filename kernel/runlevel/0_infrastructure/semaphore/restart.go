@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package semaphore
+package semaphore_0
 
 import (
 	"errors"

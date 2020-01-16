@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
 	"github.com/netfoundry/fablab/kernel/model"
-	_ "github.com/netfoundry/fablab/zitilab"
-	"github.com/netfoundry/fablab/zitilab/bootstrap"
+	_ "github.com/netfoundry/fablab/zitilab/characterization/internet"
+	_ "github.com/netfoundry/fablab/zitilab/characterization/ziti"
+	_ "github.com/netfoundry/fablab/zitilab/development"
+	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
 	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/netfoundry/ziti-foundation/transport/quic"
 	"github.com/netfoundry/ziti-foundation/transport/tcp"

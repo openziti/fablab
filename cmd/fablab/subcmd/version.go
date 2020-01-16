@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -37,5 +37,5 @@ func version(_ *cobra.Command, _ []string) {
 	cli.Figlet("fablab")
 	fmt.Println("   the fabulous laboratory")
 	fmt.Println()
-	fmt.Printf("     version: %s\n\n", model.Version)
+	fmt.Printf(" version: %s\n\n", model.Version)
 }

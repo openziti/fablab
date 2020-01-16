@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import (
 )
 
 func init() {
-	createCmd.Flags().StringVarP(&createCmdName, "name", "n", "", "name for the new instance")
+	createCmd.Flags().StringVarP(&createName, "name", "n", "", "name for the new instance")
+	createCmd.Flags().StringToStringVarP(&createBindings, "label", "l", nil, "label bindings to include in the model")
 	RootCmd.AddCommand(createCmd)
 }
 
@@ -33,15 +34,16 @@ var createCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run:   create,
 }
-var createCmdName string
+var createName string
+var createBindings map[string]string
 
 func create(_ *cobra.Command, args []string) {
 	var instanceId string
-	if createCmdName != "" {
-		if err := model.NewNamedInstance(createCmdName); err == nil {
-			instanceId = createCmdName
+	if createName != "" {
+		if err := model.NewNamedInstance(createName); err == nil {
+			instanceId = createName
 		} else {
-			logrus.Fatalf("error creating named instance [%s] (%w)", createCmdName, err)
+			logrus.Fatalf("error creating named instance [%s] (%w)", createName, err)
 		}
 	} else {
 		if id, err := model.NewInstance(); err == nil {
@@ -55,6 +57,17 @@ func create(_ *cobra.Command, args []string) {
 	modelName := args[0]
 	if err := model.CreateLabel(instanceId, modelName); err != nil {
 		logrus.Fatalf("unable to create instance label [%s] (%w)", instanceId, err)
+	}
+	if createBindings != nil {
+		logrus.Infof("setting label bindings = [%v]", createBindings)
+		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
+			l.Bindings = createBindings
+			if err := l.Save(); err != nil {
+				logrus.Fatalf("error saving label bindings (%w)", err)
+			}
+		} else {
+			logrus.Fatalf("error loading label (%w)", err)
+		}
 	}
 
 	_, found := model.GetModel(modelName)

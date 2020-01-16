@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -16,4 +16,4 @@
 
 package model
 
-const Version = "0.3.1 (h3x)"
+const Version = "0.3.2 (w1nt3r wy7ch)"

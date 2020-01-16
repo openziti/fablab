@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 Netfoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package model
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"reflect"
 )
 
 func AddBootstrapExtension(ext BootstrapExtension) {
@@ -75,7 +76,18 @@ func bootstrapModel() (*Model, error) {
 			return nil, fmt.Errorf("no such model [%s]", l.Model)
 		}
 
+		if m.Parent != nil {
+			if err := m.Merge(m.Parent); err != nil {
+				return nil, fmt.Errorf("error merging parent (%w)", err)
+			}
+		}
+
 		m.BindLabel(l)
+		for _, factory := range m.Factories {
+			if err := factory.Build(m); err != nil {
+				return nil, fmt.Errorf("error executing factory [%s] (%w)", reflect.TypeOf(factory), err)
+			}
+		}
 		m.BindBindings(bindings)
 
 		m.infrastructureStages = nil
