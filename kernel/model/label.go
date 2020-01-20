@@ -121,7 +121,7 @@ func (label *Label) SaveAtPath(path string) error {
 }
 
 func CreateLabel(instanceId, modelName string) error {
-	if err := assertNoLabel(instancePath(instanceId)); err != nil {
+	if err := assertNoLabel(instanceId); err != nil {
 		return fmt.Errorf("error with instance path [%s] (%s)", instanceId, err)
 	}
 	if _, found := modelRegistry[modelName]; !found {

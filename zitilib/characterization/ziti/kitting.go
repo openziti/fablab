@@ -19,8 +19,7 @@ package zitilib_characterization_ziti
 import (
 	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/development/bootstrap"
-	"path/filepath"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib/development/bootstrap"
 )
 
 func newKittingFactory() model.Factory {
@@ -36,7 +35,7 @@ func (f *kittingFactory) Build(m *model.Model) error {
 				"ziti-fabric-test",
 				"ziti-router",
 			}
-			return devkit.DevKit(filepath.Join(zitilib_bootstrap.ZitiRoot(), "bin"), zitiBinaries)
+			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries)
 		},
 	}
 	return nil

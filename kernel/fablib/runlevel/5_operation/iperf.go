@@ -42,18 +42,20 @@ func (i *iperf) Operate(m *model.Model) error {
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
-		sshUser := m.MustVariable("credentials", "ssh", "username").(string)
 
-		go i.runServer(serverHost, sshUser)
+		sshClientFactory := fablib.NewSshConfigFactoryImpl(m, clientHost.PublicIp)
+		sshServerFactory := fablib.NewSshConfigFactoryImpl(m, serverHost.PublicIp)
+
+		go i.runServer(sshServerFactory)
 
 		time.Sleep(10 * time.Second)
 
-		if err := fablib.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
+		if err := fablib.RemoteKill(sshClientFactory, "iperf3"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", i.endpoint, i.seconds)
-		output, err := fablib.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
+		output, err := fablib.RemoteExec(sshClientFactory, iperfCmd)
 		if err == nil {
 			logrus.Infof("output = [%s]", output)
 			if summary, err := fablib.SummarizeIperf([]byte(output)); err == nil {
@@ -75,13 +77,13 @@ func (i *iperf) Operate(m *model.Model) error {
 	return nil
 }
 
-func (i *iperf) runServer(h *model.Host, sshUser string) {
-	if err := fablib.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
+func (i *iperf) runServer(factory fablib.SshConfigFactory) {
+	if err := fablib.RemoteKill(factory, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 clients (%w)", err)
 		return
 	}
 
-	output, err := fablib.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off")
+	output, err := fablib.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
 		logrus.Infof("iperf3 server completed, output [%s]", output)
 	} else {
