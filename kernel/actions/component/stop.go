@@ -36,7 +36,11 @@ func (stop *stop) Execute(m *model.Model) error {
 		components := h.GetComponents(stop.componentSpec)
 		for _, c := range components {
 			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := internal.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
+			sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
+
+			sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, h.PublicIp, sshKeyPath)
+
+			if err := internal.KillService(sshConfigFactory, c.BinaryName); err != nil {
 				return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

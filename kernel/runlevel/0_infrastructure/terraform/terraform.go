@@ -138,7 +138,7 @@ func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
 			TerraformLib string
 		}{
 			Model:        t.model,
-			TerraformLib: terraformLib(),
+			TerraformLib: filepath.ToSlash(terraformLib()),
 		})
 		if err != nil {
 			return err

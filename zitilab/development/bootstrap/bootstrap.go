@@ -21,22 +21,62 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"os"
+	"sync"
 )
 
+var bootOnce = sync.Once{}
+
 func (bootstrap *Bootstrap) Bootstrap(m *model.Model) error {
-	zitiRoot = os.Getenv("ZITI_ROOT")
-	if zitiRoot == "" {
-		return fmt.Errorf("please set 'ZITI_ROOT'")
-	}
-	if fi, err := os.Stat(zitiRoot); err == nil {
-		if !fi.IsDir() {
-			return fmt.Errorf("invalid 'ZITI_ROOT' (!directory)")
+	var err error = nil
+	bootOnce.Do(func() {
+		zitiRoot = os.Getenv("ZITI_ROOT")
+		if zitiRoot == "" {
+			err = fmt.Errorf("please set 'ZITI_ROOT'")
+			return
 		}
-		logrus.Debugf("ZITI_ROOT = [%s]", zitiRoot)
-	} else {
-		return fmt.Errorf("non-existent 'ZITI_ROOT'")
-	}
-	return nil
+		if fi, err := os.Stat(zitiRoot); err == nil {
+			if !fi.IsDir() {
+				err = fmt.Errorf("invalid 'ZITI_ROOT' (!directory)")
+				return
+			}
+			logrus.Debugf("ZITI_ROOT = [%s]", zitiRoot)
+		} else {
+			err = fmt.Errorf("non-existent 'ZITI_ROOT'")
+			return
+		}
+
+		zitiDistRoot = os.Getenv("ZITI_DIST_ROOT")
+		if zitiDistRoot == "" {
+			zitiDistRoot = zitiRoot
+		} else {
+			if fi, err := os.Stat(zitiDistRoot); err == nil {
+				if !fi.IsDir() {
+					err = fmt.Errorf("invalid 'ZITI_DIST_ROOT' (!directory)")
+					return
+				}
+				logrus.Debugf("ZITI_DIST_ROOT = [%s]", zitiDistRoot)
+			} else {
+				err = fmt.Errorf("non-existent 'ZITI_DIST_BIN'")
+				return
+			}
+		}
+
+		rsyncCommand = os.Getenv("FABLAB_RSYNC")
+		if rsyncCommand == "" {
+			rsyncCommand = "rsync"
+		}
+
+		logrus.Debugf("FABLAB_RSYNC = [%s]", rsyncCommand)
+
+		sshCommand = os.Getenv("FABLAB_SSH")
+		if sshCommand == "" {
+			sshCommand = "ssh"
+		}
+
+		logrus.Debugf("FABLAB_SSH = [%s]", sshCommand)
+	})
+
+	return err
 }
 
 type Bootstrap struct{}

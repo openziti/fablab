@@ -22,8 +22,19 @@ func ZitiRoot() string {
 	return zitiRoot
 }
 
+func ZitiDistRoot() string {
+	if zitiDistRoot == "" {
+		return ZitiRoot()
+	}
+	return zitiDistRoot
+}
+
 func zitiBinaries() string {
 	return filepath.Join(zitiRoot, "bin")
+}
+
+func ZitiDistBinaries() string {
+	return filepath.Join(ZitiDistRoot(), "bin")
 }
 
 func ZitiCli() string {
@@ -34,4 +45,15 @@ func ZitiFabricCli() string {
 	return filepath.Join(zitiBinaries(), "ziti-fabric")
 }
 
+func RsyncCommand() string {
+	return rsyncCommand
+}
+
+func SshCommand() string {
+	return sshCommand
+}
+
 var zitiRoot string
+var zitiDistRoot string
+var rsyncCommand string
+var sshCommand string

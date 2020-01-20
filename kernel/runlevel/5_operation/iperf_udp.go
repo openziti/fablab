@@ -43,18 +43,24 @@ func (i *iperfUdp) Operate(m *model.Model) error {
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
-		sshUser := m.MustVariable("credentials", "ssh", "username").(string)
 
-		go i.runServer(serverHost, sshUser)
+		sshUser := m.MustVariable("credentials", "ssh", "username").(string)
+		sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
+
+		sshClientFactory := internal.NewSshConfigFactoryImplWithKey(sshUser, clientHost.PublicIp, sshKeyPath)
+		sshServerFactory := internal.NewSshConfigFactoryImplWithKey(sshUser, serverHost.PublicIp, sshKeyPath)
+
+
+		go i.runServer(sshServerFactory)
 
 		time.Sleep(10 * time.Second)
 
-		if err := internal.RemoteKill(sshUser, clientHost.PublicIp, "iperf3"); err != nil {
+		if err := internal.RemoteKill(sshClientFactory, "iperf3"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -u -t %d --json", i.endpoint, i.seconds)
-		output, err := internal.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
+		output, err := internal.RemoteExec(sshClientFactory, iperfCmd)
 		if err == nil {
 			if summary, err := internal.SummarizeIperfUdp([]byte(output)); err == nil {
 				if clientHost.Data == nil {
@@ -76,13 +82,13 @@ func (i *iperfUdp) Operate(m *model.Model) error {
 	return nil
 }
 
-func (i *iperfUdp) runServer(h *model.Host, sshUser string) {
-	if err := internal.RemoteKill(sshUser, h.PublicIp, "iperf3"); err != nil {
+func (i *iperfUdp) runServer(factory internal.SshConfigFactory) {
+	if err := internal.RemoteKill(factory, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 clients (%w)", err)
 		return
 	}
 
-	output, err := internal.RemoteExec(sshUser, h.PublicIp, "iperf3 -s -p 7001 --one-off")
+	output, err := internal.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
 		logrus.Infof("iperf3 server completed, output [%s]", output)
 	} else {

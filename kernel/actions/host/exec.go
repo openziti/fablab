@@ -32,7 +32,10 @@ func Exec(h *model.Host, cmd string) model.Action {
 
 func (exec *exec) Execute(m *model.Model) error {
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-	if o, err := internal.RemoteExec(sshUsername, exec.h.PublicIp, exec.cmd); err != nil {
+	sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
+	sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, exec.h.PublicIp, sshKeyPath)
+
+	if o, err := internal.RemoteExec(sshConfigFactory, exec.cmd); err != nil {
 		logrus.Errorf("output [%s]", o)
 		return fmt.Errorf("error executing process [%s] on [%s] (%s)", exec.cmd, exec.h.PublicIp, err)
 	}

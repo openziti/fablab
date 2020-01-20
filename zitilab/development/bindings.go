@@ -88,7 +88,7 @@ func commonKitting() model.KittingBinders {
 				"ziti-fabric-test",
 				"ziti-router",
 			}
-			return devkit.DevKit(filepath.Join(zitilab_bootstrap.ZitiRoot(), "bin"), zitiBinaries)
+			return devkit.DevKit(filepath.Join(zitilab_bootstrap.ZitiDistRoot(), "bin"), zitiBinaries)
 		},
 	}
 }

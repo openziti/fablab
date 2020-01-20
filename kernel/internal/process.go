@@ -27,7 +27,7 @@ import (
 
 func NewProcess(name string, cmd ...string) *Process {
 	return &Process{
-		Cmd:       exec.Command(name, cmd...),
+		Cmd: exec.Command(name, cmd...),
 		outStream: make(chan []byte),
 		errStream: make(chan []byte),
 	}
@@ -72,11 +72,11 @@ func (prc *Process) Run() error {
 }
 
 type Process struct {
-	Cmd       *exec.Cmd
-	Output    bytes.Buffer
-	outStream chan []byte
-	errStream chan []byte
-	tail      TailFunction
+	Cmd              *exec.Cmd
+	Output           bytes.Buffer
+	outStream        chan []byte
+	errStream        chan []byte
+	tail             TailFunction
 }
 
 func StdoutTail(data []byte) {

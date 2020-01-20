@@ -20,7 +20,6 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/fablab/kernel/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
-	"path/filepath"
 )
 
 func newKittingFactory() model.Factory {
@@ -36,7 +35,7 @@ func (f *kittingFactory) Build(m *model.Model) error {
 				"ziti-fabric-test",
 				"ziti-router",
 			}
-			return devkit.DevKit(filepath.Join(zitilab_bootstrap.ZitiRoot(), "bin"), zitiBinaries)
+			return devkit.DevKit(zitilab_bootstrap.ZitiDistBinaries(), zitiBinaries)
 		},
 	}
 	return nil

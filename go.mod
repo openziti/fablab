@@ -7,6 +7,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.0.0-20190813191113-2be43bd0dccc
+	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
 	github.com/netfoundry/ziti-fabric v0.0.0-20191204194843-932014abd752
 	github.com/netfoundry/ziti-foundation v0.0.0-20191204161457-1913130f80f6
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852

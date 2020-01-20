@@ -34,13 +34,15 @@ func (restartStage *restartStage) Express(m *model.Model, l *model.Label) error 
 	time.Sleep(restartStage.preDelay)
 
 	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+	sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
 
 	logrus.Infof("starting restart checks")
 	for _, r := range m.Regions {
 		for _, h := range r.Hosts {
 			success := false
 			for tries := 0; tries < 5; tries++ {
-				if output, err := internal.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
+				sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, h.PublicIp, sshKeyPath)
+				if output, err := internal.RemoteExec(sshConfigFactory, "uptime"); err != nil {
 					logrus.Warnf("host not restarted [%s] (%w)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {

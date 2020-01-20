@@ -22,19 +22,78 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
-	"net"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-func LaunchService(user, host, name, cfg string) error {
-	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > %s.log 2>&1 &", user, name, user, cfg, name)
-	if value, err := RemoteExec(user, host, serviceCmd); err == nil {
+type SshConfigFactory interface {
+	Address() string
+	Hostname() string
+	PortNum() int
+	User() string
+	Config() *ssh.ClientConfig
+}
+
+type SshConfigFactoryImpl struct {
+	user            string
+	host            string
+	Port            int
+	KeyPath         string
+	resolveAuthOnce sync.Once
+	authMethods     []ssh.AuthMethod
+}
+
+func NewSshConfigFactoryImpl(user, host string) *SshConfigFactoryImpl {
+	return &SshConfigFactoryImpl{
+		user: user,
+		host: host,
+		Port: 22,
+	}
+}
+
+func NewSshConfigFactoryImplWithKey(user, host, keyPath string) *SshConfigFactoryImpl {
+	factory := NewSshConfigFactoryImpl(user, host)
+	factory.KeyPath = keyPath
+
+	return factory
+}
+
+func (factory *SshConfigFactoryImpl) User() string {
+	return factory.user
+}
+func (factory *SshConfigFactoryImpl) Hostname() string {
+	return factory.host
+}
+
+func (factory *SshConfigFactoryImpl) PortNum() int {
+	return factory.Port
+}
+
+func (factory *SshConfigFactoryImpl) Address() string {
+	return factory.host + ":" + strconv.Itoa(factory.Port)
+}
+
+func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
+	factory.resolveAuthOnce.Do(func() {
+		factory.authMethods = sshAutMethods(factory.KeyPath)
+	})
+
+	return &ssh.ClientConfig{
+		User:            factory.user,
+		Auth:            factory.authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+}
+
+func LaunchService(factory SshConfigFactory, name, cfg string) error {
+	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > %s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
+	if value, err := RemoteExec(factory, serviceCmd); err == nil {
 		if len(value) > 0 {
-			logrus.Infof("output [%s]", strings.Trim(string(value), " \t\r\n"))
+			logrus.Infof("output [%s]", strings.Trim(value, " \t\r\n"))
 		}
 	} else {
 		return err
@@ -42,22 +101,16 @@ func LaunchService(user, host, name, cfg string) error {
 	return nil
 }
 
-func KillService(user, host, name string) error {
-	return RemoteKill(user, host, fmt.Sprintf("/home/%s/fablab/bin/%s", user, name))
+func KillService(factory SshConfigFactory, name string) error {
+	return RemoteKill(factory, fmt.Sprintf("/home/%s/fablab/bin/%s", factory.User(), name))
 }
 
-func RemoteShell(user, host string) error {
-	config := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{
-			sshAgent(),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
+func RemoteShell(factory SshConfigFactory) error {
+	config := factory.Config()
 
-	logrus.Infof("shell for [%s]", host)
+	logrus.Infof("shell for [%s]", factory.Address())
 
-	client, err := ssh.Dial("tcp", host+":22", config)
+	client, err := ssh.Dial("tcp", factory.Address(), config)
 	if err != nil {
 		return err
 	}
@@ -97,18 +150,11 @@ func RemoteShell(user, host string) error {
 	return nil
 }
 
-func RemoteConsole(user, host, cmd string) error {
-	config := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{
-			sshAgent(),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
+func RemoteConsole(factory SshConfigFactory, cmd string) error {
+	config := factory.Config()
+	logrus.Infof("console for [%s]: '%s'", factory.Address(), cmd)
 
-	logrus.Infof("console for [%s]: '%s'", host, cmd)
-
-	client, err := ssh.Dial("tcp", host+":22", config)
+	client, err := ssh.Dial("tcp", factory.Address(), config)
 	if err != nil {
 		return err
 	}
@@ -134,18 +180,12 @@ func RemoteConsole(user, host, cmd string) error {
 	return nil
 }
 
-func RemoteExec(user, host, cmd string) (string, error) {
-	config := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{
-			sshAgent(),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
+func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
+	config := sshConfig.Config()
 
-	logrus.Infof("executing [%s]: '%s'", host, cmd)
+	logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmd)
 
-	client, err := ssh.Dial("tcp", host+":22", config)
+	client, err := ssh.Dial("tcp", sshConfig.Address(), config)
 	if err != nil {
 		return "", err
 	}
@@ -166,10 +206,46 @@ func RemoteExec(user, host, cmd string) (string, error) {
 	return b.String(), err
 }
 
-func RemoteKill(user, host, match string) error {
-	output, err := RemoteExec(user, host, "ps x")
+func sshAuthMethodFromFile(keyPath string) (ssh.AuthMethod, error) {
+	content, err := ioutil.ReadFile(keyPath)
 	if err != nil {
-		return fmt.Errorf("unable to get remote process listing [%s] (%s)", host, err)
+		return nil, fmt.Errorf("could not read ssh file [%s]: %w", keyPath, err)
+	}
+
+	if signer, err := ssh.ParsePrivateKey(content); err == nil {
+		return ssh.PublicKeys(signer), nil
+	} else {
+		if err.Error() == "ssh: no key found" {
+			return nil, fmt.Errorf("no private key found in [%s]: %w", keyPath, err)
+		} else if err.(*ssh.PassphraseMissingError) != nil {
+			return nil, fmt.Errorf("file is password protected [%s] %w", keyPath, err)
+		} else {
+			return nil, fmt.Errorf("error parsing private key from [%s]L %w", keyPath, err)
+		}
+	}
+}
+
+func sshAutMethods(keyPath string) []ssh.AuthMethod {
+	var methods []ssh.AuthMethod
+
+	if fileMethod, err := sshAuthMethodFromFile(keyPath); err == nil {
+		methods = append(methods, fileMethod)
+	} else {
+		logrus.Error(err)
+	}
+
+	if agentMethod := sshAuthMethodAgent(); agentMethod != nil {
+		methods = append(methods, sshAuthMethodAgent())
+	}
+
+	methods = append(methods, )
+	return methods
+}
+
+func RemoteKill(factory SshConfigFactory, match string) error {
+	output, err := RemoteExec(factory, "ps x")
+	if err != nil {
+		return fmt.Errorf("unable to get remote process listing [%s] (%s)", factory.Address(), err)
 	}
 
 	var pidList []int
@@ -194,18 +270,11 @@ func RemoteKill(user, host, match string) error {
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
 
-		output, err = RemoteExec(user, host, killCmd)
+		output, err = RemoteExec(factory, killCmd)
 		if err != nil {
-			return fmt.Errorf("unable to kill [%s] (%s)", host, err)
+			return fmt.Errorf("unable to kill [%s] (%s)", factory.Address(), err)
 		}
 	}
 
-	return nil
-}
-
-func sshAgent() ssh.AuthMethod {
-	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-	}
 	return nil
 }
