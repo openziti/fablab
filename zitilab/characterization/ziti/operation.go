@@ -44,6 +44,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need single host for short:short, found [%d]", len(values))
 	}
 
+	/*
 	values = m.GetHosts("medium", "medium")
 	var mediumProxy string
 	if len(values) == 1 {
@@ -59,6 +60,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 	} else {
 		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
 	}
+	*/
 
 	minutes, found := m.GetVariable("sample_minutes")
 	if !found {
@@ -91,35 +93,35 @@ func (f *operationFactory) Build(m *model.Model) error {
 		/*
 		 * medium -> local
 		 */
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("ziti", mediumProxy, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("internet", directEndpoint, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
-		},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.Iperf("ziti", mediumProxy, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.Iperf("internet", directEndpoint, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
+		//},
 		/* */
 
 		/*
 		 * long -> local
 		 */
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("ziti", longProxy, "local", "service", "long", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("internet", directEndpoint, "local", "service", "long", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
-		},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.Iperf("ziti", longProxy, "local", "service", "long", "client", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.Iperf("internet", directEndpoint, "local", "service", "long", "client", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
+		//},
+		//func(m *model.Model) model.OperatingStage {
+		//	return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
+		//},
 		/* */
 
 		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },

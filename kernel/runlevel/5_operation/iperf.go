@@ -55,6 +55,7 @@ func (i *iperf) Operate(m *model.Model) error {
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", i.endpoint, i.seconds)
 		output, err := internal.RemoteExec(sshUser, clientHost.PublicIp, iperfCmd)
 		if err == nil {
+			logrus.Infof("output = [%s]", output)
 			if summary, err := internal.SummarizeIperf([]byte(output)); err == nil {
 				if clientHost.Data == nil {
 					clientHost.Data = make(map[string]interface{})
