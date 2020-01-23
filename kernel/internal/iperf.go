@@ -50,7 +50,7 @@ func SummarizeIperf(data []byte) (*model.IperfSummary, error) {
 		return nil, fmt.Errorf("error querying sum path (%w)", err)
 	}
 
-	endSumPath, err := jsonpath.Compile("$.end.sum")
+	endSumPath, err := jsonpath.Compile("$.end.sum_received")
 	if err != nil {
 		return nil, fmt.Errorf("error compiling json end sum path (%w)", err)
 	}

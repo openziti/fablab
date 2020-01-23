@@ -63,7 +63,7 @@ func (i *iperf) Operate(m *model.Model) error {
 				metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
 				clientHost.Data[metricsKey] = summary
 			} else {
-				return fmt.Errorf("error summarizing client i data [%w]", err)
+				return fmt.Errorf("error summarizing client iperf data [%w]", err)
 			}
 		} else {
 			return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
