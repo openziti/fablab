@@ -35,7 +35,7 @@ import (
 	terraform6 "github.com/netfoundry/fablab/kernel/runlevel/6_disposal/terraform"
 	zitilab_bootstrap "github.com/netfoundry/fablab/zitilab/development/bootstrap"
 	"github.com/netfoundry/fablab/zitilab/development/console"
-	"github.com/netfoundry/fablab/zitilab/development/reporting"
+	"github.com/netfoundry/fablab/zitilab/reporting"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
