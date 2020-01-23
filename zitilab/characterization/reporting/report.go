@@ -17,6 +17,7 @@
 package reporting
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
@@ -24,6 +25,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -40,12 +42,24 @@ func (report *report) Execute(m *model.Model) error {
 			if err != nil {
 				return fmt.Errorf("unable to read dataset [%s] (%w)", dataset, err)
 			}
-			tData.Datasets = append(tData.Datasets, string(data))
+
+			datamap := make(map[string]interface{})
+			if err := json.Unmarshal(data, &datamap); err != nil {
+				return fmt.Errorf("error unmarshalling dataset [%s] (%w)", dataset, err)
+			}
+
+			metricSets := make([]string, 0)
+			for k := range datamap {
+				metricSets = append(metricSets, k)
+			}
+			tData.MetricSets = append(tData.MetricSets, metricSets)
+
+			tData.Datasets = append(tData.Datasets, datamap)
 
 			logrus.Infof("dataset = [%s] (%s)", dataset, info.ByteCount(int64(len(data))))
 		}
 
-		tPath := filepath.Join(model.FablabRoot(), "zitilab/development/reporting/templates/index.html")
+		tPath := filepath.Join(model.FablabRoot(), "zitilab/characterization/reporting/templates/index.html")
 		if err := report.renderTemplate(tPath, "index.html", tData); err != nil {
 			return fmt.Errorf("unable to render template (%w)", err)
 		}
@@ -62,7 +76,7 @@ func (report *report) renderTemplate(src, dst string, tData *templateData) error
 		return fmt.Errorf("error reading template [%s] (%w)", src, err)
 	}
 
-	t, err := template.New("report").Parse(string(tSrc))
+	t, err := template.New("report").Funcs(report.templateFuncs()).Parse(string(tSrc))
 	if err != nil {
 		return fmt.Errorf("error parsing template [%s] (%w)", src, err)
 	}
@@ -82,8 +96,24 @@ func (report *report) renderTemplate(src, dst string, tData *templateData) error
 	return nil
 }
 
+func (report *report) templateFuncs() template.FuncMap {
+	return template.FuncMap{
+		"json": func(i interface{}) string {
+			data, err := json.MarshalIndent(i, "", "  ")
+			if err != nil {
+				logrus.Fatalf("error marshaling json (%w)", err)
+			}
+			return string(data)
+		},
+		"isIperfMetrics": func(metricName string) bool {
+			return strings.Contains(metricName, "_iperf_")
+		},
+	}
+}
+
 type report struct{}
 
 type templateData struct {
-	Datasets []string
+	Datasets   []interface{}
+	MetricSets [][]string
 }
