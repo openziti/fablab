@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Title</title>
-        <link href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         <style>
             .line {
                 fill: none;
@@ -556,105 +556,111 @@
             }
 
             td {
-                width: 200px;
+                width: 40%;
             }
 
-            .method {
-                padding-bottom: 100px;
+            h1 {
+                padding-bottom: 75px;
             }
+
         </style>
     </head>
     <body>
-        <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         <script src="https://d3js.org/d3.v4.js"></script>
         <script src='https://cdn.jsdelivr.net/npm/metrics-graphics@2.15.6/dist/metricsgraphics.min.js'></script>
 
-        <div class="container">
-            {{$regionKeys := .RegionKeys}}
-            {{$regions := .Regions}}
-            {{range $i, $regionKey := $regionKeys}}
+        {{$regionKeys := .RegionKeys}}
+        {{$regions := .Regions}}
+        {{range $i, $regionKey := $regionKeys}}
+            <div class="container">
                 <h1>"{{$regionKey}}" Region</h1>
+            </div>
 
-                {{$region := index $regions $regionKey}}
+            {{$region := index $regions $regionKey}}
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <h2>Ziti</h2>
 
-                <div class="method">
-                    <h2>Ziti</h2>
+                        <div id="{{$regionKey}}_ziti_bps"></div>
+                        <script>
+                            var {{$regionKey}}_ziti_bps = {{json $region.Ziti.IPerf.Timeslices}};
+                            {{$regionKey}}_ziti_bps.forEach(d => {
+                                d.timestamp_ms = new Date(d.timestamp_ms);
+                            });
 
-                    <div id="{{$regionKey}}_ziti_bps"></div>
-                    <script>
-                        var {{$regionKey}}_ziti_bps = {{json $region.Ziti.IPerf.Timeslices}};
-                        {{$regionKey}}_ziti_bps.forEach(d => {
-                            d.timestamp_ms = new Date(d.timestamp_ms);
-                        });
+                            MG.data_graphic({
+                                title: '"{{$regionKey}}" Bits Per Second (Ziti)',
+                                data: {{$regionKey}}_ziti_bps,
+                                width: 400,
+                                height: 240,
+                                target: "#{{$regionKey}}_ziti_bps",
+                                x_accessor: "timestamp_ms",
+                                y_accessor: "bits_per_second",
+                            });
+                        </script>
 
-                        MG.data_graphic({
-                            title: '"{{$regionKey}}" Bits Per Second (Ziti)',
-                            data: {{$regionKey}}_ziti_bps,
-                            width: 640,
-                            height: 320,
-                            target: "#{{$regionKey}}_ziti_bps",
-                            x_accessor: "timestamp_ms",
-                            y_accessor: "bits_per_second",
-                        });
-                    </script>
+                        <table>
+                            <th>Metric</th><th>Value</th>
+                            <tr>
+                                <td>Bits Per Second</td><td>{{dataRate $region.Ziti.IPerf.BitsPerSecond}}/second</td>
+                            </tr>
+                            <tr>
+                                <td>Bytes</td><td>{{dataRate $region.Ziti.IPerf.Bytes}}</td>
+                            </tr>
+                            <tr>
+                                <td>Jitter Milliseconds</td><td>{{$region.Ziti.IPerfUdp.JitterMs}}</td>
+                            </tr>
+                            <tr>
+                                <td>Lost Packets</td><td>{{$region.Ziti.IPerfUdp.LostPackets}}</td>
+                            </tr>
+                        </table>
+                    </div>
 
-                    <table>
-                        <th>Metric</th><th>Value</th>
-                        <tr>
-                            <td>Bits Per Second</td><td>{{dataRate $region.Ziti.IPerf.BitsPerSecond}}/second</td>
-                        </tr>
-                        <tr>
-                            <td>Bytes</td><td>{{dataRate $region.Ziti.IPerf.Bytes}}</td>
-                        </tr>
-                        <tr>
-                            <td>Jitter Milliseconds</td><td>{{$region.Ziti.IPerfUdp.JitterMs}}</td>
-                        </tr>
-                        <tr>
-                            <td>Lost Packets</td><td>{{$region.Ziti.IPerfUdp.LostPackets}}</td>
-                        </tr>
-                    </table>
+                    <div class="col">
+                        <h2>Internet</h2>
+
+                        <div id="{{$regionKey}}_internet_bps"></div>
+                        <script>
+                            var {{$regionKey}}_internet_bps = {{json $region.Internet.IPerf.Timeslices}};
+                            {{$regionKey}}_internet_bps.forEach(d => {
+                                d.timestamp_ms = new Date(d.timestamp_ms);
+                            });
+
+                            MG.data_graphic({
+                                title: '"{{$regionKey}}" Bits Per Second (Internet)',
+                                data: {{$regionKey}}_internet_bps,
+                                width: 400,
+                                height: 240,
+                                target: "#{{$regionKey}}_internet_bps",
+                                x_accessor: "timestamp_ms",
+                                y_accessor: "bits_per_second",
+                            });
+                        </script>
+
+                        <table>
+                            <th>Metric</th><th>Value</th>
+                            <tr>
+                                <td>Bits Per Second</td><td>{{dataRate $region.Internet.IPerf.BitsPerSecond}}/second</td>
+                            </tr>
+                            <tr>
+                                <td>Bytes</td><td>{{dataRate $region.Internet.IPerf.Bytes}}</td>
+                            </tr>
+                            <tr>
+                                <td>Jitter Milliseconds</td><td>{{$region.Internet.IPerfUdp.JitterMs}}</td>
+                            </tr>
+                            <tr>
+                                <td>Lost Packets</td><td>{{$region.Internet.IPerfUdp.LostPackets}}</td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
+            </div>
 
-                <h2>Internet</h2>
-
-                <div class="method">
-                    <div id="{{$regionKey}}_internet_bps"></div>
-                    <script>
-                        var {{$regionKey}}_internet_bps = {{json $region.Internet.IPerf.Timeslices}};
-                        {{$regionKey}}_internet_bps.forEach(d => {
-                            d.timestamp_ms = new Date(d.timestamp_ms);
-                        });
-
-                        MG.data_graphic({
-                            title: '"{{$regionKey}}" Bits Per Second (Internet)',
-                            data: {{$regionKey}}_internet_bps,
-                            width: 640,
-                            height: 320,
-                            target: "#{{$regionKey}}_internet_bps",
-                            x_accessor: "timestamp_ms",
-                            y_accessor: "bits_per_second",
-                        });
-                    </script>
-
-                    <table>
-                        <th>Metric</th><th>Value</th>
-                        <tr>
-                            <td>Bits Per Second</td><td>{{dataRate $region.Internet.IPerf.BitsPerSecond}}/second</td>
-                        </tr>
-                        <tr>
-                            <td>Bytes</td><td>{{dataRate $region.Internet.IPerf.Bytes}}</td>
-                        </tr>
-                        <tr>
-                            <td>Jitter Milliseconds</td><td>{{$region.Internet.IPerfUdp.JitterMs}}</td>
-                        </tr>
-                        <tr>
-                            <td>Lost Packets</td><td>{{$region.Internet.IPerfUdp.LostPackets}}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <hr>
-            {{end}}
-        </div>
+            <hr>
+        {{end}}
     </body>
 </html>
