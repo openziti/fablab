@@ -34,6 +34,12 @@ type ZitiFabricLinkMetricsSummary struct {
 	TxBytesRateM1 float64 `json:"tx_bytes_rate_m1"`
 }
 
+type IperfSummary struct {
+	Timeslices    []*IperfTimeslice `json:"timeslices"`
+	Bytes         float64           `json:"bytes"`
+	BitsPerSecond float64           `json:"bits_per_second"`
+}
+
 type IperfTimeslice struct {
 	TimestampMs   int64   `json:"timestamp_ms"`
 	BitsPerSecond float64 `json:"bits_per_second"`
