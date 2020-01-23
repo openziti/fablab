@@ -554,6 +554,14 @@
                 -ms-user-select: none;
                 user-select: none;
             }
+
+            td {
+                width: 200px;
+            }
+
+            .method {
+                padding-bottom: 100px;
+            }
         </style>
     </head>
     <body>
@@ -561,63 +569,92 @@
         <script src="https://d3js.org/d3.v4.js"></script>
         <script src='https://cdn.jsdelivr.net/npm/metrics-graphics@2.15.6/dist/metricsgraphics.min.js'></script>
 
-        {{ $datasets := .Datasets }}
-        {{ $metricSets := .MetricSets }}
+        <div class="container">
+            {{$regionKeys := .RegionKeys}}
+            {{$regions := .Regions}}
+            {{range $i, $regionKey := $regionKeys}}
+                <h1>"{{$regionKey}}" Region</h1>
 
-        {{ range $j, $metricSet := $metricSets }}
-            {{ range $i, $metricKey := $metricSet }}
-                {{ if isIperfMetrics $metricKey }}
-                    <div id="metric_{{ $i }}"></div>
+                {{$region := index $regions $regionKey}}
+
+                <div class="method">
+                    <h2>Ziti</h2>
+
+                    <div id="{{$regionKey}}_ziti_bps"></div>
                     <script>
-                        {{ $metrics := index $datasets $j $metricKey }}
-                        var source_{{ $i }} = {{ json $metrics }};
-                        var data_{{ $i }} = [];
-
-                        var bits_per_second_{{ $i }} = [];
-                        var packets_{{ $i }} = [];
-
-                        var i_{{$i}} = [];
-                        if(source_{{$i}}.hasOwnProperty("timeslices")) {
-                            i_{{$i}} = source_{{$i}}.timeslices;
-                        } else {
-                            i_{{$i}} = source_{{$i}};
-                        }
-
-                        i_{{$i}}.forEach(d => {
-                            if(d.hasOwnProperty("bits_per_second")) {
-                                bits_per_second_{{$i}}.push({
-                                    timestamp_ms: new Date(d.timestamp_ms),
-                                    bits_per_second: d.bits_per_second
-                                });
-                            }
-                            if(d.hasOwnProperty("packets")) {
-                                packets_{{$i}}.push({
-                                    timestamp_ms: new Date(d.timestamp_ms),
-                                    packets: d.packets
-                                });
-                            }
+                        var {{$regionKey}}_ziti_bps = {{json $region.Ziti.IPerf.Timeslices}};
+                        {{$regionKey}}_ziti_bps.forEach(d => {
+                            d.timestamp_ms = new Date(d.timestamp_ms);
                         });
-                        if(bits_per_second_{{$i}}.length > 0) {
-                            data_{{$i}}.push(bits_per_second_{{$i}});
-                        }
-                        if(packets_{{$i}}.length > 0) {
-                            data_{{$i}}.push(packets_{{$i}});
-                        }
-
-                        console.log("data_{{$i}}", data_{{$i}});
 
                         MG.data_graphic({
-                            title: "{{ $metricKey }}",
-                            data: data_{{$i}},
-                            width: 800,
-                            height: 400,
-                            target: "#metric_{{ $i }}",
+                            title: '"{{$regionKey}}" Bits Per Second (Ziti)',
+                            data: {{$regionKey}}_ziti_bps,
+                            width: 640,
+                            height: 320,
+                            target: "#{{$regionKey}}_ziti_bps",
                             x_accessor: "timestamp_ms",
                             y_accessor: "bits_per_second",
                         });
                     </script>
-                {{ end }}
-            {{ end }}
-        {{ end }}
+
+                    <table>
+                        <th>Metric</th><th>Value</th>
+                        <tr>
+                            <td>Bits Per Second</td><td>{{dataRate $region.Ziti.IPerf.BitsPerSecond}}/second</td>
+                        </tr>
+                        <tr>
+                            <td>Bytes</td><td>{{dataRate $region.Ziti.IPerf.Bytes}}</td>
+                        </tr>
+                        <tr>
+                            <td>Jitter Milliseconds</td><td>{{$region.Ziti.IPerfUdp.JitterMs}}</td>
+                        </tr>
+                        <tr>
+                            <td>Lost Packets</td><td>{{$region.Ziti.IPerfUdp.LostPackets}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h2>Internet</h2>
+
+                <div class="method">
+                    <div id="{{$regionKey}}_internet_bps"></div>
+                    <script>
+                        var {{$regionKey}}_internet_bps = {{json $region.Internet.IPerf.Timeslices}};
+                        {{$regionKey}}_internet_bps.forEach(d => {
+                            d.timestamp_ms = new Date(d.timestamp_ms);
+                        });
+
+                        MG.data_graphic({
+                            title: '"{{$regionKey}}" Bits Per Second (Internet)',
+                            data: {{$regionKey}}_internet_bps,
+                            width: 640,
+                            height: 320,
+                            target: "#{{$regionKey}}_internet_bps",
+                            x_accessor: "timestamp_ms",
+                            y_accessor: "bits_per_second",
+                        });
+                    </script>
+
+                    <table>
+                        <th>Metric</th><th>Value</th>
+                        <tr>
+                            <td>Bits Per Second</td><td>{{dataRate $region.Internet.IPerf.BitsPerSecond}}/second</td>
+                        </tr>
+                        <tr>
+                            <td>Bytes</td><td>{{dataRate $region.Internet.IPerf.Bytes}}</td>
+                        </tr>
+                        <tr>
+                            <td>Jitter Milliseconds</td><td>{{$region.Internet.IPerfUdp.JitterMs}}</td>
+                        </tr>
+                        <tr>
+                            <td>Lost Packets</td><td>{{$region.Internet.IPerfUdp.LostPackets}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <hr>
+            {{end}}
+        </div>
     </body>
 </html>

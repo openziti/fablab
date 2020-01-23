@@ -25,7 +25,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 )
 
@@ -34,9 +33,9 @@ func Report() model.Action {
 }
 
 func (report *report) Execute(m *model.Model) error {
-	tData := &templateData{}
-
 	if datasets, err := model.ListDatasets(); err == nil {
+		tData := &ReportData{Regions: make(map[string]*ReportRegionData)}
+
 		for _, dataset := range datasets {
 			data, err := ioutil.ReadFile(dataset)
 			if err != nil {
@@ -48,18 +47,60 @@ func (report *report) Execute(m *model.Model) error {
 				return fmt.Errorf("error unmarshalling dataset [%s] (%w)", dataset, err)
 			}
 
-			metricSets := make([]string, 0)
-			for k := range datamap {
-				metricSets = append(metricSets, k)
+			tData.RegionKeys = []string{"short", "medium", "long"}
+			for _, regionPrefix := range tData.RegionKeys {
+				regionData := &ReportRegionData{}
+
+				key := fmt.Sprintf("%s_client_iperf_ziti_metrics", regionPrefix)
+				if value, found := datamap[key]; found {
+					summary, err := report.toIperfSummary(value)
+					if err != nil {
+						return fmt.Errorf("error conforming [%s] (%w)", key, err)
+					}
+					regionData.Ziti.IPerf = summary
+				} else {
+					return fmt.Errorf("missing [%s]", key)
+				}
+
+				key = fmt.Sprintf("%s_client_iperf_internet_metrics", regionPrefix)
+				if value, found := datamap[key]; found {
+					summary, err := report.toIperfSummary(value)
+					if err != nil {
+						return fmt.Errorf("error conforming [%s] (%w)", key, err)
+					}
+					regionData.Internet.IPerf = summary
+				} else {
+					return fmt.Errorf("missing [%s]", key)
+				}
+
+				key = fmt.Sprintf("%s_client_iperf_udp_ziti_1m_metrics", regionPrefix)
+				if value, found := datamap[key]; found {
+					summary, err := report.toIperfUdpSummary(value)
+					if err != nil {
+						return fmt.Errorf("error conforming [%s] (%w)", key, err)
+					}
+					regionData.Ziti.IPerfUdp = summary
+				} else {
+					return fmt.Errorf("missing [%s]", key)
+				}
+
+				key = fmt.Sprintf("%s_client_iperf_udp_internet_1m_metrics", regionPrefix)
+				if value, found := datamap[key]; found {
+					summary, err := report.toIperfUdpSummary(value)
+					if err != nil {
+						return fmt.Errorf("error conforming [%s] (%w)", key, err)
+					}
+					regionData.Internet.IPerfUdp = summary
+				} else {
+					return fmt.Errorf("missing [%s]", key)
+				}
+
+				tData.Regions[regionPrefix] = regionData
 			}
-			tData.MetricSets = append(tData.MetricSets, metricSets)
-
-			tData.Datasets = append(tData.Datasets, datamap)
-
-			logrus.Infof("dataset = [%s] (%s)", dataset, info.ByteCount(int64(len(data))))
 		}
 
 		tPath := filepath.Join(model.FablabRoot(), "zitilab/characterization/reporting/templates/index.html")
+
 		if err := report.renderTemplate(tPath, "index.html", tData); err != nil {
 			return fmt.Errorf("unable to render template (%w)", err)
 		}
@@ -70,7 +111,35 @@ func (report *report) Execute(m *model.Model) error {
 	}
 }
 
-func (report *report) renderTemplate(src, dst string, tData *templateData) error {
+func (report *report) toIperfSummary(v interface{}) (*model.IperfSummary, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json (%w)", err)
+	}
+
+	iperfSummary := &model.IperfSummary{}
+	if err := json.Unmarshal(data, iperfSummary); err != nil {
+		return nil, fmt.Errorf("error unmarshaling iperf summary (%w)", err)
+	}
+
+	return iperfSummary, nil
+}
+
+func (report *report) toIperfUdpSummary(v interface{}) (*model.IperfUdpSummary, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json (%w)", err)
+	}
+
+	iperfUdpSummary := &model.IperfUdpSummary{}
+	if err := json.Unmarshal(data, iperfUdpSummary); err != nil {
+		return nil, fmt.Errorf("error unmarshaling iperf udp summary (%w)", err)
+	}
+
+	return iperfUdpSummary, nil
+}
+
+func (report *report) renderTemplate(src, dst string, data *ReportData) error {
 	tSrc, err := ioutil.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("error reading template [%s] (%w)", src, err)
@@ -87,7 +156,7 @@ func (report *report) renderTemplate(src, dst string, tData *templateData) error
 	}
 	defer func() { _ = dstF.Close() }()
 
-	if err := t.Execute(dstF, tData); err != nil {
+	if err := t.Execute(dstF, data); err != nil {
 		return fmt.Errorf("error rendering template [%s] (%w)", src, err)
 	}
 
@@ -105,15 +174,26 @@ func (report *report) templateFuncs() template.FuncMap {
 			}
 			return string(data)
 		},
-		"isIperfMetrics": func(metricName string) bool {
-			return strings.Contains(metricName, "_iperf_")
+		"dataRate": func(value float64) string {
+			return info.ByteCount(int64(value))
 		},
 	}
 }
 
 type report struct{}
 
-type templateData struct {
-	Datasets   []interface{}
-	MetricSets [][]string
+type ReportData struct {
+	RegionKeys []string
+	Regions    map[string]*ReportRegionData
+}
+
+type ReportRegionData struct {
+	Ziti struct {
+		IPerf    *model.IperfSummary
+		IPerfUdp *model.IperfUdpSummary
+	}
+	Internet struct {
+		IPerf    *model.IperfSummary
+		IPerfUdp *model.IperfUdpSummary
+	}
 }
