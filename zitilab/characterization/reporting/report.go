@@ -36,7 +36,7 @@ func (report *report) Execute(m *model.Model) error {
 	if datasets, err := model.ListDatasets(); err == nil {
 		tData := &ReportData{Regions: make(map[string]*ReportRegionData)}
 
-		for _, dataset := range datasets {
+		for i, dataset := range datasets {
 			data, err := ioutil.ReadFile(dataset)
 			if err != nil {
 				return fmt.Errorf("unable to read dataset [%s] (%w)", dataset, err)
@@ -97,13 +97,20 @@ func (report *report) Execute(m *model.Model) error {
 
 				tData.Regions[regionPrefix] = regionData
 			}
+
+			tPath := filepath.Join(model.FablabRoot(), "zitilab/characterization/reporting/templates/index.html")
+
+			reportPath := filepath.Join(model.ActiveInstancePath(), fmt.Sprintf("reports/%d.html", i))
+			if err := os.MkdirAll(filepath.Dir(reportPath), os.ModePerm); err != nil {
+				return fmt.Errorf("error creating report path [%s] (%w)", reportPath, err)
+			}
+			if err := report.renderTemplate(tPath, reportPath, tData); err != nil {
+				return fmt.Errorf("unable to render template (%w)", err)
+			}
+
+			logrus.Infof("[%s] => [%s]", dataset, reportPath)
 		}
 
-		tPath := filepath.Join(model.FablabRoot(), "zitilab/characterization/reporting/templates/index.html")
-
-		if err := report.renderTemplate(tPath, "index.html", tData); err != nil {
-			return fmt.Errorf("unable to render template (%w)", err)
-		}
 		return nil
 
 	} else {
@@ -159,8 +166,6 @@ func (report *report) renderTemplate(src, dst string, data *ReportData) error {
 	if err := t.Execute(dstF, data); err != nil {
 		return fmt.Errorf("error rendering template [%s] (%w)", src, err)
 	}
-
-	logrus.Infof("wrote report to => [%s]", dst)
 
 	return nil
 }

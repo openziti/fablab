@@ -560,7 +560,11 @@
             }
 
             h1 {
-                padding-bottom: 75px;
+                padding-bottom: 100px;
+            }
+
+            .row {
+                margin-bottom: 100px;
             }
 
         </style>
@@ -593,7 +597,7 @@
                             });
 
                             MG.data_graphic({
-                                title: '"{{$regionKey}}" Bits Per Second (Ziti)',
+                                title: "Bits Per Second",
                                 data: {{$regionKey}}_ziti_bps,
                                 width: 400,
                                 height: 240,
@@ -604,7 +608,6 @@
                         </script>
 
                         <table>
-                            <th>Metric</th><th>Value</th>
                             <tr>
                                 <td>Bits Per Second</td><td>{{dataRate $region.Ziti.IPerf.BitsPerSecond}}/second</td>
                             </tr>
@@ -631,7 +634,7 @@
                             });
 
                             MG.data_graphic({
-                                title: '"{{$regionKey}}" Bits Per Second (Internet)',
+                                title: "Bits Per Second",
                                 data: {{$regionKey}}_internet_bps,
                                 width: 400,
                                 height: 240,
@@ -642,7 +645,6 @@
                         </script>
 
                         <table>
-                            <th>Metric</th><th>Value</th>
                             <tr>
                                 <td>Bits Per Second</td><td>{{dataRate $region.Internet.IPerf.BitsPerSecond}}/second</td>
                             </tr>
