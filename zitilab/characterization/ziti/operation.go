@@ -98,7 +98,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 			return operation.Iperf("internet", directEndpoint, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
 		},
 		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
+			return operation.IperfUdp("ziti_1m", mediumProxy, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
 		},
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
@@ -115,7 +115,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 			return operation.Iperf("internet", directEndpoint, "local", "service", "long", "client", int(sampleDuration.Seconds()))
 		},
 		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
+			return operation.IperfUdp("ziti_1m", longProxy, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
 		},
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
