@@ -18,7 +18,7 @@ package zitilab_characterization_ziti
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilab/development/reporting"
+	"github.com/netfoundry/fablab/zitilab/characterization/reporting"
 )
 
 func newReportAction() model.ActionBinder {

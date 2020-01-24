@@ -8,11 +8,14 @@ identity:
   key:                  /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/keys/{{ .Component.PublicIdentity }}.key
   ca:                   /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/certs/{{ .Component.PublicIdentity }}-server.chain.pem
 
+# Disable smart routing for zitilab/characterization transit-less configuration
+#
 network:
-  cycleSeconds:         2
+  cycleSeconds:         120
   smart:
-    rerouteFraction:    0.2
-    rerouteCap:         256
+    rerouteFraction:    0
+    rerouteCap:         0
+# #
 
 ctrl:
   listener:             tls:0.0.0.0:6262
