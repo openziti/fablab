@@ -28,6 +28,22 @@ func AllocateDump() string {
 	return fmt.Sprintf("%s/dumps/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
 }
 
+func ListDumps() ([]string, error) {
+	files, err := ioutil.ReadDir(filepath.Join(ActiveInstancePath(), "dumps"))
+	if err != nil {
+		return nil, fmt.Errorf("unable to list dumps (%w)", err)
+	}
+
+	var dumps []string
+	for _, file := range files {
+		if file.Mode().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
+			dumps = append(dumps, filepath.Join(ActiveInstancePath(), "dumps", file.Name()))
+		}
+	}
+
+	return dumps, nil
+}
+
 func AllocateDataset() string {
 	return fmt.Sprintf("%s/datasets/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
 }
