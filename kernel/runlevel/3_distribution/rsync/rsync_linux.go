@@ -23,7 +23,7 @@ import (
 )
 
 func rsync(sourcePath, targetPath string) error {
-	rsync := internal.NewProcess(zitilab_bootstrap.RsyncCommand(), "-avz", "-e", zitilab_bootstrap.SshCommand()+" -o StrictHostKeyCheckin=no", "--delete", sourcePath, targetPath)
+	rsync := internal.NewProcess(zitilab_bootstrap.RsyncCommand(), "-avz", "-e", zitilab_bootstrap.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
 	rsync.WithTail(internal.StdoutTail)
 	if err := rsync.Run(); err != nil {
 		return fmt.Errorf("rsync failed (%w)", err)
