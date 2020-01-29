@@ -123,7 +123,6 @@ func (f *operationFactory) Build(m *model.Model) error {
 		/* */
 
 		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
-		func(m *model.Model) model.OperatingStage { return operation.Dumper() },
 		func(m *model.Model) model.OperatingStage { return operation.Persist() },
 	}
 

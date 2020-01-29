@@ -24,20 +24,24 @@ import (
 	"strings"
 )
 
+func AllocateDump() string {
+	return fmt.Sprintf("%s/dumps/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
+}
+
 func AllocateDataset() string {
-	return fmt.Sprintf("%s/data-%d.json", ActiveInstancePath(), info.NowInMilliseconds())
+	return fmt.Sprintf("%s/datasets/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
 }
 
 func ListDatasets() ([]string, error) {
-	files, err := ioutil.ReadDir(ActiveInstancePath())
+	files, err := ioutil.ReadDir(filepath.Join(ActiveInstancePath(), "datasets"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to list datasets (%w)", err)
 	}
 
 	var datasets []string
 	for _, file := range files {
-		if file.Mode().IsRegular() && strings.HasPrefix(file.Name(), "data-") && strings.HasSuffix(file.Name(), ".json") {
-			datasets = append(datasets, filepath.Join(ActiveInstancePath(), file.Name()))
+		if file.Mode().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
+			datasets = append(datasets, filepath.Join(ActiveInstancePath(), "datasets", file.Name()))
 		}
 	}
 

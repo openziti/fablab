@@ -20,6 +20,10 @@ func dumpScope(s Scope) *ScopeDump {
 		dump.Variables = variables
 		empty = false
 	}
+	if s.Data != nil {
+		dump.Data = s.Data
+		empty = false
+	}
 	if s.Tags != nil {
 		dump.Tags = s.Tags
 		empty = false
@@ -53,7 +57,7 @@ func dumpVariable(v *Variable) *VariableDump {
 		Required:       v.Required,
 		Scoped:         v.Scoped,
 		GlobalFallback: v.GlobalFallback,
-		Sensitive:		v.Sensitive,
+		Sensitive:      v.Sensitive,
 		Bound:          v.bound,
 	}
 	if v.Default != nil {
@@ -111,6 +115,7 @@ type Dump struct {
 
 type ScopeDump struct {
 	Variables map[string]interface{} `json:"variables,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
 	Tags      []string               `json:"tags,omitempty"`
 }
 
@@ -120,7 +125,7 @@ type VariableDump struct {
 	Required       bool   `json:"required"`
 	Scoped         bool   `json:"scoped"`
 	GlobalFallback bool   `json:"global_fallback"`
-	Sensitive 	   bool   `json:"sensitive"`
+	Sensitive      bool   `json:"sensitive"`
 	Binder         string `json:"binder,omitempty"`
 	Value          string `json:"value,omitempty"`
 	Bound          bool   `json:"bound"`
