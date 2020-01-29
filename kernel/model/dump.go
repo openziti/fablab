@@ -7,14 +7,27 @@ import (
 
 func (m *Model) Dump() *ModelDump {
 	return &ModelDump{
-		Scope: dumpScope(m.Scope),
+		Scope:   dumpScope(m.Scope),
+		Regions: dumpRegions(m.Regions),
 	}
 }
 
 func dumpScope(s Scope) *ScopeDump {
-	return &ScopeDump{
-		Variables: dumpVariables(s.Variables),
+	dump := &ScopeDump{}
+	empty := true
+	if s.Variables != nil {
+		variables := dumpVariables(s.Variables)
+		dump.Variables = variables
+		empty = false
 	}
+	if s.Tags != nil {
+		dump.Tags = s.Tags
+		empty = false
+	}
+	if !empty {
+		return dump
+	}
+	return nil
 }
 
 func dumpVariables(vs Variables) map[string]interface{} {
@@ -36,11 +49,11 @@ func dumpVariables(vs Variables) map[string]interface{} {
 
 func dumpVariable(v *Variable) *VariableDump {
 	dump := &VariableDump{
-		Description: v.Description,
-		Required: v.Required,
-		Scoped: v.Scoped,
+		Description:    v.Description,
+		Required:       v.Required,
+		Scoped:         v.Scoped,
 		GlobalFallback: v.GlobalFallback,
-		Bound: v.bound,
+		Bound:          v.bound,
 	}
 	if v.Default != nil {
 		dump.Default = fmt.Sprintf("%v", v.Default)
@@ -54,12 +67,50 @@ func dumpVariable(v *Variable) *VariableDump {
 	return dump
 }
 
+func dumpRegions(rs map[string]*Region) map[string]*RegionDump {
+	dumps := make(map[string]*RegionDump, 0)
+	for k, v := range rs {
+		dumps[k] = dumpRegion(v)
+	}
+	return dumps
+}
+
+func dumpRegion(r *Region) *RegionDump {
+	dump := &RegionDump{
+		Scope: dumpScope(r.Scope),
+		Id:    r.Id,
+		Az:    r.Az,
+		Hosts: dumpHosts(r.Hosts),
+	}
+	return dump
+}
+
+func dumpHosts(hs map[string]*Host) map[string]*HostDump {
+	dumps := make(map[string]*HostDump, 0)
+	for k, v := range hs {
+		dumps[k] = dumpHost(v)
+	}
+	return dumps
+}
+
+func dumpHost(h *Host) *HostDump {
+	dump := &HostDump{
+		Scope:        dumpScope(h.Scope),
+		PublicIp:     h.PublicIp,
+		PrivateIp:    h.PrivateIp,
+		InstanceType: h.InstanceType,
+	}
+	return dump
+}
+
 type ModelDump struct {
-	Scope *ScopeDump `json:"scope"`
+	Scope   *ScopeDump             `json:"scope,omitempty"`
+	Regions map[string]*RegionDump `json:"regions"`
 }
 
 type ScopeDump struct {
-	Variables map[string]interface{} `json:"variables"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
+	Tags      []string               `json:"tags,omitempty"`
 }
 
 type VariableDump struct {
@@ -71,4 +122,18 @@ type VariableDump struct {
 	Binder         string `json:"binder,omitempty"`
 	Value          string `json:"value,omitempty"`
 	Bound          bool   `json:"bound"`
+}
+
+type RegionDump struct {
+	Scope *ScopeDump           `json:"scope,omitempty"`
+	Id    string               `json:"id,omitempty"`
+	Az    string               `json:"az,omitempty"`
+	Hosts map[string]*HostDump `json:"hosts,omitempty"`
+}
+
+type HostDump struct {
+	Scope        *ScopeDump `json:"scope,omitempty"`
+	PublicIp     string     `json:"public_ip,omitempty"`
+	PrivateIp    string     `json:"private_ip,omitempty"`
+	InstanceType string     `json:"instance_type,omitempty"`
 }
