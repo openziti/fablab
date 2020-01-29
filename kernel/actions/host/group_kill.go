@@ -33,9 +33,8 @@ func GroupKill(regionSpec, hostSpec, match string) model.Action {
 func (groupKill *groupKill) Execute(m *model.Model) error {
 	hosts := m.GetHosts(groupKill.regionSpec, groupKill.hostSpec)
 	for _, h := range hosts {
-		sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-		sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
-		sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, h.PublicIp, sshKeyPath)
+
+		sshConfigFactory := internal.NewSshConfigFactoryImpl(m, h.PublicIp)
 		if err := internal.RemoteKill(sshConfigFactory, groupKill.match); err != nil {
 			return fmt.Errorf("error killing [%s] on [%s] (%s)", groupKill.match, h.PublicIp, err)
 		}

@@ -34,9 +34,8 @@ func GroupExec(regionSpec, hostSpec, cmd string) model.Action {
 func (groupExec *groupExec) Execute(m *model.Model) error {
 	hosts := m.GetHosts(groupExec.regionSpec, groupExec.hostSpec)
 	for _, h := range hosts {
-		sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-		sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
-		sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, h.PublicIp, sshKeyPath)
+		sshConfigFactory := internal.NewSshConfigFactoryImpl(m, h.PublicIp)
+
 		if o, err := internal.RemoteExec(sshConfigFactory, groupExec.cmd); err != nil {
 			logrus.Errorf("output [%s]", o)
 			return fmt.Errorf("error executing process [%s] on [%s] (%s)", groupExec.cmd, h.PublicIp, err)

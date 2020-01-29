@@ -31,9 +31,7 @@ func Exec(h *model.Host, cmd string) model.Action {
 }
 
 func (exec *exec) Execute(m *model.Model) error {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-	sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
-	sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, exec.h.PublicIp, sshKeyPath)
+	sshConfigFactory := internal.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
 
 	if o, err := internal.RemoteExec(sshConfigFactory, exec.cmd); err != nil {
 		logrus.Errorf("output [%s]", o)

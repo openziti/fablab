@@ -29,12 +29,9 @@ func Rsync() model.DistributionStage {
 }
 
 func (rsync *rsyncStage) Distribute(m *model.Model) error {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-	sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
-
 	for regionId, r := range m.Regions {
 		for hostId, host := range r.Hosts {
-			sshConfigFactory := internal.NewSshConfigFactoryImplWithKey(sshUsername, host.PublicIp, sshKeyPath)
+			sshConfigFactory := internal.NewSshConfigFactoryImpl(m, host.PublicIp)
 			if err := synchronizeHost(sshConfigFactory); err != nil {
 				return fmt.Errorf("error synchronizing host [%s/%s] (%s)", regionId, hostId, err)
 			}

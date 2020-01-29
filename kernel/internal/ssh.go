@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -33,7 +34,7 @@ import (
 type SshConfigFactory interface {
 	Address() string
 	Hostname() string
-	PortNum() int
+	Port() int
 	User() string
 	Config() *ssh.ClientConfig
 }
@@ -41,23 +42,21 @@ type SshConfigFactory interface {
 type SshConfigFactoryImpl struct {
 	user            string
 	host            string
-	Port            int
-	KeyPath         string
+	port            int
+	keyPath         string
 	resolveAuthOnce sync.Once
 	authMethods     []ssh.AuthMethod
 }
 
-func NewSshConfigFactoryImpl(user, host string) *SshConfigFactoryImpl {
-	return &SshConfigFactoryImpl{
-		user: user,
-		host: host,
-		Port: 22,
+func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
+	user := m.MustVariable("credentials", "ssh", "username").(string)
+	keyPath := m.Variable("credentials", "ssh", "key_path").(string)
+	factory := &SshConfigFactoryImpl{
+		user:    user,
+		host:    host,
+		port:    22,
+		keyPath: keyPath,
 	}
-}
-
-func NewSshConfigFactoryImplWithKey(user, host, keyPath string) *SshConfigFactoryImpl {
-	factory := NewSshConfigFactoryImpl(user, host)
-	factory.KeyPath = keyPath
 
 	return factory
 }
@@ -69,17 +68,17 @@ func (factory *SshConfigFactoryImpl) Hostname() string {
 	return factory.host
 }
 
-func (factory *SshConfigFactoryImpl) PortNum() int {
-	return factory.Port
+func (factory *SshConfigFactoryImpl) Port() int {
+	return factory.port
 }
 
 func (factory *SshConfigFactoryImpl) Address() string {
-	return factory.host + ":" + strconv.Itoa(factory.Port)
+	return factory.host + ":" + strconv.Itoa(factory.port)
 }
 
 func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
 	factory.resolveAuthOnce.Do(func() {
-		factory.authMethods = sshAutMethods(factory.KeyPath)
+		factory.authMethods = sshAutMethods(factory.keyPath)
 	})
 
 	return &ssh.ClientConfig{

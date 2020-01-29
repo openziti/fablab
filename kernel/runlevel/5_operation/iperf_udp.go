@@ -44,12 +44,8 @@ func (i *iperfUdp) Operate(m *model.Model) error {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
 
-		sshUser := m.MustVariable("credentials", "ssh", "username").(string)
-		sshKeyPath := m.Variable("credentials", "ssh", "key_path").(string)
-
-		sshClientFactory := internal.NewSshConfigFactoryImplWithKey(sshUser, clientHost.PublicIp, sshKeyPath)
-		sshServerFactory := internal.NewSshConfigFactoryImplWithKey(sshUser, serverHost.PublicIp, sshKeyPath)
-
+		sshClientFactory := internal.NewSshConfigFactoryImpl(m, clientHost.PublicIp)
+		sshServerFactory := internal.NewSshConfigFactoryImpl(m, serverHost.PublicIp)
 
 		go i.runServer(sshServerFactory)
 

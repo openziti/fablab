@@ -1,10 +1,12 @@
 package host
 
-import "github.com/netfoundry/fablab/kernel/internal"
+import (
+	"github.com/netfoundry/fablab/kernel/internal"
+	"github.com/netfoundry/fablab/kernel/model"
+)
 
-func RemoteShell(user, host, keyPath string) error {
-	factory := internal.NewSshConfigFactoryImpl(user, host)
-	factory.KeyPath = keyPath
+func RemoteShell(m *model.Model, host string) error {
+	factory := internal.NewSshConfigFactoryImpl(m, host)
 
 	return internal.RemoteShell(factory)
 }
