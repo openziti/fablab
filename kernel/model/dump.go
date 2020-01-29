@@ -5,8 +5,8 @@ import (
 	"reflect"
 )
 
-func (m *Model) Dump() *ModelDump {
-	return &ModelDump{
+func (m *Model) Dump() *Dump {
+	return &Dump{
 		Scope:   dumpScope(m.Scope),
 		Regions: dumpRegions(m.Regions),
 	}
@@ -104,7 +104,7 @@ func dumpHost(h *Host) *HostDump {
 	return dump
 }
 
-type ModelDump struct {
+type Dump struct {
 	Scope   *ScopeDump             `json:"scope,omitempty"`
 	Regions map[string]*RegionDump `json:"regions"`
 }

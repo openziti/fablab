@@ -576,6 +576,11 @@
         <script src="https://d3js.org/d3.v4.js"></script>
         <script src='https://cdn.jsdelivr.net/npm/metrics-graphics@2.15.6/dist/metricsgraphics.min.js'></script>
 
+        <script>
+            var modelDump = {{json .Dump}};
+            console.log(modelDump);
+        </script>
+
         {{$regionKeys := .RegionKeys}}
         {{$regions := .Regions}}
         {{range $i, $regionKey := $regionKeys}}

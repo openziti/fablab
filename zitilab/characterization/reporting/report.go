@@ -47,6 +47,16 @@ func (report *report) Execute(m *model.Model) error {
 				return fmt.Errorf("error unmarshalling dataset [%s] (%w)", dataset, err)
 			}
 
+			if v, found := datamap["_dump"]; found {
+				if dump, err := report.toModelDump(v); err == nil {
+					tData.Dump = dump
+				} else {
+					logrus.Errorf("error conforming model dump (%w)", err)
+				}
+			} else {
+				logrus.Warnf("no model dump data")
+			}
+
 			tData.RegionKeys = []string{"short", "medium", "long"}
 			for _, regionPrefix := range tData.RegionKeys {
 				regionData := &ReportRegionData{}
@@ -146,6 +156,20 @@ func (report *report) toIperfUdpSummary(v interface{}) (*model.IperfUdpSummary, 
 	return iperfUdpSummary, nil
 }
 
+func (report *report) toModelDump(v interface{}) (*model.Dump, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json (%w)", err)
+	}
+
+	modelDump := &model.Dump{}
+	if err := json.Unmarshal(data, modelDump); err != nil {
+		return nil, fmt.Errorf("error unmarshaling model dump (%w)", err)
+	}
+
+	return modelDump, nil
+}
+
 func (report *report) renderTemplate(src, dst string, data *ReportData) error {
 	tSrc, err := ioutil.ReadFile(src)
 	if err != nil {
@@ -188,6 +212,7 @@ func (report *report) templateFuncs() template.FuncMap {
 type report struct{}
 
 type ReportData struct {
+	Dump       *model.Dump
 	RegionKeys []string
 	Regions    map[string]*ReportRegionData
 }
