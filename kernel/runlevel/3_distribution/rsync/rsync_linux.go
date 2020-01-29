@@ -16,6 +16,12 @@
 
 package rsync
 
+import (
+	"fmt"
+	"github.com/netfoundry/fablab/kernel/internal"
+	zitilab_bootstrap "github.com/netfoundry/fablab/zitilab/development/bootstrap"
+)
+
 func rsync(sourcePath, targetPath string) error {
 	rsync := internal.NewProcess(zitilab_bootstrap.RsyncCommand(), "-avz", "-e", zitilab_bootstrap.SshCommand()+" -o StrictHostKeyCheckin=no", "--delete", sourcePath, targetPath)
 	rsync.WithTail(internal.StdoutTail)
