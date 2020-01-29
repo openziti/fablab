@@ -32,6 +32,7 @@ type Variable struct {
 	Required       bool
 	Scoped         bool
 	GlobalFallback bool
+	Sensitive      bool
 	Binder         func(v *Variable, i interface{}, path ...string)
 	Value          interface{}
 	bound          bool

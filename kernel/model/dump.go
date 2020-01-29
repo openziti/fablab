@@ -53,6 +53,7 @@ func dumpVariable(v *Variable) *VariableDump {
 		Required:       v.Required,
 		Scoped:         v.Scoped,
 		GlobalFallback: v.GlobalFallback,
+		Sensitive:		v.Sensitive,
 		Bound:          v.bound,
 	}
 	if v.Default != nil {
@@ -61,7 +62,7 @@ func dumpVariable(v *Variable) *VariableDump {
 	if v.Binder != nil {
 		dump.Binder = fmt.Sprintf("%p", v.Binder)
 	}
-	if v.Value != nil {
+	if v.Value != nil && !v.Sensitive {
 		dump.Value = fmt.Sprintf("%v", v.Value)
 	}
 	return dump
@@ -119,6 +120,7 @@ type VariableDump struct {
 	Required       bool   `json:"required"`
 	Scoped         bool   `json:"scoped"`
 	GlobalFallback bool   `json:"global_fallback"`
+	Sensitive 	   bool   `json:"sensitive"`
 	Binder         string `json:"binder,omitempty"`
 	Value          string `json:"value,omitempty"`
 	Bound          bool   `json:"bound"`

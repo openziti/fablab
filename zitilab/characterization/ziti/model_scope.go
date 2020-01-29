@@ -27,8 +27,8 @@ func (f *modelScopeFactory) Build(m *model.Model) error {
 		"environment": &model.Variable{Required: true},
 		"credentials": model.Variables{
 			"aws": model.Variables{
-				"access_key":   &model.Variable{Required: true},
-				"secret_key":   &model.Variable{Required: true},
+				"access_key":   &model.Variable{Required: true, Sensitive: true},
+				"secret_key":   &model.Variable{Required: true, Sensitive: true},
 				"ssh_key_name": &model.Variable{Required: true},
 			},
 			"ssh": model.Variables{
