@@ -14,33 +14,24 @@
 	limitations under the License.
 */
 
-package subcmd
+package console
 
 import (
-	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	"net/http"
+	"path/filepath"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func Console() model.Action {
+	return &console{}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (consoleAction *console) Execute(m *model.Model) error {
+	server := NewServer()
+	go server.Listen()
+
+	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/console/webroot"))))
+	return http.ListenAndServe(":8080", nil)
 }
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
-}
+type console struct{}

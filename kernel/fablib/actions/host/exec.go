@@ -14,33 +14,32 @@
 	limitations under the License.
 */
 
-package subcmd
+package host
 
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	"github.com/sirupsen/logrus"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func Exec(h *model.Host, cmd string) model.Action {
+	return &exec{
+		h:   h,
+		cmd: cmd,
+	}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (exec *exec) Execute(m *model.Model) error {
+	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+	if o, err := fablib.RemoteExec(sshUsername, exec.h.PublicIp, exec.cmd); err != nil {
+		logrus.Errorf("output [%s]", o)
+		return fmt.Errorf("error executing process [%s] on [%s] (%s)", exec.cmd, exec.h.PublicIp, err)
+	}
+	return nil
 }
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+type exec struct {
+	h   *model.Host
+	cmd string
 }

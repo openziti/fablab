@@ -14,33 +14,32 @@
 	limitations under the License.
 */
 
-package subcmd
+package terraform
 
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func Dispose() model.DisposalStage {
+	return &terraform{}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (terraform *terraform) Dispose(m *model.Model) error {
+	prc := fablib.NewProcess("terraform", "destroy", "-auto-approve")
+	prc.Cmd.Dir = terraformRun()
+	prc.WithTail(fablib.StdoutTail)
+	if err := prc.Run(); err != nil {
+		return fmt.Errorf("error running 'terraform destroy' (%w)", err)
+	}
+	return nil
 }
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
+type terraform struct {
 }
 
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+func terraformRun() string {
+	return filepath.Join(model.ActiveInstancePath(), "tf")
 }

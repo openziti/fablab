@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,33 +14,20 @@
 	limitations under the License.
 */
 
-package subcmd
+package zitilib_characterization_ziti
 
 import (
-	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	"github.com/netfoundry/fablab/zitilib/development/console"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func newConsoleAction() model.ActionBinder {
+	action := &consoleAction{}
+	return action.bind
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (a *consoleAction) bind(m *model.Model) model.Action {
+	return console.Console()
 }
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
-}
+type consoleAction struct{}

@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,33 +14,25 @@
 	limitations under the License.
 */
 
-package subcmd
+package zitilib_characterization_internet
 
 import (
-	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	zitilib_characterization_ziti "github.com/netfoundry/fablab/zitilib/characterization/ziti"
 )
 
 func init() {
-	RootCmd.AddCommand(versionCmd)
+	model.RegisterModel("zitilib/characterization/internet", Model)
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
-}
+// Static model skeleton for zitilib/characterization/internet
+//
+var Model = &model.Model{
+	// Extends zitilib/characterization/ziti
+	//
+	Parent: zitilib_characterization_ziti.Model,
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+	Factories: []model.Factory{
+		newBindingsFactory(),
+	},
 }

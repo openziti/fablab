@@ -14,33 +14,29 @@
 	limitations under the License.
 */
 
-package subcmd
+package zitilib_bootstrap
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
+	"github.com/sirupsen/logrus"
+	"os"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func (bootstrap *Bootstrap) Bootstrap(m *model.Model) error {
+	zitiRoot = os.Getenv("ZITI_ROOT")
+	if zitiRoot == "" {
+		return fmt.Errorf("please set 'ZITI_ROOT'")
+	}
+	if fi, err := os.Stat(zitiRoot); err == nil {
+		if !fi.IsDir() {
+			return fmt.Errorf("invalid 'ZITI_ROOT' (!directory)")
+		}
+		logrus.Debugf("ZITI_ROOT = [%s]", zitiRoot)
+	} else {
+		return fmt.Errorf("non-existent 'ZITI_ROOT'")
+	}
+	return nil
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
-}
-
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
-}
+type Bootstrap struct{}

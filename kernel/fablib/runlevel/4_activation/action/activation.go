@@ -14,33 +14,32 @@
 	limitations under the License.
 */
 
-package subcmd
+package action
 
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/spf13/cobra"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func Activation(actions ...string) model.ActivationStage {
+	return &actionActivation{actions: actions}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (actionActivation *actionActivation) Activate(m *model.Model) error {
+	for _, actionName := range actionActivation.actions {
+		action, found := m.GetAction(actionName)
+		if !found {
+			return fmt.Errorf("no [%s] action", actionName)
+		}
+		fablib.FigletMini("action: " + actionName)
+		if err := action.Execute(m); err != nil {
+			return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
+		}
+	}
+	return nil
 }
 
-func version(_ *cobra.Command, _ []string) {
-	fablib.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+type actionActivation struct {
+	actions []string
 }
