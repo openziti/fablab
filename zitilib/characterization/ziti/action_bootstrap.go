@@ -19,11 +19,11 @@ package zitilib_characterization_ziti
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib/actions"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/cli"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/host"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
 	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/fablab/zitilib/actions/cli"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"

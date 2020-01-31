@@ -19,7 +19,6 @@ package zitilib_development
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib/actions"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/cli"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/host"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
@@ -32,6 +31,7 @@ import (
 	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
 	terraform6 "github.com/netfoundry/fablab/kernel/fablib/runlevel/6_disposal/terraform"
 	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/fablab/zitilib/actions/cli"
 	"github.com/netfoundry/fablab/zitilib/characterization/reporting"
 	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/1_configuration/pki"
 	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/5_operation"
