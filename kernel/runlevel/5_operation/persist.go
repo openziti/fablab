@@ -34,9 +34,6 @@ func (self *persist) Operate(m *model.Model) error {
 	if err := self.storeDump(m); err != nil {
 		return fmt.Errorf("error storing dump (%w)", err)
 	}
-	if err := self.storeDataset(m); err != nil {
-		return fmt.Errorf("error storing dataset (%w)", err)
-	}
 	return nil
 }
 
@@ -57,43 +54,6 @@ func (self *persist) storeDump(m *model.Model) error {
 	}
 
 	logrus.Infof("dump saved to [%s]", filename)
-
-	return nil
-}
-
-func (self *persist) storeDataset(m *model.Model) error {
-	all := make(map[string]interface{})
-
-	for k, v := range m.Data {
-		all["_"+k] = v
-	}
-
-	for regionId, region := range m.Regions {
-		for k, v := range region.Data {
-			all[regionId+"_"+k] = v
-		}
-
-		for hostId, host := range region.Hosts {
-			for k, v := range host.Data {
-				all[regionId+"_"+hostId+"_"+k] = v
-			}
-		}
-	}
-
-	data, err := json.MarshalIndent(all, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	filename := model.AllocateDataset()
-	if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
-		return fmt.Errorf("error creating dataset tree [%s] (%w)", filepath.Dir(filename), err)
-	}
-	if err := ioutil.WriteFile(filename, data, os.ModePerm); err != nil {
-		return err
-	}
-
-	logrus.Infof("data saved to [%s]", filename)
 
 	return nil
 }

@@ -43,23 +43,3 @@ func ListDumps() ([]string, error) {
 
 	return dumps, nil
 }
-
-func AllocateDataset() string {
-	return fmt.Sprintf("%s/datasets/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
-}
-
-func ListDatasets() ([]string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(ActiveInstancePath(), "datasets"))
-	if err != nil {
-		return nil, fmt.Errorf("unable to list datasets (%w)", err)
-	}
-
-	var datasets []string
-	for _, file := range files {
-		if file.Mode().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
-			datasets = append(datasets, filepath.Join(ActiveInstancePath(), "datasets", file.Name()))
-		}
-	}
-
-	return datasets, nil
-}
