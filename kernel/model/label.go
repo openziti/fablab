@@ -31,7 +31,9 @@ func (m *Model) BindLabel(l *Label) {
 		for hostId, host := range region.Hosts {
 			publicIpBinding := fmt.Sprintf("%s_host_%s_public_ip", regionId, hostId)
 			if binding, found := l.Bindings[publicIpBinding]; found {
-				host.PublicIp = binding
+				if publicIp, ok := binding.(string); ok {
+					host.PublicIp = publicIp
+				}
 			} else {
 				logrus.Warnf("no binding [%s]", publicIpBinding)
 				clean = false
@@ -39,7 +41,9 @@ func (m *Model) BindLabel(l *Label) {
 
 			privateIpBinding := fmt.Sprintf("%s_host_%s_private_ip", regionId, hostId)
 			if binding, found := l.Bindings[privateIpBinding]; found {
-				host.PrivateIp = binding
+				if privateIp, ok := binding.(string); ok {
+					host.PrivateIp = privateIp
+				}
 			} else {
 				logrus.Warnf("no binding [%s]", privateIpBinding)
 				clean = false
@@ -53,6 +57,44 @@ func (m *Model) BindLabel(l *Label) {
 
 func GetLabel() *Label {
 	return label
+}
+
+func (label *Label) Has(name ...string) bool {
+	_, found := label.Get(name...)
+	return found
+}
+
+func (label *Label) Must(name ...string) interface{} {
+	value, found := label.Get(name...)
+	if !found {
+		logrus.Fatalf("label binding [%v] not found", name)
+	}
+	return value
+}
+
+func (label *Label) Get(name ...string) (interface{}, bool) {
+	if len(name) < 1 {
+		return nil, false
+	}
+
+	inputMap := label.Bindings
+	for i := 0; i < (len(name) - 1); i++ {
+		key := name[i]
+		if value, found := inputMap[key]; found {
+			lowerMap, ok := value.(Bindings)
+			if !ok {
+				return nil, false
+			}
+			inputMap = lowerMap
+		} else {
+			return nil, false
+		}
+	}
+
+	if value, found := inputMap[name[len(name)-1]]; found {
+		return value, true
+	}
+	return nil, false
 }
 
 func (label *Label) Save() error {
@@ -149,9 +191,9 @@ func labelPath(path string) string {
 }
 
 type Label struct {
-	Model    string            `yaml:"model"`
-	State    InstanceState     `yaml:"state"`
-	Bindings map[string]string `yaml:"bindings"`
+	Model    string        `yaml:"model"`
+	State    InstanceState `yaml:"state"`
+	Bindings Bindings      `yaml:"bindings"`
 	path     string
 }
 

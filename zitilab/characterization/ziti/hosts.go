@@ -29,9 +29,9 @@ func (f *hostsFactory) Build(m *model.Model) error {
 		host.InstanceType = "t2.micro"
 	}
 
-	b := model.GetBindings()
-	if b.Has("instance_type") {
-		instanceType := b.Must("instance_type")
+	l := model.GetLabel()
+	if l.Has("instance_type") {
+		instanceType := l.Must("instance_type")
 		for _, host := range m.GetAllHosts() {
 			host.InstanceType = instanceType.(string)
 		}

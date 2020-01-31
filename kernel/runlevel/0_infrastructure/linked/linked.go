@@ -29,7 +29,9 @@ func Linked() model.InfrastructureStage {
 func (linked *linked) Express(m *model.Model, l *model.Label) error {
 	var parent string
 	if value, found := l.Bindings["parent"]; found {
-		parent = value
+		if parentName, ok := value.(string); ok {
+			parent = parentName
+		}
 	} else {
 		return fmt.Errorf("missing 'parent' label binding")
 	}
