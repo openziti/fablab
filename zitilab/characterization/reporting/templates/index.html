@@ -582,13 +582,13 @@
         </script>
 
         {{$regionKeys := .RegionKeys}}
-        {{$regions := .Regions}}
+        {{$regionData := .RegionData}}
         {{range $i, $regionKey := $regionKeys}}
             <div class="container">
                 <h1>"{{$regionKey}}" Region</h1>
             </div>
 
-            {{$region := index $regions $regionKey}}
+            {{$region := index $regionData $regionKey}}
             <div class="container">
                 <div class="row">
                     <div class="col">

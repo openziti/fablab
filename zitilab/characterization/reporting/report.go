@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/oliveagle/jsonpath"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -33,80 +34,23 @@ func Report() model.Action {
 }
 
 func (report *report) Execute(m *model.Model) error {
-	if datasets, err := model.ListDatasets(); err == nil {
-		tData := &ReportData{Regions: make(map[string]*ReportRegionData)}
-
-		for i, dataset := range datasets {
-			data, err := ioutil.ReadFile(dataset)
+	if dumppaths, err := model.ListDumps(); err == nil {
+		for i, dumppath := range dumppaths {
+			data, err := ioutil.ReadFile(dumppath)
 			if err != nil {
-				return fmt.Errorf("unable to read dataset [%s] (%w)", dataset, err)
+				return fmt.Errorf("unable to read dump [%s] (%w)", dumppath, err)
 			}
 
-			datamap := make(map[string]interface{})
-			if err := json.Unmarshal(data, &datamap); err != nil {
-				return fmt.Errorf("error unmarshalling dataset [%s] (%w)", dataset, err)
+			dump := &model.Dump{}
+			if err := json.Unmarshal(data, dump); err != nil {
+				return fmt.Errorf("error unmarshaling dump (%w)", err)
 			}
 
-			if v, found := datamap["_dump"]; found {
-				if dump, err := report.toModelDump(v); err == nil {
-					tData.Dump = dump
-				} else {
-					logrus.Errorf("error conforming model dump (%w)", err)
-				}
-			} else {
-				logrus.Warnf("no model dump data")
+			reportData, err := report.buildReportData(data, []string{"short", "medium", "long"})
+			if err != nil {
+				return fmt.Errorf("error building report data (%w)", err)
 			}
-
-			tData.RegionKeys = []string{"short", "medium", "long"}
-			for _, regionPrefix := range tData.RegionKeys {
-				regionData := &ReportRegionData{}
-
-				key := fmt.Sprintf("%s_client_iperf_ziti_metrics", regionPrefix)
-				if value, found := datamap[key]; found {
-					summary, err := report.toIperfSummary(value)
-					if err != nil {
-						return fmt.Errorf("error conforming [%s] (%w)", key, err)
-					}
-					regionData.Ziti.IPerf = summary
-				} else {
-					return fmt.Errorf("missing [%s]", key)
-				}
-
-				key = fmt.Sprintf("%s_client_iperf_internet_metrics", regionPrefix)
-				if value, found := datamap[key]; found {
-					summary, err := report.toIperfSummary(value)
-					if err != nil {
-						return fmt.Errorf("error conforming [%s] (%w)", key, err)
-					}
-					regionData.Internet.IPerf = summary
-				} else {
-					return fmt.Errorf("missing [%s]", key)
-				}
-
-				key = fmt.Sprintf("%s_client_iperf_udp_ziti_1m_metrics", regionPrefix)
-				if value, found := datamap[key]; found {
-					summary, err := report.toIperfUdpSummary(value)
-					if err != nil {
-						return fmt.Errorf("error conforming [%s] (%w)", key, err)
-					}
-					regionData.Ziti.IPerfUdp = summary
-				} else {
-					return fmt.Errorf("missing [%s]", key)
-				}
-
-				key = fmt.Sprintf("%s_client_iperf_udp_internet_1m_metrics", regionPrefix)
-				if value, found := datamap[key]; found {
-					summary, err := report.toIperfUdpSummary(value)
-					if err != nil {
-						return fmt.Errorf("error conforming [%s] (%w)", key, err)
-					}
-					regionData.Internet.IPerfUdp = summary
-				} else {
-					return fmt.Errorf("missing [%s]", key)
-				}
-
-				tData.Regions[regionPrefix] = regionData
-			}
+			reportData.Dump = dump
 
 			tPath := filepath.Join(model.FablabRoot(), "zitilab/characterization/reporting/templates/index.html")
 
@@ -114,11 +58,11 @@ func (report *report) Execute(m *model.Model) error {
 			if err := os.MkdirAll(filepath.Dir(reportPath), os.ModePerm); err != nil {
 				return fmt.Errorf("error creating report path [%s] (%w)", reportPath, err)
 			}
-			if err := report.renderTemplate(tPath, reportPath, tData); err != nil {
+			if err := report.renderTemplate(tPath, reportPath, reportData); err != nil {
 				return fmt.Errorf("unable to render template (%w)", err)
 			}
 
-			logrus.Infof("[%s] => [%s]", dataset, reportPath)
+			logrus.Infof("[%s] => [%s]", dumppath, reportPath)
 		}
 
 		return nil
@@ -128,46 +72,95 @@ func (report *report) Execute(m *model.Model) error {
 	}
 }
 
-func (report *report) toIperfSummary(v interface{}) (*model.IperfSummary, error) {
-	data, err := json.Marshal(v)
+func (report *report) buildReportData(data []byte, regionKeys []string) (*ReportData, error) {
+	var jsonData interface{}
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		return nil, fmt.Errorf("error unmarshalling json data (%w)", err)
+	}
+
+	reportData := &ReportData{
+		RegionKeys: regionKeys,
+		RegionData: make(map[string]*ReportRegionData),
+	}
+
+	for _, regionKey := range regionKeys {
+		regionData := &ReportRegionData{}
+
+		iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_ziti_metrics", regionKey))
+		if err != nil {
+			return nil, fmt.Errorf("error getting ziti iperf summary (%w)", err)
+		}
+		regionData.Ziti.IPerf = iperfSummary
+
+		iperfSummary, err = report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_internet_metrics", regionKey))
+		if err != nil {
+			return nil, fmt.Errorf("error getting internet iperf summary (%w)", err)
+		}
+		regionData.Internet.IPerf = iperfSummary
+
+		iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_ziti_1m_metrics", regionKey))
+		if err != nil {
+			return nil, fmt.Errorf("error getting ziti iperf udp summary (%w)", err)
+		}
+		regionData.Ziti.IPerfUdp = iperfUdpSummary
+
+		iperfUdpSummary, err = report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_internet_1m_metrics", regionKey))
+		if err != nil {
+			return nil, fmt.Errorf("error getting internet iperf udp summary (%w)", err)
+		}
+		regionData.Internet.IPerfUdp = iperfUdpSummary
+
+		reportData.RegionData[regionKey] = regionData
+	}
+
+	return reportData, nil
+}
+
+func (report *report) getIperfSummary(jsonData interface{}, path string) (*model.IperfSummary, error) {
+	compiled, err := jsonpath.Compile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling json path [%s] (%w)", path, err)
+	}
+
+	res, err := compiled.Lookup(jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("error querying json path [%s] (%w)", path, err)
+	}
+
+	data, err := json.Marshal(res)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling json (%w)", err)
 	}
 
-	iperfSummary := &model.IperfSummary{}
-	if err := json.Unmarshal(data, iperfSummary); err != nil {
+	summary := &model.IperfSummary{}
+	if err := json.Unmarshal(data, summary); err != nil {
 		return nil, fmt.Errorf("error unmarshaling iperf summary (%w)", err)
 	}
 
-	return iperfSummary, nil
+	return summary, nil
 }
+func (report *report) getIperfUdpSummary(jsonData interface{}, path string) (*model.IperfUdpSummary, error) {
+	compiled, err := jsonpath.Compile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling json path [%s] (%w)", path, err)
+	}
 
-func (report *report) toIperfUdpSummary(v interface{}) (*model.IperfUdpSummary, error) {
-	data, err := json.Marshal(v)
+	res, err := compiled.Lookup(jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("error querying json path [%s] (%w)", path, err)
+	}
+
+	data, err := json.Marshal(res)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling json (%w)", err)
 	}
 
-	iperfUdpSummary := &model.IperfUdpSummary{}
-	if err := json.Unmarshal(data, iperfUdpSummary); err != nil {
+	summary := &model.IperfUdpSummary{}
+	if err := json.Unmarshal(data, summary); err != nil {
 		return nil, fmt.Errorf("error unmarshaling iperf udp summary (%w)", err)
 	}
 
-	return iperfUdpSummary, nil
-}
-
-func (report *report) toModelDump(v interface{}) (*model.Dump, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling json (%w)", err)
-	}
-
-	modelDump := &model.Dump{}
-	if err := json.Unmarshal(data, modelDump); err != nil {
-		return nil, fmt.Errorf("error unmarshaling model dump (%w)", err)
-	}
-
-	return modelDump, nil
+	return summary, nil
 }
 
 func (report *report) renderTemplate(src, dst string, data *ReportData) error {
@@ -214,7 +207,7 @@ type report struct{}
 type ReportData struct {
 	Dump       *model.Dump
 	RegionKeys []string
-	Regions    map[string]*ReportRegionData
+	RegionData map[string]*ReportRegionData
 }
 
 type ReportRegionData struct {
