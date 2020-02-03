@@ -1,6 +1,6 @@
 # Ziti Characterization
 
-The `zitilab/characterization` package contains a set of scalable "characterization" models, used to continually evaluate and refine the performance of Ziti network overlay implementations.
+The `zitilib/characterization` package contains a set of scalable "characterization" models, used to continually evaluate and refine the performance of Ziti network overlay implementations.
 
 ## Geolocation
 

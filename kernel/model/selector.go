@@ -26,14 +26,6 @@ func (m *Model) IsBound() bool {
 	return m.bound
 }
 
-func (m *Model) Variable(name ...string) interface{} {
-	value, found := m.GetVariable(name...)
-	if !found {
-		logrus.Fatalf("missing model variable [%v]", name)
-	}
-	return value
-}
-
 func (m *Model) GetVariable(name ...string) (interface{}, bool) {
 	if len(name) < 1 {
 		return nil, false
@@ -76,7 +68,7 @@ func (m *Model) GetVariable(name ...string) (interface{}, bool) {
 func (m *Model) MustVariable(name ...string) interface{} {
 	value, found := m.GetVariable(name...)
 	if !found {
-		logrus.Fatalf("missing data [%s]", name)
+		logrus.Fatalf("missing variable [%s]", name)
 	}
 	return value
 }

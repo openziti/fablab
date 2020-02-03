@@ -61,7 +61,12 @@ func create(_ *cobra.Command, args []string) {
 	if createBindings != nil {
 		logrus.Infof("setting label bindings = [%v]", createBindings)
 		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
-			l.Bindings = createBindings
+			if l.Bindings == nil {
+				l.Bindings = make(model.Bindings)
+			}
+			for k, v := range createBindings {
+				l.Bindings[k] = v
+			}
 			if err := l.Save(); err != nil {
 				logrus.Fatalf("error saving label bindings (%w)", err)
 			}

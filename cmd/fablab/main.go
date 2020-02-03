@@ -20,10 +20,10 @@ import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
 	"github.com/netfoundry/fablab/kernel/model"
-	_ "github.com/netfoundry/fablab/zitilab/characterization/internet"
-	_ "github.com/netfoundry/fablab/zitilab/characterization/ziti"
-	_ "github.com/netfoundry/fablab/zitilab/development"
-	"github.com/netfoundry/fablab/zitilab/development/bootstrap"
+	_ "github.com/netfoundry/fablab/zitilib/characterization/internet"
+	_ "github.com/netfoundry/fablab/zitilib/characterization/ziti"
+	_ "github.com/netfoundry/fablab/zitilib/development"
+	"github.com/netfoundry/fablab/zitilib/development/bootstrap"
 	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/netfoundry/ziti-foundation/transport/quic"
 	"github.com/netfoundry/ziti-foundation/transport/tcp"
@@ -37,7 +37,7 @@ func init() {
 	transport.AddAddressParser(quic.AddressParser{})
 	transport.AddAddressParser(tls.AddressParser{})
 	transport.AddAddressParser(tcp.AddressParser{})
-	model.AddBootstrapExtension(&zitilab_bootstrap.Bootstrap{})
+	model.AddBootstrapExtension(&zitilib_bootstrap.Bootstrap{})
 }
 
 func main() {

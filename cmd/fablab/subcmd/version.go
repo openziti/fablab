@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/actions/cli"
+	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +34,7 @@ var versionCmd = &cobra.Command{
 }
 
 func version(_ *cobra.Command, _ []string) {
-	cli.Figlet("fablab")
+	fablib.Figlet("fablab")
 	fmt.Println(center("the fabulous laboratory", 30))
 	fmt.Println()
 	fmt.Println(center(model.Version, 30))

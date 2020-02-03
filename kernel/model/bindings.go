@@ -54,6 +54,11 @@ func (m *Model) BindBindings(bindings Bindings) error {
 	return nil
 }
 
+func (bindings Bindings) Has(name ...string) bool {
+	_, found := bindings.Get(name...)
+	return found
+}
+
 func (bindings Bindings) Must(name ...string) interface{} {
 	value, found := bindings.Get(name...)
 	if !found {
