@@ -31,62 +31,7 @@ import (
 	"sync"
 )
 
-type SshConfigFactory interface {
-	Address() string
-	Hostname() string
-	Port() int
-	User() string
-	Config() *ssh.ClientConfig
-}
-
-type SshConfigFactoryImpl struct {
-	user            string
-	host            string
-	port            int
-	keyPath         string
-	resolveAuthOnce sync.Once
-	authMethods     []ssh.AuthMethod
-}
-
-func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
-	user := m.MustVariable("credentials", "ssh", "username").(string)
-	keyPath := m.Variable("credentials", "ssh", "key_path").(string)
-	factory := &SshConfigFactoryImpl{
-		user:    user,
-		host:    host,
-		port:    22,
-		keyPath: keyPath,
-	}
-
-	return factory
-}
-
-func (factory *SshConfigFactoryImpl) User() string {
-	return factory.user
-}
-func (factory *SshConfigFactoryImpl) Hostname() string {
-	return factory.host
-}
-
-func (factory *SshConfigFactoryImpl) Port() int {
-	return factory.port
-}
-
-func (factory *SshConfigFactoryImpl) Address() string {
-	return factory.host + ":" + strconv.Itoa(factory.port)
-}
-
-func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
-	factory.resolveAuthOnce.Do(func() {
-		factory.authMethods = sshAutMethods(factory.keyPath)
-	})
-
-	return &ssh.ClientConfig{
-		User:            factory.user,
-		Auth:            factory.authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-}
+var SshCommand string
 
 func LaunchService(factory SshConfigFactory, name, cfg string) error {
 	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > %s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
@@ -205,42 +150,6 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 	return b.String(), err
 }
 
-func sshAuthMethodFromFile(keyPath string) (ssh.AuthMethod, error) {
-	content, err := ioutil.ReadFile(keyPath)
-	if err != nil {
-		return nil, fmt.Errorf("could not read ssh file [%s]: %w", keyPath, err)
-	}
-
-	if signer, err := ssh.ParsePrivateKey(content); err == nil {
-		return ssh.PublicKeys(signer), nil
-	} else {
-		if err.Error() == "ssh: no key found" {
-			return nil, fmt.Errorf("no private key found in [%s]: %w", keyPath, err)
-		} else if err.(*ssh.PassphraseMissingError) != nil {
-			return nil, fmt.Errorf("file is password protected [%s] %w", keyPath, err)
-		} else {
-			return nil, fmt.Errorf("error parsing private key from [%s]L %w", keyPath, err)
-		}
-	}
-}
-
-func sshAutMethods(keyPath string) []ssh.AuthMethod {
-	var methods []ssh.AuthMethod
-
-	if fileMethod, err := sshAuthMethodFromFile(keyPath); err == nil {
-		methods = append(methods, fileMethod)
-	} else {
-		logrus.Error(err)
-	}
-
-	if agentMethod := sshAuthMethodAgent(); agentMethod != nil {
-		methods = append(methods, sshAuthMethodAgent())
-	}
-
-	methods = append(methods, )
-	return methods
-}
-
 func RemoteKill(factory SshConfigFactory, match string) error {
 	output, err := RemoteExec(factory, "ps x")
 	if err != nil {
@@ -276,4 +185,99 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 	}
 
 	return nil
+}
+
+type SshConfigFactory interface {
+	Address() string
+	Hostname() string
+	Port() int
+	User() string
+	Config() *ssh.ClientConfig
+	KeyPath() string
+}
+
+type SshConfigFactoryImpl struct {
+	user            string
+	host            string
+	port            int
+	keyPath         string
+	resolveAuthOnce sync.Once
+	authMethods     []ssh.AuthMethod
+}
+
+func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
+	user := m.MustVariable("credentials", "ssh", "username").(string)
+	keyPath, _ := m.Variable("credentials", "ssh", "key_path").(string)
+	factory := &SshConfigFactoryImpl{
+		user:    user,
+		host:    host,
+		port:    22,
+		keyPath: keyPath,
+	}
+
+	return factory
+}
+
+func (factory *SshConfigFactoryImpl) User() string {
+	return factory.user
+}
+func (factory *SshConfigFactoryImpl) Hostname() string {
+	return factory.host
+}
+
+func (factory *SshConfigFactoryImpl) Port() int {
+	return factory.port
+}
+
+func (factory *SshConfigFactoryImpl) KeyPath() string {
+	return factory.keyPath
+}
+
+func (factory *SshConfigFactoryImpl) Address() string {
+	return factory.host + ":" + strconv.Itoa(factory.port)
+}
+
+func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
+	factory.resolveAuthOnce.Do(func() {
+		var methods []ssh.AuthMethod
+
+		if fileMethod, err := sshAuthMethodFromFile(factory.keyPath); err == nil {
+			methods = append(methods, fileMethod)
+		} else {
+			logrus.Error(err)
+		}
+
+		if agentMethod := sshAuthMethodAgent(); agentMethod != nil {
+			methods = append(methods, sshAuthMethodAgent())
+		}
+
+		methods = append(methods, )
+
+		factory.authMethods = methods
+	})
+
+	return &ssh.ClientConfig{
+		User:            factory.user,
+		Auth:            factory.authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+}
+
+func sshAuthMethodFromFile(keyPath string) (ssh.AuthMethod, error) {
+	content, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not read ssh file [%s]: %w", keyPath, err)
+	}
+
+	if signer, err := ssh.ParsePrivateKey(content); err == nil {
+		return ssh.PublicKeys(signer), nil
+	} else {
+		if err.Error() == "ssh: no key found" {
+			return nil, fmt.Errorf("no private key found in [%s]: %w", keyPath, err)
+		} else if err.(*ssh.PassphraseMissingError) != nil {
+			return nil, fmt.Errorf("file is password protected [%s] %w", keyPath, err)
+		} else {
+			return nil, fmt.Errorf("error parsing private key from [%s]L %w", keyPath, err)
+		}
+	}
 }

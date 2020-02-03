@@ -45,15 +45,5 @@ func ZitiFabricCli() string {
 	return filepath.Join(zitiBinaries(), "ziti-fabric")
 }
 
-func RsyncCommand() string {
-	return rsyncCommand
-}
-
-func SshCommand() string {
-	return sshCommand
-}
-
 var zitiRoot string
 var zitiDistRoot string
-var rsyncCommand string
-var sshCommand string

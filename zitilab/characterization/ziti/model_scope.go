@@ -36,6 +36,10 @@ func (f *modelScopeFactory) Build(m *model.Model) error {
 				"username": &model.Variable{Default: "fedora"},
 			},
 		},
+		"distribution": model.Variables{
+			"rsync_bin": &model.Variable{Default: "rsync"},
+			"ssh_bin":   &model.Variable{Default: "ssh"},
+		},
 	}
 	return nil
 }

@@ -60,20 +60,6 @@ func (bootstrap *Bootstrap) Bootstrap(m *model.Model) error {
 				return
 			}
 		}
-
-		rsyncCommand = os.Getenv("FABLAB_RSYNC")
-		if rsyncCommand == "" {
-			rsyncCommand = "rsync"
-		}
-
-		logrus.Debugf("FABLAB_RSYNC = [%s]", rsyncCommand)
-
-		sshCommand = os.Getenv("FABLAB_SSH")
-		if sshCommand == "" {
-			sshCommand = "ssh"
-		}
-
-		logrus.Debugf("FABLAB_SSH = [%s]", sshCommand)
 	})
 
 	return err

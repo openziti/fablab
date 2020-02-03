@@ -19,11 +19,10 @@ package rsync
 import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/internal"
-	zitilab_bootstrap "github.com/netfoundry/fablab/zitilab/development/bootstrap"
 )
 
-func rsync(sourcePath, targetPath string) error {
-	rsync := internal.NewProcess(zitilab_bootstrap.RsyncCommand(), "-avz", "-e", zitilab_bootstrap.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
+func rsync(config *Config, sourcePath, targetPath string) error {
+	rsync := internal.NewProcess(config.rsyncBin, config.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
 	rsync.WithTail(internal.StdoutTail)
 	if err := rsync.Run(); err != nil {
 		return fmt.Errorf("rsync failed (%w)", err)

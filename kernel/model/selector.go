@@ -29,7 +29,7 @@ func (m *Model) IsBound() bool {
 func (m *Model) Variable(name ...string) interface{} {
 	value, found := m.GetVariable(name...)
 	if !found {
-		logrus.Fatalf("missing model variable [%v]", name)
+		return nil
 	}
 	return value
 }
