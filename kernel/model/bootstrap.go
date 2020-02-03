@@ -29,7 +29,6 @@ func AddBootstrapExtension(ext BootstrapExtension) {
 func Bootstrap() error {
 	var err error
 	var m *Model
-
 	if err = BootstrapBindings(); err != nil {
 		return fmt.Errorf("unable to bootstrap config (%w)", err)
 	}
