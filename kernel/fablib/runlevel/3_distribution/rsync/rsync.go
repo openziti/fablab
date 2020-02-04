@@ -29,10 +29,10 @@ func Rsync() model.DistributionStage {
 }
 
 func (rsync *rsyncStage) Distribute(m *model.Model) error {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 	for regionId, r := range m.Regions {
 		for hostId, host := range r.Hosts {
-			if err := synchronizeHost(host, sshUsername); err != nil {
+			config := newConfig(m, host.PublicIp)
+			if err := synchronizeHost(config); err != nil {
 				return fmt.Errorf("error synchronizing host [%s/%s] (%s)", regionId, hostId, err)
 			}
 		}
@@ -43,8 +43,8 @@ func (rsync *rsyncStage) Distribute(m *model.Model) error {
 type rsyncStage struct {
 }
 
-func synchronizeHost(h *model.Host, sshUsername string) error {
-	if output, err := fablib.RemoteExec(sshUsername, h.PublicIp, "mkdir -p /home/fedora/fablab"); err == nil {
+func synchronizeHost(config *Config) error {
+	if output, err := fablib.RemoteExec(config.sshConfigFactory, "mkdir -p /home/fedora/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -52,18 +52,45 @@ func synchronizeHost(h *model.Host, sshUsername string) error {
 		return err
 	}
 
-	if err := rsync(model.KitBuild()+"/", fmt.Sprintf("fedora@%s:/home/fedora/fablab", h.PublicIp)); err != nil {
+	if err := rsync(config, model.KitBuild()+"/", fmt.Sprintf("fedora@%s:/home/fedora/fablab", config.sshConfigFactory.Hostname())); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 
 	return nil
 }
 
-func rsync(sourcePath, targetPath string) error {
-	rsync := fablib.NewProcess("rsync", "-avz", "-e", "ssh -o \"StrictHostKeyChecking no\"", "--delete", sourcePath, targetPath)
-	rsync.WithTail(fablib.StdoutTail)
-	if err := rsync.Run(); err != nil {
-		return fmt.Errorf("rsync failed (%w)", err)
+type Config struct {
+	sshBin           string
+	sshConfigFactory fablib.SshConfigFactory
+	rsyncBin         string
+}
+
+func newConfig(m *model.Model, publicIp string) *Config {
+	config := &Config{
+		sshBin:           "ssh",
+		sshConfigFactory: fablib.NewSshConfigFactoryImpl(m, publicIp),
+		rsyncBin:         "rsync",
 	}
-	return nil
+
+	if rsyncBin, ok := m.MustVariable("distribution", "rsync_bin").(string); ok {
+		config.rsyncBin = rsyncBin
+	}
+
+	if sshBin, ok := m.MustVariable("distribution", "ssh_bin").(string); ok {
+		config.sshBin = sshBin
+	}
+
+	return config
+}
+
+func (config *Config) sshIdentityFlag() string {
+	if config.sshConfigFactory.KeyPath() != "" {
+		return "-i " + config.sshConfigFactory.KeyPath()
+	}
+
+	return ""
+}
+
+func (config *Config) SshCommand() string {
+	return config.sshBin + " " + config.sshIdentityFlag()
 }

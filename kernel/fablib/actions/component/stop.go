@@ -35,8 +35,9 @@ func (stop *stop) Execute(m *model.Model) error {
 	for _, h := range hosts {
 		components := h.GetComponents(stop.componentSpec)
 		for _, c := range components {
-			sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-			if err := fablib.KillService(sshUsername, h.PublicIp, c.BinaryName); err != nil {
+			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
+
+			if err := fablib.KillService(sshConfigFactory, c.BinaryName); err != nil {
 				return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
 			}
 		}

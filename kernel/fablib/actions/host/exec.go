@@ -31,8 +31,9 @@ func Exec(h *model.Host, cmd string) model.Action {
 }
 
 func (exec *exec) Execute(m *model.Model) error {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-	if o, err := fablib.RemoteExec(sshUsername, exec.h.PublicIp, exec.cmd); err != nil {
+	sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
+
+	if o, err := fablib.RemoteExec(sshConfigFactory, exec.cmd); err != nil {
 		logrus.Errorf("output [%s]", o)
 		return fmt.Errorf("error executing process [%s] on [%s] (%s)", exec.cmd, exec.h.PublicIp, err)
 	}

@@ -14,36 +14,17 @@
 	limitations under the License.
 */
 
-package zitilib_bootstrap
+package fablib
 
-import "path/filepath"
-
-func ZitiRoot() string {
-	return zitiRoot
-}
-
-func ZitiDistRoot() string {
-	if zitiDistRoot == "" {
-		return ZitiRoot()
+import (
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
+	"net"
+	"os"
+)
+func sshAuthMethodAgent() ssh.AuthMethod {
+	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 	}
-	return zitiDistRoot
+	return nil
 }
-
-func zitiBinaries() string {
-	return filepath.Join(zitiRoot, "bin")
-}
-
-func ZitiDistBinaries() string {
-	return filepath.Join(ZitiDistRoot(), "bin")
-}
-
-func ZitiCli() string {
-	return filepath.Join(zitiBinaries(), "ziti")
-}
-
-func ZitiFabricCli() string {
-	return filepath.Join(zitiBinaries(), "ziti-fabric")
-}
-
-var zitiRoot string
-var zitiDistRoot string

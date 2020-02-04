@@ -14,36 +14,18 @@
 	limitations under the License.
 */
 
-package zitilib_bootstrap
+package rsync
 
-import "path/filepath"
+import (
+	"fmt"
+	"github.com/netfoundry/fablab/kernel/fablib"
+)
 
-func ZitiRoot() string {
-	return zitiRoot
-}
-
-func ZitiDistRoot() string {
-	if zitiDistRoot == "" {
-		return ZitiRoot()
+func rsync(config *Config, sourcePath, targetPath string) error {
+	rsync := fablib.NewProcess(config.rsyncBin, "-avz", "-e", config.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
+	rsync.WithTail(fablib.StdoutTail)
+	if err := rsync.Run(); err != nil {
+		return fmt.Errorf("rsync failed (%w)", err)
 	}
-	return zitiDistRoot
+	return nil
 }
-
-func zitiBinaries() string {
-	return filepath.Join(zitiRoot, "bin")
-}
-
-func ZitiDistBinaries() string {
-	return filepath.Join(ZitiDistRoot(), "bin")
-}
-
-func ZitiCli() string {
-	return filepath.Join(zitiBinaries(), "ziti")
-}
-
-func ZitiFabricCli() string {
-	return filepath.Join(zitiBinaries(), "ziti-fabric")
-}
-
-var zitiRoot string
-var zitiDistRoot string
