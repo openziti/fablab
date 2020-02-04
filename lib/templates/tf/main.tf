@@ -1,8 +1,8 @@
-variable "environment_tag"    { default = "{{ .Model.Variable "environment" }}" }
-variable "aws_access_key"     { default = "{{ .Model.Variable "credentials" "aws" "access_key" }}" }
-variable "aws_secret_key"     { default = "{{ .Model.Variable "credentials" "aws" "secret_key" }}" }
-variable "aws_key_name"       { default = "{{ .Model.Variable "credentials" "aws" "ssh_key_name" }}" }
-variable "aws_key_path"       { default = "{{ .Model.Variable "credentials" "ssh" "key_path" }}" }
+variable "environment_tag"    { default = "{{ .Model.MustVariable "environment" }}" }
+variable "aws_access_key"     { default = "{{ .Model.MustVariable "credentials" "aws" "access_key" }}" }
+variable "aws_secret_key"     { default = "{{ .Model.MustVariable "credentials" "aws" "secret_key" }}" }
+variable "aws_key_name"       { default = "{{ .Model.MustVariable "credentials" "aws" "ssh_key_name" }}" }
+variable "aws_key_path"       { default = "{{ .Model.MustVariable "credentials" "ssh" "key_path" }}" }
 
 variable "vpc_cidr"           { default = "10.0.0.0/16" }
 variable "public_cidr"        { default = "10.0.0.0/24" }

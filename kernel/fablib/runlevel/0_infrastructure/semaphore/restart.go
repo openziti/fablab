@@ -33,14 +33,14 @@ func (restartStage *restartStage) Express(m *model.Model, l *model.Label) error 
 	logrus.Infof("waiting for expressed hosts to restart (pre-delay: %s)", restartStage.preDelay.String())
 	time.Sleep(restartStage.preDelay)
 
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-
 	logrus.Infof("starting restart checks")
 	for _, r := range m.Regions {
 		for _, h := range r.Hosts {
 			success := false
 			for tries := 0; tries < 5; tries++ {
-				if output, err := fablib.RemoteExec(sshUsername, h.PublicIp, "uptime"); err != nil {
+				sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
+
+				if output, err := fablib.RemoteExec(sshConfigFactory, "uptime"); err != nil {
 					logrus.Warnf("host not restarted [%s] (%w)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {
