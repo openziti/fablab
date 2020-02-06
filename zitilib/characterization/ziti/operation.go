@@ -61,10 +61,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
 	}
 
-	minutes, found := m.GetVariable("sample_minutes")
-	if !found {
-		minutes = 1
-	}
+	minutes := m.MustVariable("characterization", "sample_minutes")
 	sampleDuration := time.Duration(minutes.(int)) * time.Minute
 
 	c := make(chan struct{})
