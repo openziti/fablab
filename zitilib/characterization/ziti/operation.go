@@ -45,6 +45,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need single host for short:short, found [%d]", len(values))
 	}
 
+	/*
 	values = m.GetHosts("medium", "medium")
 	var mediumProxy string
 	if len(values) == 1 {
@@ -60,71 +61,62 @@ func (f *operationFactory) Build(m *model.Model) error {
 	} else {
 		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
 	}
+	*/
 
 	minutes := m.MustVariable("characterization", "sample_minutes")
-	sampleDuration := time.Duration(minutes.(int)) * time.Minute
+	sampleDuration := int((time.Duration(minutes.(int)) * time.Minute).Seconds())
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
 		func(m *model.Model) model.OperatingStage { return __operation.Mesh(c) },
 		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
-
-		/*
-		 * short -> local
-		 */
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("ziti", shortProxy, "local", "service", "short", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("internet", directEndpoint, "local", "service", "short", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", shortProxy, "local", "service", "short", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "short", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		/* */
-
-		/*
-		 * medium -> local
-		 */
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("ziti", mediumProxy, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("internet", directEndpoint, "local", "service", "medium", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", mediumProxy, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "medium", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		/* */
-
-		/*
-		 * long -> local
-		 */
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("ziti", longProxy, "local", "service", "long", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.Iperf("internet", directEndpoint, "local", "service", "long", "client", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("ziti_1m", longProxy, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		func(m *model.Model) model.OperatingStage {
-			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", "long", "client", "1M", int(sampleDuration.Seconds()))
-		},
-		/* */
-
-		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
-		func(m *model.Model) model.OperatingStage { return operation.Persist() },
 	}
 
+	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, sampleDuration)...)
+	//m.Operation = append(m.Operation, f.forRegion("medium", mediumProxy, directEndpoint, sampleDuration)...)
+	//m.Operation = append(m.Operation, f.forRegion("long", longProxy, directEndpoint, sampleDuration)...)
+
+	m.Operation = append(m.Operation, []model.OperatingBinder{
+		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
+		func(m *model.Model) model.OperatingStage { return operation.Persist() },
+	}...)
+
 	return nil
+}
+
+func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint string, seconds int) []model.OperatingBinder {
+	return []model.OperatingBinder{
+		func(m *model.Model) model.OperatingStage {
+			return operation.Tcpdump("ziti", region, "client", 64)
+		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.Iperf("ziti", initiatingRouter, "local", "service", region, "client", seconds)
+		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.TcpdumpCloser(region, "client")
+		},
+
+
+		func(m *model.Model) model.OperatingStage {
+			return operation.Tcpdump("internet", region, "client", 64)
+		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.Iperf("internet", directEndpoint, "local", "service", region, "client", seconds)
+		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.TcpdumpCloser(region, "client")
+		},
+
+		/*
+		func(m *model.Model) model.OperatingStage {
+			return operation.IperfUdp("ziti_1m", initiatingRouter, "local", "service", region, "client", "1M", seconds)
+		},
+
+		func(m *model.Model) model.OperatingStage {
+			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", region, "client", "1M", seconds)
+		},
+		*/
+	}
 }
 
 type operationFactory struct{}

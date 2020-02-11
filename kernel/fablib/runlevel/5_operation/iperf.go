@@ -79,7 +79,7 @@ func (i *iperf) Operate(m *model.Model) error {
 
 func (i *iperf) runServer(factory fablib.SshConfigFactory) {
 	if err := fablib.RemoteKill(factory, "iperf3"); err != nil {
-		logrus.Errorf("error killing iperf3 clients (%w)", err)
+		logrus.Errorf("error killing iperf3 servers (%w)", err)
 		return
 	}
 
