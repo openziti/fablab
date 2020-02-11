@@ -18,8 +18,8 @@ package config
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/fablab/kernel/fablib"
+	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"

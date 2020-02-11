@@ -33,7 +33,7 @@ func Mesh(closer chan struct{}) model.OperatingStage {
 	return &mesh{closer: closer}
 }
 
-func (mesh *mesh) Operate(m *model.Model) error {
+func (mesh *mesh) Operate(m *model.Model, _ string) error {
 	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)

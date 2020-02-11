@@ -45,7 +45,6 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need single host for short:short, found [%d]", len(values))
 	}
 
-	/*
 	values = m.GetHosts("medium", "medium")
 	var mediumProxy string
 	if len(values) == 1 {
@@ -61,10 +60,9 @@ func (f *operationFactory) Build(m *model.Model) error {
 	} else {
 		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
 	}
-	*/
 
 	minutes := m.MustVariable("characterization", "sample_minutes")
-	sampleDuration := int((time.Duration(minutes.(int)) * time.Minute).Seconds())
+	seconds := int((time.Duration(minutes.(int)) * time.Minute).Seconds())
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
@@ -72,9 +70,9 @@ func (f *operationFactory) Build(m *model.Model) error {
 		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
 	}
 
-	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, sampleDuration)...)
-	//m.Operation = append(m.Operation, f.forRegion("medium", mediumProxy, directEndpoint, sampleDuration)...)
-	//m.Operation = append(m.Operation, f.forRegion("long", longProxy, directEndpoint, sampleDuration)...)
+	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, seconds)...)
+	m.Operation = append(m.Operation, f.forRegion("medium", mediumProxy, directEndpoint, seconds)...)
+	m.Operation = append(m.Operation, f.forRegion("long", longProxy, directEndpoint, seconds)...)
 
 	m.Operation = append(m.Operation, []model.OperatingBinder{
 		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
@@ -96,7 +94,6 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 			return operation.TcpdumpCloser(region, "client")
 		},
 
-
 		func(m *model.Model) model.OperatingStage {
 			return operation.Tcpdump("internet", region, "client", 64)
 		},
@@ -107,7 +104,10 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 			return operation.TcpdumpCloser(region, "client")
 		},
 
-		/*
+		func(m *model.Model) model.OperatingStage {
+			return operation.Retrieve(region, "client", ".", ".pcap")
+		},
+
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("ziti_1m", initiatingRouter, "local", "service", region, "client", "1M", seconds)
 		},
@@ -115,7 +115,6 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", region, "client", "1M", seconds)
 		},
-		*/
 	}
 }
 

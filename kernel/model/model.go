@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/netfoundry/ziti-foundation/util/info"
 )
 
 func (m *Model) Express(l *Label) error {
@@ -86,8 +87,9 @@ func (m *Model) Activate(l *Label) error {
 }
 
 func (m *Model) Operate(l *Label) error {
+	run := fmt.Sprintf("%d", info.NowInMilliseconds())
 	for _, stage := range m.operationStages {
-		if err := stage.Operate(m); err != nil {
+		if err := stage.Operate(m, run); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}
 	}
@@ -197,7 +199,7 @@ type ActivationStage interface {
 }
 
 type OperatingStage interface {
-	Operate(m *Model) error
+	Operate(m *Model, run string) error
 }
 
 type DisposalStage interface {

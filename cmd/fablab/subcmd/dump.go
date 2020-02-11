@@ -13,10 +13,10 @@ func init() {
 }
 
 var dumpCmd = &cobra.Command{
-	Use: "dump",
+	Use:   "dump",
 	Short: "dump the resolved model structure",
-	Args: cobra.ExactArgs(0),
-	Run: dump,
+	Args:  cobra.ExactArgs(0),
+	Run:   dump,
 }
 
 func dump(_ *cobra.Command, _ []string) {

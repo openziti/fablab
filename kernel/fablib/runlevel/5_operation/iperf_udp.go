@@ -37,7 +37,7 @@ func IperfUdp(scenarioName, endpoint, serverRegion, serverHost, clientRegion, cl
 	}
 }
 
-func (i *iperfUdp) Operate(m *model.Model) error {
+func (i *iperfUdp) Operate(m *model.Model, _ string) error {
 	serverHosts := m.GetHosts(i.serverRegion, i.serverHost)
 	clientHosts := m.GetHosts(i.clientRegion, i.clientHost)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {

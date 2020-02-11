@@ -14,7 +14,7 @@ func TcpdumpCloser(region, host string) model.OperatingStage {
 	}
 }
 
-func (t *tcpdumpCloser) Operate(m *model.Model) error {
+func (t *tcpdumpCloser) Operate(m *model.Model, _ string) error {
 	hosts := m.GetHosts(t.region, t.host)
 	var ssh fablib.SshConfigFactory
 	if len(hosts) == 1 {
@@ -23,7 +23,7 @@ func (t *tcpdumpCloser) Operate(m *model.Model) error {
 		return fmt.Errorf("found [%d] hosts", len(hosts))
 	}
 
-	if err := fablib.RemoteKill(ssh, "tcpdump"); err != nil {
+	if err := fablib.RemoteKillFilter(ssh, "tcpdump", "sudo"); err != nil {
 		return fmt.Errorf("error closing tcpdump (%w)", err)
 	}
 	logrus.Infof("tcpdump closed")

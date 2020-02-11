@@ -18,14 +18,17 @@ package model
 
 import (
 	"fmt"
-	"github.com/netfoundry/ziti-foundation/util/info"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
 
-func AllocateDump() string {
-	return fmt.Sprintf("%s/dumps/%d.json", ActiveInstancePath(), info.NowInMilliseconds())
+func AllocateForensicScenario(run, scenario string) string {
+	return fmt.Sprintf("%s/forensics/%s/%s", ActiveInstancePath(), run, scenario)
+}
+
+func AllocateDump(run string) string {
+	return fmt.Sprintf("%s/dumps/%s.json", ActiveInstancePath(), run)
 }
 
 func ListDumps() ([]string, error) {

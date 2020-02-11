@@ -34,7 +34,7 @@ func Metrics(closer chan struct{}) model.OperatingStage {
 	return &metrics{closer: closer}
 }
 
-func (metrics *metrics) Operate(m *model.Model) error {
+func (metrics *metrics) Operate(m *model.Model, _ string) error {
 	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
