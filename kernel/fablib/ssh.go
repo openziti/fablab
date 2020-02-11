@@ -151,7 +151,7 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 }
 
 func RemoteKill(factory SshConfigFactory, match string) error {
-	output, err := RemoteExec(factory, "ps x")
+	output, err := RemoteExec(factory, "ps ax")
 	if err != nil {
 		return fmt.Errorf("unable to get remote process listing [%s] (%s)", factory.Address(), err)
 	}
@@ -173,7 +173,7 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 	}
 
 	if len(pidList) > 0 {
-		killCmd := "kill"
+		killCmd := "sudo kill"
 		for _, pid := range pidList {
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
