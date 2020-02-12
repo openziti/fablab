@@ -85,7 +85,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint string, seconds int) []model.OperatingBinder {
 	return []model.OperatingBinder{
 		func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("ziti", region, "client", 64)
+			return operation.Tcpdump("ziti", region, "client", 128)
 		},
 		func(m *model.Model) model.OperatingStage {
 			return operation.Iperf("ziti", initiatingRouter, "local", "service", region, "client", seconds)
@@ -95,7 +95,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 		},
 
 		func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("internet", region, "client", 64)
+			return operation.Tcpdump("internet", region, "client", 128)
 		},
 		func(m *model.Model) model.OperatingStage {
 			return operation.Iperf("internet", directEndpoint, "local", "service", region, "client", seconds)
