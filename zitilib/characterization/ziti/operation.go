@@ -93,6 +93,9 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 		func(m *model.Model) model.OperatingStage {
 			return operation.TcpdumpCloser(region, "client")
 		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.Persist()
+		},
 
 		func(m *model.Model) model.OperatingStage {
 			return operation.Tcpdump("internet", region, "client", 128)
@@ -103,6 +106,9 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 		func(m *model.Model) model.OperatingStage {
 			return operation.TcpdumpCloser(region, "client")
 		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.Persist()
+		},
 
 		func(m *model.Model) model.OperatingStage {
 			return operation.Retrieve(region, "client", ".", ".pcap")
@@ -111,9 +117,11 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("ziti_1m", initiatingRouter, "local", "service", region, "client", "1M", seconds)
 		},
-
 		func(m *model.Model) model.OperatingStage {
 			return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", region, "client", "1M", seconds)
+		},
+		func(m *model.Model) model.OperatingStage {
+			return operation.Persist()
 		},
 	}
 }
