@@ -70,7 +70,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
 	}
 
-	m.Operation = append(m.Operation, f.sarHosts(m, 1, seconds)...)
+	m.Operation = append(m.Operation, f.sarHosts(c, m, 1, 5)...)
 
 	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, seconds)...)
 	m.Operation = append(m.Operation, f.forRegion("medium", mediumProxy, directEndpoint, seconds)...)
@@ -84,12 +84,12 @@ func (f *operationFactory) Build(m *model.Model) error {
 	return nil
 }
 
-func (f *operationFactory) sarHosts(m *model.Model, intervalSeconds, snapshots int) []model.OperatingBinder {
+func (f *operationFactory) sarHosts(closer chan struct{}, m *model.Model, intervalSeconds, snapshots int) []model.OperatingBinder {
 	binders := make([]model.OperatingBinder, 0)
 	for _, host := range m.GetAllHosts() {
 		h := host
 		stage := func(m *model.Model) model.OperatingStage {
-			return operation.Sar(h, intervalSeconds, snapshots)
+			return operation.Sar(closer, h, intervalSeconds, snapshots)
 		}
 		binders = append(binders, stage)
 	}

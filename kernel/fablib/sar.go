@@ -65,7 +65,11 @@ func SummarizeSar(data []byte) (*model.HostSummary, error) {
 
 		blankLine, err := reader.ReadString('\n')
 		if err != nil {
-			return nil, fmt.Errorf("unexpected error (%w)", err)
+			if err.Error() == "EOF" {
+				return summary, nil
+			} else {
+				return nil, fmt.Errorf("unexpected error (%w)", err)
+			}
 		}
 		if blankLine != "\n" {
 			return nil, fmt.Errorf("synchronization error [%s]", blankLine)
