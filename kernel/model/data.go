@@ -1,17 +1,13 @@
 package model
 
 type HostSummary struct {
-	Timeslices []*HostTimeslice `json:"timeslices"`
+	Cpu     []*CpuTimeslice     `json:"cpu,omitempty"`
+	Memory  []*MemoryTimeslice  `json:"memory,omitempty"`
+	Process []*ProcessTimeslice `json:"process,omitempty"`
 }
 
-type HostTimeslice struct {
-	TimestampMs int64           `json:"timestamp_ms"`
-	Cpu         *CpuMetrics     `json:"cpu"`
-	Memory      *MemoryMetrics  `json:"memory"`
-	Process     *ProcessMetrics `json:"process"`
-}
-
-type CpuMetrics struct {
+type CpuTimeslice struct {
+	TimestampMs   int64   `json:"timestamp_ms"`
 	PercentUser   float64 `json:"percent_user"`
 	PercentNice   float64 `json:"percent_nice"`
 	PercentSystem float64 `json:"percent_system"`
@@ -20,7 +16,8 @@ type CpuMetrics struct {
 	PercentIdle   float64 `json:"percent_idle"`
 }
 
-type MemoryMetrics struct {
+type MemoryTimeslice struct {
+	TimestampMs   int64   `json:"timestamp_ms"`
 	MemFreeK      int64   `json:"free_k"`
 	AvailK        int64   `json:"avail_k"`
 	UsedK         int64   `json:"used_k"`
@@ -34,7 +31,8 @@ type MemoryMetrics struct {
 	DirtyK        int64   `json:"dirty_k"`
 }
 
-type ProcessMetrics struct {
+type ProcessTimeslice struct {
+	TimestampMs     int64   `json:"timestamp_ms"`
 	RunQueueSize    int64   `json:"run_queue_size"`
 	ProcessListSize int64   `json:"process_list_size"`
 	LoadAverage1m   float64 `json:"load_average_1m"`
