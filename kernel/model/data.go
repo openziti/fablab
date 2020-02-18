@@ -25,7 +25,7 @@ type MemoryTimeslice struct {
 	BuffersK      int64   `json:"buffers_k"`
 	CachedK       int64   `json:"cached_k"`
 	CommitK       int64   `json:"commit_k"`
-	CommitPercent int64   `json:"commit_percent"`
+	CommitPercent float64 `json:"commit_percent"`
 	ActiveK       int64   `json:"active_k"`
 	InactiveK     int64   `json:"inactive_k"`
 	DirtyK        int64   `json:"dirty_k"`
