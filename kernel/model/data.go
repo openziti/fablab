@@ -1,5 +1,48 @@
 package model
 
+type HostSummary struct {
+	Timeslices []*HostTimeslice `json:"timeslices"`
+}
+
+type HostTimeslice struct {
+	TimestampMs int64           `json:"timestamp_ms"`
+	Cpu         *CpuMetrics     `json:"cpu"`
+	Memory      *MemoryMetrics  `json:"memory"`
+	Process     *ProcessMetrics `json:"process"`
+}
+
+type CpuMetrics struct {
+	PercentUser   float64 `json:"percent_user"`
+	PercentNice   float64 `json:"percent_nice"`
+	PercentSystem float64 `json:"percent_system"`
+	PercentIowait float64 `json:"percent_iowait"`
+	PercentSteal  float64 `json:"percent_steal"`
+	PercentIdle   float64 `json:"percent_idle"`
+}
+
+type MemoryMetrics struct {
+	MemFreeK      int64   `json:"free_k"`
+	AvailK        int64   `json:"avail_k"`
+	UsedK         int64   `json:"used_k"`
+	UsedPercent   float64 `json:"used_percent"`
+	BuffersK      int64   `json:"buffers_k"`
+	CachedK       int64   `json:"cached_k"`
+	CommitK       int64   `json:"commit_k"`
+	CommitPercent int64   `json:"commit_percent"`
+	ActiveK       int64   `json:"active_k"`
+	InactiveK     int64   `json:"inactive_k"`
+	DirtyK        int64   `json:"dirty_k"`
+}
+
+type ProcessMetrics struct {
+	RunQueueSize    int64   `json:"run_queue_size"`
+	ProcessListSize int64   `json:"process_list_size"`
+	LoadAverage1m   float64 `json:"load_average_1m"`
+	LoadAverage5m   float64 `json:"load_average_5m`
+	LoadAverage15m  float64 `json:"load_average_15m"`
+	Blocked         int64   `json:"blocked"`
+}
+
 type ZitiFabricMeshSummary struct {
 	TimestampMs int64                   `json:"timestamp_ms"`
 	RouterIds   []string                `json:"router_ids"`
