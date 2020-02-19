@@ -88,7 +88,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	/*
 	 * Ziti Bandwidth Testing
 	 */
-	scenario0 := fmt.Sprintf("ziti_%s", region)
+	scenario0 := fmt.Sprintf("%s_ziti", region)
 	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario0) })
 	stages0, joiners0 := f.sarStages(scenario0, m, 1)
 	binders = append(binders, stages0...)
@@ -115,7 +115,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	/*
 	 * Internet Bandwidth Testing
 	 */
-	scenario1 := fmt.Sprintf("internet_%s", region)
+	scenario1 := fmt.Sprintf("%s_internet", region)
 	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario1) })
 	stages1, joiners1 := f.sarStages(scenario1, m, 1)
 	binders = append(binders, stages1...)
@@ -150,7 +150,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	/*
 	 * Ziti UDP Testing
 	 */
-	scenario2 := fmt.Sprintf("ziti_udp_%s", region)
+	scenario2 := fmt.Sprintf("%s_ziti_udp", region)
 	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario2) })
 	stages2, joiners2 := f.sarStages(scenario2, m, 1)
 	binders = append(binders, stages2...)
@@ -166,7 +166,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	/*
 	 * Internet UDP Testing
 	 */
-	scenario3 := fmt.Sprintf("internet_udp_%s", region)
+	scenario3 := fmt.Sprintf("%s_internet_udp", region)
 	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario3) })
 	stages3, joiners3 := f.sarStages(scenario3, m, 1)
 	binders = append(binders, stages3...)
