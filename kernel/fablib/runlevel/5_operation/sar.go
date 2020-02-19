@@ -5,6 +5,7 @@ import (
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 func Sar(closer chan struct{}, host *model.Host, intervalSeconds, snapshots int) model.OperatingStage {
@@ -35,17 +36,27 @@ func (s *sar) waitClose() {
 
 func (s *sar) runSar(ssh fablib.SshConfigFactory) {
 	defer logrus.Infof("stopping")
+
+	delay := 0
 	for !s.closed {
-		sar := fmt.Sprintf("sudo sar -u -r -q %d %d", s.intervalSeconds, s.snapshots)
+		time.Sleep(time.Duration(delay) * time.Second)
+
+		sar := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.snapshots)
 		output, err := fablib.RemoteExec(ssh, sar)
 		if err != nil {
 			logrus.Errorf("sar failed [%s] (%w)", output, err)
+			delay = 5000
+			break
 		}
 
 		summary, err := fablib.SummarizeSar([]byte(output))
 		if err != nil {
 			logrus.Errorf("sar summary failed (%w)", err)
+			delay = 5000
+			break
 		}
+
+		delay = 0
 
 		if s.host.Data == nil {
 			s.host.Data = make(model.Data)

@@ -57,7 +57,7 @@ func (i *iperf) Operate(m *model.Model, _ string) error {
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", i.endpoint, i.seconds)
 		output, err := fablib.RemoteExec(sshClientFactory, iperfCmd)
 		if err == nil {
-			logrus.Infof("output = [%s]", output)
+			logrus.Debugf("output = [%s]", output)
 			if summary, err := fablib.SummarizeIperf([]byte(output)); err == nil {
 				if clientHost.Data == nil {
 					clientHost.Data = make(map[string]interface{})
