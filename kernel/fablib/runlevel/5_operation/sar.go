@@ -1,80 +1,86 @@
 package operation
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Sar(closer chan struct{}, host *model.Host, intervalSeconds, snapshots int) model.OperatingStage {
+func Sar(scenario string, host *model.Host, intervalSeconds int, joiner chan struct{}) model.OperatingStage {
 	return &sar{
-		closer:          closer,
+		scenario:        scenario,
 		host:            host,
 		intervalSeconds: intervalSeconds,
-		snapshots:       snapshots,
-		closed:          false,
+		joiner:          joiner,
+	}
+}
+
+func SarCloser(host *model.Host) model.OperatingStage {
+	return &sarCloser{
+		host: host,
 	}
 }
 
 func (s *sar) Operate(m *model.Model, _ string) error {
-	logrus.Infof("ip = %s", s.host.PublicIp)
 	ssh := fablib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
-	go s.waitClose()
 	go s.runSar(ssh)
 	return nil
 }
 
-func (s *sar) waitClose() {
-	defer logrus.Infof("closed")
-	select {
-	case <-s.closer:
-		s.closed = true
+func (s *sarCloser) Operate(m *model.Model, _ string) error {
+	ssh := fablib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
+	if err := fablib.RemoteKill(ssh, "sar"); err != nil {
+		return fmt.Errorf("error closing sar (%w)", err)
 	}
+	return nil
 }
 
 func (s *sar) runSar(ssh fablib.SshConfigFactory) {
-	defer logrus.Infof("stopping")
+	defer func() {
+		close(s.joiner)
+		logrus.Debugf("joiner closed")
+	}()
 
-	delay := 0
-	for !s.closed {
-		time.Sleep(time.Duration(delay) * time.Second)
-
-		sar := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.snapshots)
-		output, err := fablib.RemoteExec(ssh, sar)
-		if err != nil {
-			logrus.Errorf("sar failed [%s] (%w)", output, err)
-			delay = 5000
-			break
-		}
-
-		summary, err := fablib.SummarizeSar([]byte(output))
-		if err != nil {
-			logrus.Errorf("sar summary failed (%w)", err)
-			delay = 5000
-			break
-		}
-
-		delay = 0
-
-		if s.host.Data == nil {
-			s.host.Data = make(model.Data)
-		}
-		a, found := s.host.Data["host"]
-		if !found {
-			a = make([]*model.HostSummary, 0)
-			s.host.Data["host"] = a
-		}
-		a = append(a.([]*model.HostSummary), summary)
-		s.host.Data["host"] = a
+	sar := fmt.Sprintf("sar -u -r -q %d", s.intervalSeconds)
+	output, err := fablib.RemoteExec(ssh, sar)
+	if err != nil {
+		logrus.Warnf("sar exited (%w)", err)
 	}
+
+	summary, err := fablib.SummarizeSar([]byte(output))
+	if err != nil {
+		logrus.Errorf("sar summary failed (%w) [%s]", err, output)
+		return
+	}
+	j, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		logrus.Errorf("error marshaling summary (%w)", err)
+		return
+	}
+	logrus.Debugf("summary = %s", j)
+
+	if s.host.Data == nil {
+		s.host.Data = make(model.Data)
+	}
+	v, found := s.host.Data["host"]
+	if !found {
+		v = make(model.Data)
+		s.host.Data["host"] = v
+	}
+	v.(model.Data)[s.scenario] = summary
+
+	logrus.Infof("sar data added to host")
 }
 
 type sar struct {
-	closer          chan struct{}
+	scenario        string
 	host            *model.Host
 	intervalSeconds int
-	snapshots       int
-	closed          bool
+	joiner          chan struct{}
+}
+
+type sarCloser struct {
+	host *model.Host
 }

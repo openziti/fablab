@@ -50,7 +50,7 @@ func (i *iperf) Operate(m *model.Model, _ string) error {
 
 		time.Sleep(10 * time.Second)
 
-		if err := fablib.RemoteKill(sshClientFactory, "iperf3"); err != nil {
+		if err := fablib.RemoteKillFilter(sshClientFactory, "iperf3", "sudo"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
@@ -85,7 +85,7 @@ func (i *iperf) runServer(factory fablib.SshConfigFactory) {
 
 	output, err := fablib.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
-		logrus.Infof("iperf3 server completed, output [%s]", output)
+		logrus.Infof("iperf3 server completed")
 	} else {
 		logrus.Errorf("iperf3 server failure [%s] (%w)", output, err)
 	}

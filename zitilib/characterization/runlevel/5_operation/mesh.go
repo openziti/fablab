@@ -62,7 +62,7 @@ func (mesh *mesh) runMesh() {
 
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(15 * time.Second):
 			if err := mesh.interrogate(); err != nil {
 				logrus.Errorf("error querying mesh state (%w)", err)
 			}
