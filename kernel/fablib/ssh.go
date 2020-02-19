@@ -148,7 +148,7 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 
 	err = session.Run(cmd)
 	if err != nil {
-		return "", err
+		return b.String(), err
 	}
 
 	return b.String(), err
