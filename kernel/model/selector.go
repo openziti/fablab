@@ -92,6 +92,8 @@ func (m *Model) GetHosts(regionSpec, hostSpec string) []*Host {
 	var regions []*Region
 	if strings.HasPrefix(regionSpec, "@") {
 		regions = m.GetRegionsByTag(strings.TrimPrefix(regionSpec, "@"))
+	} else if regionSpec == "*" {
+		regions = m.GetAllRegions()
 	} else {
 		region := m.GetRegion(regionSpec)
 		if region != nil {
@@ -103,6 +105,8 @@ func (m *Model) GetHosts(regionSpec, hostSpec string) []*Host {
 	for _, region := range regions {
 		if strings.HasPrefix(hostSpec, "@") {
 			hosts = append(hosts, region.GetHostsByTag(strings.TrimPrefix(hostSpec, "@"))...)
+		} else if hostSpec == "*" {
+			hosts = region.GetAllHosts()
 		} else {
 			host := region.GetHost(hostSpec)
 			if host != nil {
@@ -164,6 +168,14 @@ func (m *Model) GetComponentsByTag(componentTag string) []*Component {
 	return components
 }
 
+func (m *Model) GetAllRegions() []*Region {
+	var regions []*Region
+	for _, region := range m.Regions {
+		regions = append(regions, region)
+	}
+	return regions
+}
+
 func (m *Model) GetRegion(regionId string) *Region {
 	region, found := m.Regions[regionId]
 	if found {
@@ -193,6 +205,14 @@ func (m *Model) GetRegionsByTag(regionTag string) []*Region {
 		}
 	}
 	return regions
+}
+
+func (r *Region) GetAllHosts() []*Host {
+	hosts := make([]*Host, 0)
+	for _, host := range r.Hosts {
+		hosts = append(hosts, host)
+	}
+	return hosts
 }
 
 func (r *Region) GetHost(hostId string) *Host {
