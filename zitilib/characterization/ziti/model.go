@@ -19,7 +19,7 @@ package zitilib_characterization_ziti
 import "github.com/netfoundry/fablab/kernel/model"
 
 func init() {
-	model.RegisterModel("zitilib/characterization/Ziti", Ziti)
+	model.RegisterModel("zitilib/characterization/ziti", Ziti)
 }
 
 // Static model skeleton for zitilib/characterization/ziti

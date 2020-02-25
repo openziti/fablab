@@ -23,6 +23,7 @@ import (
 	_ "github.com/netfoundry/fablab/zitilib/characterization/internet"
 	_ "github.com/netfoundry/fablab/zitilib/characterization/ziti"
 	_ "github.com/netfoundry/fablab/zitilib/development"
+	_ "github.com/netfoundry/fablab/zitilib/mattermozt"
 	"github.com/netfoundry/fablab/zitilib/development/bootstrap"
 	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/netfoundry/ziti-foundation/transport/quic"
