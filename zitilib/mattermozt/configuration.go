@@ -14,25 +14,24 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_internet
+package mattermozt
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/1_configuration/config"
 	"github.com/netfoundry/fablab/kernel/model"
-	zitilib_characterization_ziti "github.com/netfoundry/fablab/zitilib/characterization/ziti"
+	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/1_configuration/pki"
 )
 
-func init() {
-	model.RegisterModel("zitilib/characterization/internet", Model)
+func newConfigurationFactory() model.Factory {
+	return &configurationFactory{}
 }
 
-// Static model skeleton for zitilib/characterization/internet
-//
-var Model = &model.Model{
-	// Extends zitilib/characterization/ziti
-	//
-	Parent: zitilib_characterization_ziti.Ziti,
-
-	Factories: []model.Factory{
-		newBindingsFactory(),
-	},
+func (self *configurationFactory) Build(m *model.Model) error {
+	m.Configuration = model.ConfigurationBinders{
+		func(m *model.Model) model.ConfigurationStage { return pki.Group(pki.Fabric(), pki.DotZiti()) },
+		func(m *model.Model) model.ConfigurationStage { return config.Component() },
+	}
+	return nil
 }
+
+type configurationFactory struct{}

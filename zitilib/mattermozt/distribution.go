@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package mattermozt
 
 import (
 	distribution "github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution"
@@ -26,7 +26,7 @@ func newDistributionFactory() model.Factory {
 	return &distributionFactory{}
 }
 
-func (f *distributionFactory) Build(m *model.Model) error {
+func (self *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
 		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@ctrl", "logs") },
 		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@router", "logs") },

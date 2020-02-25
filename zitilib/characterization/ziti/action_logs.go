@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,27 +14,20 @@
 	limitations under the License.
 */
 
-package operation
+package zitilib_characterization_ziti
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
+	"github.com/netfoundry/fablab/zitilib/actions/logs"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, close: closer}
+func newLogsAction() model.ActionBinder {
+	action := &logsAction{}
+	return action.bind
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	logrus.Infof("closing")
-	close(timer.close)
-	return nil
+func (self *logsAction) bind(_ *model.Model) model.Action {
+	return logs.Logs()
 }
 
-type timer struct {
-	duration time.Duration
-	close    chan struct{}
-}
+type logsAction struct{}

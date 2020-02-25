@@ -1,3 +1,19 @@
+/*
+	Copyright 2020 NetFoundry, Inc.
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	https://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 package model
 
 import (
@@ -73,7 +89,7 @@ func dumpVariable(v *Variable) *VariableDump {
 }
 
 func dumpRegions(rs map[string]*Region) map[string]*RegionDump {
-	dumps := make(map[string]*RegionDump, 0)
+	dumps := make(map[string]*RegionDump)
 	for k, v := range rs {
 		dumps[k] = dumpRegion(v)
 	}
@@ -81,17 +97,16 @@ func dumpRegions(rs map[string]*Region) map[string]*RegionDump {
 }
 
 func dumpRegion(r *Region) *RegionDump {
-	dump := &RegionDump{
+	return &RegionDump{
 		Scope: dumpScope(r.Scope),
 		Id:    r.Id,
 		Az:    r.Az,
 		Hosts: dumpHosts(r.Hosts),
 	}
-	return dump
 }
 
 func dumpHosts(hs map[string]*Host) map[string]*HostDump {
-	dumps := make(map[string]*HostDump, 0)
+	dumps := make(map[string]*HostDump)
 	for k, v := range hs {
 		dumps[k] = dumpHost(v)
 	}
@@ -99,13 +114,33 @@ func dumpHosts(hs map[string]*Host) map[string]*HostDump {
 }
 
 func dumpHost(h *Host) *HostDump {
-	dump := &HostDump{
+	return &HostDump{
 		Scope:        dumpScope(h.Scope),
 		PublicIp:     h.PublicIp,
 		PrivateIp:    h.PrivateIp,
 		InstanceType: h.InstanceType,
 	}
-	return dump
+}
+
+func dumpComponents(cs map[string]*Component) map[string]*ComponentDump {
+	dumps := make(map[string]*ComponentDump)
+	for k, v := range cs {
+		dumps[k] = dumpComponent(v)
+	}
+	return dumps
+}
+
+func dumpComponent(c *Component) *ComponentDump {
+	return &ComponentDump{
+		Scope:           dumpScope(c.Scope),
+		ScriptSrc:       c.ScriptSrc,
+		ScriptName:      c.ScriptName,
+		ConfigSrc:       c.ConfigSrc,
+		ConfigName:      c.ConfigName,
+		BinaryName:      c.BinaryName,
+		PublicIdentity:  c.PublicIdentity,
+		PrivateIdentity: c.PrivateIdentity,
+	}
 }
 
 type Dump struct {
@@ -139,8 +174,20 @@ type RegionDump struct {
 }
 
 type HostDump struct {
-	Scope        *ScopeDump `json:"scope,omitempty"`
-	PublicIp     string     `json:"public_ip,omitempty"`
-	PrivateIp    string     `json:"private_ip,omitempty"`
-	InstanceType string     `json:"instance_type,omitempty"`
+	Scope        *ScopeDump                `json:"scope,omitempty"`
+	PublicIp     string                    `json:"public_ip,omitempty"`
+	PrivateIp    string                    `json:"private_ip,omitempty"`
+	InstanceType string                    `json:"instance_type,omitempty"`
+	Components   map[string]*ComponentDump `json:"components,omitempty"`
+}
+
+type ComponentDump struct {
+	Scope           *ScopeDump `json:"scope,omitempty"`
+	ScriptSrc       string     `json:"script_src,omitempty"`
+	ScriptName      string     `json:"script_name,omitempty"`
+	ConfigSrc       string     `json:"config_src,omitempty"`
+	ConfigName      string     `json:"config_name,omitempty"`
+	BinaryName      string     `json:"binary_name,omitempty"`
+	PublicIdentity  string     `json:"public_identity,omitempty`
+	PrivateIdentity string     `json:"private_identity,omitempty"`
 }

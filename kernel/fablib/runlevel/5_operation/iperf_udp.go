@@ -37,7 +37,7 @@ func IperfUdp(scenarioName, endpoint, serverRegion, serverHost, clientRegion, cl
 	}
 }
 
-func (i *iperfUdp) Operate(m *model.Model) error {
+func (i *iperfUdp) Operate(m *model.Model, _ string) error {
 	serverHosts := m.GetHosts(i.serverRegion, i.serverHost)
 	clientHosts := m.GetHosts(i.clientRegion, i.clientHost)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
@@ -67,7 +67,7 @@ func (i *iperfUdp) Operate(m *model.Model) error {
 			} else {
 				return fmt.Errorf("error summarizing client i data [%w]", err)
 			}
-			logrus.Infof("output = [%s]", output)
+			logrus.Debugf("output = [%s]", output)
 		} else {
 			return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
 		}
@@ -86,7 +86,7 @@ func (i *iperfUdp) runServer(factory fablib.SshConfigFactory) {
 
 	output, err := fablib.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
-		logrus.Infof("iperf3 server completed, output [%s]", output)
+		logrus.Infof("iperf3 server completed")
 	} else {
 		logrus.Errorf("iperf3 server failure [%s] (%w)", output, err)
 	}

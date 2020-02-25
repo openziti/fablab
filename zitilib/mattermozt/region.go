@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,27 +14,33 @@
 	limitations under the License.
 */
 
-package operation
+package mattermozt
 
 import (
+	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, close: closer}
+func newRegionFactory() model.Factory {
+	return &regionFactory{}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	logrus.Infof("closing")
-	close(timer.close)
+func (self *regionFactory) Build(m *model.Model) error {
+	r, found := m.Regions["local"]
+	if !found {
+		return fmt.Errorf("missing 'local' region")
+	}
+	region, found := m.GetVariable("mattermozt", "region")
+	if !found {
+		return fmt.Errorf("missing 'mattermozt/region' variable")
+	}
+	az, found := m.GetVariable("mattermozt", "az")
+	if !found {
+		return fmt.Errorf("missing 'mattermozt/az' variable")
+	}
+	r.Id = region.(string)
+	r.Az = az.(string)
 	return nil
 }
 
-type timer struct {
-	duration time.Duration
-	close    chan struct{}
-}
+type regionFactory struct{}

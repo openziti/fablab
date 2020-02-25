@@ -33,7 +33,7 @@ func Mesh(closer chan struct{}) model.OperatingStage {
 	return &mesh{closer: closer}
 }
 
-func (mesh *mesh) Operate(m *model.Model) error {
+func (mesh *mesh) Operate(m *model.Model, _ string) error {
 	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
@@ -62,7 +62,7 @@ func (mesh *mesh) runMesh() {
 
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(15 * time.Second):
 			if err := mesh.interrogate(); err != nil {
 				logrus.Errorf("error querying mesh state (%w)", err)
 			}

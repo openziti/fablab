@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -17,24 +17,21 @@
 package operation
 
 import (
+	"fmt"
+	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, close: closer}
+func Banner(msg string) model.OperatingStage {
+	return &banner{msg: msg}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	logrus.Infof("closing")
-	close(timer.close)
+func (b *banner) Operate(_ *model.Model, _ string) error {
+	fablib.Figlet(b.msg)
+	fmt.Println()
 	return nil
 }
 
-type timer struct {
-	duration time.Duration
-	close    chan struct{}
+type banner struct{
+	msg string
 }

@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -19,22 +19,26 @@ package operation
 import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, close: closer}
+func Joiner(joiners []chan struct{}) model.OperatingStage {
+	return &joiner{
+		joiners: joiners,
+	}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	logrus.Infof("closing")
-	close(timer.close)
+func (j *joiner) Operate(m *model.Model, _ string) error {
+	logrus.Debugf("will join with [%d] joiners", len(j.joiners))
+	count := 0
+	for _, joiner := range j.joiners {
+		<-joiner
+		logrus.Debugf("joined with joiner [%d]", count)
+		count++
+	}
+	logrus.Infof("joined with [%d] joiners", len(j.joiners))
 	return nil
 }
 
-type timer struct {
-	duration time.Duration
-	close    chan struct{}
+type joiner struct {
+	joiners []chan struct{}
 }

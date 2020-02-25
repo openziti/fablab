@@ -29,6 +29,7 @@ func (f *actionsFactory) Build(m *model.Model) error {
 		"stop":      newStopAction(),
 		"console":   newConsoleAction(),
 		"report":    newReportAction(),
+		"logs":      newLogsAction(),
 	}
 	return nil
 }

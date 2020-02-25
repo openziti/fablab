@@ -21,11 +21,15 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
+	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,7 +38,7 @@ import (
 var SshCommand string
 
 func LaunchService(factory SshConfigFactory, name, cfg string) error {
-	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > %s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
+	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
 	if value, err := RemoteExec(factory, serviceCmd); err == nil {
 		if len(value) > 0 {
 			logrus.Infof("output [%s]", strings.Trim(value, " \t\r\n"))
@@ -144,14 +148,18 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 
 	err = session.Run(cmd)
 	if err != nil {
-		return "", err
+		return b.String(), err
 	}
 
 	return b.String(), err
 }
 
 func RemoteKill(factory SshConfigFactory, match string) error {
-	output, err := RemoteExec(factory, "ps x")
+	return RemoteKillFilter(factory, match, "")
+}
+
+func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error {
+	output, err := RemoteExec(factory, "ps ax")
 	if err != nil {
 		return fmt.Errorf("unable to get remote process listing [%s] (%s)", factory.Address(), err)
 	}
@@ -161,7 +169,7 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, match) {
+		if killMatch(line, match, anti) {
 			logrus.Infof("line [%s]", scanner.Text())
 			tokens := strings.Split(strings.Trim(line, " \t\n"), " ")
 			if pid, err := strconv.Atoi(tokens[0]); err == nil {
@@ -173,7 +181,7 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 	}
 
 	if len(pidList) > 0 {
-		killCmd := "kill"
+		killCmd := "sudo kill"
 		for _, pid := range pidList {
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
@@ -182,6 +190,107 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 		if err != nil {
 			return fmt.Errorf("unable to kill [%s] (%s)", factory.Address(), err)
 		}
+	}
+
+	return nil
+}
+
+func killMatch(s, search, anti string) bool {
+	match := false
+	if strings.Contains(s, search) {
+		match = true
+	}
+	if anti != "" && strings.Contains(s, anti) {
+		match = false
+	}
+	return match
+}
+
+func RemoteFileList(factory SshConfigFactory, path string) ([]os.FileInfo, error) {
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return nil, fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return nil, fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	files, err := client.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving directory [%s] (%w)", path, err)
+	}
+
+	return files, nil
+}
+
+func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...string) error {
+	if err := os.MkdirAll(localPath, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating local path")
+	}
+
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	for _, path := range paths {
+		rf, err := client.Open(path)
+		if err != nil {
+			return fmt.Errorf("error opening remote file [%s] (%w)", path, err)
+		}
+		defer func() { _ = rf.Close() }()
+
+		lf, err := os.OpenFile(filepath.Join(localPath, filepath.Base(path)), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("error opening local file [%s] (%w)", path, err)
+		}
+		defer func() { _ = lf.Close() }()
+
+		n, err := io.Copy(lf, rf)
+		if err != nil {
+			return fmt.Errorf("error copying remote file to local [%s] (%w)", path, err)
+		}
+		logrus.Infof("%s => %s", path, info.ByteCount(n))
+	}
+
+	return nil
+}
+
+func DeleteRemoteFiles(factory SshConfigFactory, paths ...string) error {
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	for _, path := range paths {
+		if err := client.Remove(path); err != nil {
+			return fmt.Errorf("error removing path [%s] (%w)", path, err)
+		}
+		logrus.Infof("%s removed", path)
 	}
 
 	return nil
@@ -251,7 +360,7 @@ func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
 			methods = append(methods, sshAuthMethodAgent())
 		}
 
-		methods = append(methods, )
+		methods = append(methods)
 
 		factory.authMethods = methods
 	})

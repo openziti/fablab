@@ -42,7 +42,7 @@ resource "aws_instance" "fablab" {
 
     inline = [
       "sudo dnf update -y",
-      "sudo dnf install -y iperf3",
+      "sudo dnf install -y iperf3 tcpdump sysstat",
       "sudo bash -c \"echo 'fedora soft nofile 40960' >> /etc/security/limits.conf\"",
       "sudo shutdown -r +1"
     ]

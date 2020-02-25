@@ -30,14 +30,14 @@ func Persist() model.OperatingStage {
 	return &persist{}
 }
 
-func (self *persist) Operate(m *model.Model) error {
-	if err := self.storeDump(m); err != nil {
+func (self *persist) Operate(m *model.Model, run string) error {
+	if err := self.storeDump(m, run); err != nil {
 		return fmt.Errorf("error storing dump (%w)", err)
 	}
 	return nil
 }
 
-func (self *persist) storeDump(m *model.Model) error {
+func (self *persist) storeDump(m *model.Model, run string) error {
 	dump := m.Dump()
 
 	data, err := json.MarshalIndent(dump, "", "  ")
@@ -45,7 +45,7 @@ func (self *persist) storeDump(m *model.Model) error {
 		return fmt.Errorf("error marshaling dump (%w)", err)
 	}
 
-	filename := model.AllocateDump()
+	filename := model.AllocateDump(run)
 	if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating dump tree [%s] (%w)", filepath.Dir(filename), err)
 	}

@@ -147,7 +147,7 @@ func LoadLabel(path string) (*Label, error) {
 	if err != nil {
 		return nil, err
 	}
-	l := &Label{}
+	l := &Label{Bindings: make(Bindings)}
 	if err = yaml.Unmarshal(data, l); err != nil {
 		return nil, err
 	}
