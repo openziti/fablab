@@ -30,7 +30,7 @@ func init() {
 var Model = &model.Model{
 	// Extends zitilib/characterization/ziti
 	//
-	Parent: zitilib_characterization_ziti.Model,
+	Parent: zitilib_characterization_ziti.Ziti,
 
 	Factories: []model.Factory{
 		newBindingsFactory(),

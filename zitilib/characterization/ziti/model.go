@@ -19,12 +19,12 @@ package zitilib_characterization_ziti
 import "github.com/netfoundry/fablab/kernel/model"
 
 func init() {
-	model.RegisterModel("zitilib/characterization/ziti", Model)
+	model.RegisterModel("zitilib/characterization/Ziti", Ziti)
 }
 
 // Static model skeleton for zitilib/characterization/ziti
 //
-var Model = &model.Model{
+var Ziti = &model.Model{
 	Scope: model.Scope{
 		Variables: model.Variables{
 			"characterization": model.Variables{
