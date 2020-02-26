@@ -86,29 +86,33 @@ func (report *report) buildReportData(data []byte, regionKeys []string) (*Report
 	for _, regionKey := range regionKeys {
 		regionData := &ReportRegionData{}
 
-		iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_ziti_metrics", regionKey))
-		if err != nil {
-			return nil, fmt.Errorf("error getting ziti iperf summary (%w)", err)
+		if iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_ziti_metrics", regionKey)); err == nil {
+			regionData.Ziti.IPerf = iperfSummary
+		} else {
+			logrus.Warnf("error getting ziti iperf summary (%w)", err)
+			regionData.Ziti.IPerf = &model.IperfSummary{}
 		}
-		regionData.Ziti.IPerf = iperfSummary
 
-		iperfSummary, err = report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_internet_metrics", regionKey))
-		if err != nil {
-			return nil, fmt.Errorf("error getting internet iperf summary (%w)", err)
+		if iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_internet_metrics", regionKey)); err == nil {
+			regionData.Internet.IPerf = iperfSummary
+		} else {
+			logrus.Warnf("error getting internet iperf summary (%w)", err)
+			regionData.Internet.IPerf = &model.IperfSummary{}
 		}
-		regionData.Internet.IPerf = iperfSummary
 
-		iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_ziti_1m_metrics", regionKey))
-		if err != nil {
-			return nil, fmt.Errorf("error getting ziti iperf udp summary (%w)", err)
+		if iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_ziti_1m_metrics", regionKey)); err == nil {
+			regionData.Ziti.IPerfUdp = iperfUdpSummary
+		} else {
+			logrus.Warnf("error getting ziti iperf udp summary (%w)", err)
+			regionData.Ziti.IPerfUdp = &model.IperfUdpSummary{}
 		}
-		regionData.Ziti.IPerfUdp = iperfUdpSummary
 
-		iperfUdpSummary, err = report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_internet_1m_metrics", regionKey))
-		if err != nil {
-			return nil, fmt.Errorf("error getting internet iperf udp summary (%w)", err)
+		if iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_internet_1m_metrics", regionKey)); err == nil {
+			regionData.Internet.IPerfUdp = iperfUdpSummary
+		} else {
+			logrus.Warnf("error getting internet iperf udp summary (%w)", err)
+			regionData.Internet.IPerfUdp = &model.IperfUdpSummary{}
 		}
-		regionData.Internet.IPerfUdp = iperfUdpSummary
 
 		reportData.RegionData[regionKey] = regionData
 	}
