@@ -32,6 +32,10 @@ var Ziti = &model.Model{
 				"fabric": model.Variables{
 					"data_plane_protocol": &model.Variable{Default: "tls"},
 				},
+				"tcpdump": model.Variables{
+					"enabled": &model.Variable{Default: true},
+					"snaplen": &model.Variable{Default: 128},
+				},
 			},
 			"environment": &model.Variable{Required: true},
 			"credentials": model.Variables{
