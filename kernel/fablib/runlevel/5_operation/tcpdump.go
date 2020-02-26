@@ -25,12 +25,12 @@ import (
 	"path/filepath"
 )
 
-func Tcpdump(scenarioName, region, host string, snaplen int) model.OperatingStage {
+func Tcpdump(scenarioName, region, host string, snaplen int, joiner chan struct{}) model.OperatingStage {
 	return &tcpdump{
-		scenarioName: scenarioName,
-		region:       region,
-		host:         host,
-		snaplen:      snaplen,
+		scenario: scenarioName,
+		region:   region,
+		host:     host,
+		snaplen:  snaplen,
 	}
 }
 
@@ -53,7 +53,14 @@ func (t *tcpdump) Operate(m *model.Model, _ string) error {
 }
 
 func (t *tcpdump) runTcpdump(ssh fablib.SshConfigFactory) {
-	pcapPath, err := ioutil.TempFile("", fmt.Sprintf("%s_*.pcap", t.scenarioName))
+	defer func() {
+		if t.joiner != nil {
+			close(t.joiner)
+			logrus.Debug("joiner closed")
+		}
+	}()
+
+	pcapPath, err := ioutil.TempFile("", fmt.Sprintf("%s_*.pcap", t.scenario))
 	if err != nil {
 		logrus.Fatalf("error creating pcap filename (%w)", err)
 	}
@@ -65,8 +72,9 @@ func (t *tcpdump) runTcpdump(ssh fablib.SshConfigFactory) {
 }
 
 type tcpdump struct {
-	scenarioName string
-	region       string
-	host         string
-	snaplen      int
+	scenario string
+	region   string
+	host     string
+	snaplen  int
+	joiner   chan struct{}
 }

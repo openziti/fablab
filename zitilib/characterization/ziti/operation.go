@@ -96,9 +96,11 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	stages0, joiners0 := f.sarStages(scenario0, m, 1)
 	binders = append(binders, stages0...)
 	if tcpdump {
+		joiner := make(chan struct{})
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("ziti", region, "client", snaplen)
+			return operation.Tcpdump("ziti", region, "client", snaplen, joiner)
 		})
+		joiners0 = append(joiners0, joiner)
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
 		return operation.Iperf("ziti", initiatingRouter, "local", "service", region, "client", seconds)
@@ -125,9 +127,11 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	stages1, joiners1 := f.sarStages(scenario1, m, 1)
 	binders = append(binders, stages1...)
 	if tcpdump {
+		joiner := make(chan struct{})
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("internet", region, "client", snaplen)
+			return operation.Tcpdump("internet", region, "client", snaplen, joiner)
 		})
+		joiners1 = append(joiners1, joiner)
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
 		return operation.Iperf("internet", directEndpoint, "local", "service", region, "client", seconds)
