@@ -90,6 +90,11 @@ type Action interface {
 	Execute(m *Model) error
 }
 
+type ActionWithOutput interface {
+	Action
+	ExecuteWithOutput(m *Model) (string, error)
+}
+
 type InfrastructureStage interface {
 	Express(m *Model, l *Label) error
 }

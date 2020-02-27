@@ -16,7 +16,9 @@
 
 package mattermozt
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/model"
+)
 
 func init() {
 	model.RegisterModel("zitilib/mattermozt", mattermozt)
@@ -37,6 +39,11 @@ var mattermozt = &model.Model{
 					"service":    &model.Variable{Default: "t2.medium"},
 				},
 			},
+			"characterization": model.Variables{ //configs in /lib link to this....
+				"fabric": model.Variables{
+					"data_plane_protocol": &model.Variable{Default: "tls"},
+				},
+			},
 			"environment": &model.Variable{Required: true},
 			"credentials": model.Variables{
 				"aws": model.Variables{
@@ -47,6 +54,10 @@ var mattermozt = &model.Model{
 				"ssh": model.Variables{
 					"key_path": &model.Variable{Required: true},
 					"username": &model.Variable{Default: "fedora"},
+				},
+				"edge": model.Variables{
+					"username": &model.Variable{Required: true, Sensitive: true},
+					"password": &model.Variable{Required: true, Sensitive: true},
 				},
 			},
 			"distribution": model.Variables{
@@ -59,17 +70,18 @@ var mattermozt = &model.Model{
 	Factories: []model.Factory{
 		newRegionFactory(),
 		newHostsFactory(),
+		newActionsFactory(),
 		newInfrastructureFactory(),
 		newConfigurationFactory(),
 		newKittingFactory(),
 		newDistributionFactory(),
-		// activation
+		newActivationFactory(),
 		// operation
 	},
 
 	Regions: model.Regions{
 		"local": {
-			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "service"}},
+			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "edge-router", "service"}},
 			Hosts: model.Hosts{
 				"ctrl": {
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
@@ -77,8 +89,8 @@ var mattermozt = &model.Model{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 							BinaryName:     "ziti-controller",
-							ConfigSrc:      "ctrl.yml",
-							ConfigName:     "ctrl.yml",
+							ConfigSrc:      "ctrl_edge.yml",
+							ConfigName:     "ctrl_edge.yml",
 							PublicIdentity: "ctrl",
 						},
 					},
@@ -90,13 +102,22 @@ var mattermozt = &model.Model{
 							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "egress_router.yml",
-							ConfigName:     "local.yml",
+							ConfigName:     "egress_router.yml",
 							PublicIdentity: "local",
 						},
 					},
 				},
 				"edge": {
-					Scope: model.Scope{Tags: model.Tags{"edge", "router"}},
+					Scope: model.Scope{Tags: model.Tags{"edge-router"}},
+					Components: model.Components{
+						"initiator": {
+							Scope:          model.Scope{Tags: model.Tags{"edge-router", "initiator"}},
+							BinaryName:     "ziti-router",
+							ConfigSrc:      "ingress_router_edge.yml",
+							ConfigName:     "edge_router_initiator.yml",
+							PublicIdentity: "edge_router_initiator",
+						},
+					},
 				},
 				"service": {
 					Scope: model.Scope{Tags: model.Tags{"service"}},

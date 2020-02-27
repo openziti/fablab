@@ -3,6 +3,7 @@ module github.com/openziti/fablab
 go 1.14
 
 require (
+	github.com/Jeffail/gabs v1.4.0
 	github.com/aws/aws-sdk-go v1.31.14
 	github.com/golang/protobuf v1.3.5
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
