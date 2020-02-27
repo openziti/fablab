@@ -3,6 +3,7 @@ module github.com/netfoundry/fablab
 go 1.13
 
 require (
+	github.com/Jeffail/gabs v1.4.0
 	github.com/golang/protobuf v1.3.2
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4

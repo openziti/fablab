@@ -35,6 +35,7 @@ import (
 func init() {
 	pfxlog.Global(logrus.InfoLevel)
 	pfxlog.SetPrefix("github.com/netfoundry/")
+
 	transport.AddAddressParser(quic.AddressParser{})
 	transport.AddAddressParser(tls.AddressParser{})
 	transport.AddAddressParser(tcp.AddressParser{})
