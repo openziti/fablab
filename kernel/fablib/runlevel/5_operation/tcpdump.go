@@ -31,6 +31,7 @@ func Tcpdump(scenarioName, region, host string, snaplen int, joiner chan struct{
 		region:   region,
 		host:     host,
 		snaplen:  snaplen,
+		joiner:   joiner,
 	}
 }
 
