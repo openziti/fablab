@@ -50,7 +50,7 @@ A `fablab` model will be created that supports the following kinds of variations
 
 ## Hands Off
 
-`fablab` will provide a mechanism to allow an entire "manifest" of model configurations to be characterized sequentially (or possibly in parallel, eventually), creating a detailed data set that accurately describes the performance of specific Ziti network configuration.
+`fablab` will provide a mechanism to allow an entire "manifest" of model configurations to be characterized sequentially (or possibly in parallel, eventually), creating a detailed data set that accurately describes the performance of the specific Ziti network configuration being tested.
 
 ## NetFoundry Reference Characterizations
 
