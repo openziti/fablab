@@ -21,10 +21,10 @@ import (
 )
 
 func init() {
-	model.RegisterModel("zitilib/examples/diamondback", diamondback)
+	model.RegisterModel("zitilib/examples/smartrouting", smartrouting)
 }
 
-var diamondback = &model.Model{
+var smartrouting = &model.Model{
 	Scope: modelScope,
 
 	Factories: []model.Factory{
