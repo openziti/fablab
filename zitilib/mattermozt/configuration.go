@@ -19,7 +19,7 @@ package mattermozt
 import (
 	"github.com/netfoundry/fablab/kernel/fablib/runlevel/1_configuration/config"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/1_configuration/pki"
+	"github.com/netfoundry/fablab/zitilib/runlevel/1_configuration/pki"
 )
 
 func newConfigurationFactory() model.Factory {

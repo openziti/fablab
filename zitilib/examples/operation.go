@@ -19,7 +19,7 @@ package zitilib_examples
 import (
 	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/netfoundry/fablab/kernel/model"
-	__operation "github.com/netfoundry/fablab/zitilib/characterization/runlevel/5_operation"
+	__operation "github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 

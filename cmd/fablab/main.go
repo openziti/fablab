@@ -22,7 +22,6 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/fablab/zitilib"
 	_ "github.com/netfoundry/fablab/zitilib"
-	_ "github.com/netfoundry/fablab/zitilib/characterization/internet"
 	_ "github.com/netfoundry/fablab/zitilib/characterization/ziti"
 	_ "github.com/netfoundry/fablab/zitilib/examples"
 	_ "github.com/netfoundry/fablab/zitilib/mattermozt"

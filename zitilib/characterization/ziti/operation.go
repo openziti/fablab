@@ -20,7 +20,7 @@ import (
 	"fmt"
 	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/5_operation"
+	"github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 
