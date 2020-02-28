@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/development/bootstrap"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"

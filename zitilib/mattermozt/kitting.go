@@ -19,7 +19,7 @@ package mattermozt
 import (
 	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/kernel/model"
-	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib/development/bootstrap"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
 )
 
 func newKittingFactory() model.Factory {

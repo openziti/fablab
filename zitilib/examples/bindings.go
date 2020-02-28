@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_development
+package zitilib_examples
 
 import (
 	"fmt"
@@ -35,16 +35,16 @@ import (
 	"github.com/netfoundry/fablab/zitilib/characterization/reporting"
 	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/1_configuration/pki"
 	"github.com/netfoundry/fablab/zitilib/characterization/runlevel/5_operation"
-	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib/development/bootstrap"
-	"github.com/netfoundry/fablab/zitilib/development/console"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
+	"github.com/netfoundry/fablab/zitilib/examples/console"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
 )
 
 func init() {
-	model.RegisterModel("zitilib/development/diamondback", diamondback)
-	model.RegisterModel("zitilib/development/tiny", tiny)
+	model.RegisterModel("zitilib/examples/diamondback", diamondback)
+	model.RegisterModel("zitilib/examples/tiny", tiny)
 }
 
 func commonActions() model.ActionBinders {

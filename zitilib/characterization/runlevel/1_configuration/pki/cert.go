@@ -20,14 +20,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/development/bootstrap"
+	"github.com/netfoundry/fablab/zitilib"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"
 )
 
 func generateCa() error {
-	pki := exec.Command(zitilib_bootstrap.ZitiCli(), "pki", "create", "ca", "--pki-root", model.PkiBuild(), "--ca-name", "root", "--ca-file", "root")
+	pki := exec.Command(zitilib.ZitiCli(), "pki", "create", "ca", "--pki-root", model.PkiBuild(), "--ca-name", "root", "--ca-file", "root")
 	var pkiOut bytes.Buffer
 	pki.Stdout = &pkiOut
 	var pkiErr bytes.Buffer
@@ -38,7 +38,7 @@ func generateCa() error {
 		return fmt.Errorf("error generating key (%s)", err)
 	}
 
-	pki = exec.Command(zitilib_bootstrap.ZitiCli(), "pki", "create", "intermediate", "--pki-root", model.PkiBuild(), "--ca-name", "root")
+	pki = exec.Command(zitilib.ZitiCli(), "pki", "create", "intermediate", "--pki-root", model.PkiBuild(), "--ca-name", "root")
 	pkiOut.Reset()
 	pki.Stdout = &pkiOut
 	pkiErr.Reset()
@@ -54,7 +54,7 @@ func generateCa() error {
 
 func generateCert(name, ip string) error {
 	logrus.Infof("generating certificate [%s:%s]", name, ip)
-	pki := exec.Command(zitilib_bootstrap.ZitiCli(), "pki", "create", "key", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--key-file", name)
+	pki := exec.Command(zitilib.ZitiCli(), "pki", "create", "key", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--key-file", name)
 	var pkiOut bytes.Buffer
 	pki.Stdout = &pkiOut
 	var pkiErr bytes.Buffer
@@ -65,7 +65,7 @@ func generateCert(name, ip string) error {
 		return fmt.Errorf("error generating key (%s)", err)
 	}
 
-	pki = exec.Command(zitilib_bootstrap.ZitiCli(), "pki", "create", "server", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--server-file", fmt.Sprintf("%s-server", name), "--ip", ip, "--key-file", name)
+	pki = exec.Command(zitilib.ZitiCli(), "pki", "create", "server", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--server-file", fmt.Sprintf("%s-server", name), "--ip", ip, "--key-file", name)
 	pkiOut.Reset()
 	pki.Stdout = &pkiOut
 	pkiErr.Reset()
@@ -76,7 +76,7 @@ func generateCert(name, ip string) error {
 		return fmt.Errorf("error generating server certificate (%s)", err)
 	}
 
-	pki = exec.Command(zitilib_bootstrap.ZitiCli(), "pki", "create", "client", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--client-file", fmt.Sprintf("%s-client", name), "--key-file", name, "--client-name", name)
+	pki = exec.Command(zitilib.ZitiCli(), "pki", "create", "client", "--pki-root", model.PkiBuild(), "--ca-name", "intermediate", "--client-file", fmt.Sprintf("%s-client", name), "--key-file", name, "--client-name", name)
 	pkiOut.Reset()
 	pki.Stdout = &pkiOut
 	pkiErr.Reset()

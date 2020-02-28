@@ -18,7 +18,7 @@ package zitilib_characterization_ziti
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/development/console"
+	"github.com/netfoundry/fablab/zitilib/examples/console"
 )
 
 func newConsoleAction() model.ActionBinder {

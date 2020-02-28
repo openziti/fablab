@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_development
+package zitilib_examples
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"

@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_bootstrap
+package zitilib
 
 import (
 	"fmt"
