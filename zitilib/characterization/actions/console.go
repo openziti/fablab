@@ -14,20 +14,20 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization_actions
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/characterization/reporting"
+	"github.com/netfoundry/fablab/zitilib/examples/console"
 )
 
-func newReportAction() model.ActionBinder {
-	action := &reportAction{}
+func NewConsoleAction() model.ActionBinder {
+	action := &consoleAction{}
 	return action.bind
 }
 
-func (a *reportAction) bind(m *model.Model) model.Action {
-	return reporting.Report()
+func (a *consoleAction) bind(m *model.Model) model.Action {
+	return console.Console()
 }
 
-type reportAction struct{}
+type consoleAction struct{}

@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization_actions
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-func newBootstrapAction() model.ActionBinder {
+func NewBootstrapAction() model.ActionBinder {
 	action := &bootstrapAction{}
 	return action.bind
 }

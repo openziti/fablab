@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization_actions
 
 import (
 	"github.com/netfoundry/fablab/kernel/fablib/actions"
@@ -22,7 +22,7 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
-func newStopAction() model.ActionBinder {
+func NewStopAction() model.ActionBinder {
 	action := &stopAction{}
 	return action.bind
 }

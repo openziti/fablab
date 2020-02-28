@@ -14,9 +14,12 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization
 
-import "github.com/netfoundry/fablab/kernel/model"
+import (
+	"github.com/netfoundry/fablab/kernel/model"
+	zitilib_characterization_actions "github.com/netfoundry/fablab/zitilib/characterization/actions"
+)
 
 func newActionsFactory() model.Factory {
 	return &actionsFactory{}
@@ -24,12 +27,12 @@ func newActionsFactory() model.Factory {
 
 func (f *actionsFactory) Build(m *model.Model) error {
 	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"console":   newConsoleAction(),
-		"report":    newReportAction(),
-		"logs":      newLogsAction(),
+		"bootstrap": zitilib_characterization_actions.NewBootstrapAction(),
+		"start":     zitilib_characterization_actions.NewStartAction(),
+		"stop":      zitilib_characterization_actions.NewStopAction(),
+		"console":   zitilib_characterization_actions.NewConsoleAction(),
+		"report":    zitilib_characterization_actions.NewReportAction(),
+		"logs":      zitilib_characterization_actions.NewLogsAction(),
 	}
 	return nil
 }

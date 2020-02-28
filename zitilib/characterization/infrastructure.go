@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization
 
 import (
 	"fmt"

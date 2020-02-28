@@ -14,24 +14,30 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/1_configuration/config"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/runlevel/1_configuration/pki"
 )
 
-func newConfigurationFactory() model.Factory {
-	return &configurationFactory{}
+func newHostsFactory() *hostsFactory {
+	return &hostsFactory{}
 }
 
-func (f *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(m *model.Model) model.ConfigurationStage { return pki.Group(pki.Fabric(), pki.DotZiti()) },
-		func(m *model.Model) model.ConfigurationStage { return config.Component() },
+func (f *hostsFactory) Build(m *model.Model) error {
+	for _, host := range m.GetAllHosts() {
+		host.InstanceType = "t2.micro"
 	}
+
+	l := model.GetLabel()
+	if l.Has("instance_type") {
+		instanceType := l.Must("instance_type")
+		for _, host := range m.GetAllHosts() {
+			host.InstanceType = instanceType.(string)
+		}
+	}
+
 	return nil
 }
 
-type configurationFactory struct{}
+type hostsFactory struct{}

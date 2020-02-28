@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization_actions
 
 import (
 	"github.com/netfoundry/fablab/kernel/fablib/actions"
@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-func newStartAction() model.ActionBinder {
+func NewStartAction() model.ActionBinder {
 	action := &startAction{}
 	return action.bind
 }

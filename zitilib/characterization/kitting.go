@@ -14,20 +14,31 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/examples/console"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
 )
 
-func newConsoleAction() model.ActionBinder {
-	action := &consoleAction{}
-	return action.bind
+func newKittingFactory() model.Factory {
+	return &kittingFactory{}
 }
 
-func (a *consoleAction) bind(m *model.Model) model.Action {
-	return console.Console()
+func (f *kittingFactory) Build(m *model.Model) error {
+	m.Kitting = model.KittingBinders{
+		func(m *model.Model) model.KittingStage {
+			zitiBinaries := []string{
+				"ziti-controller",
+				"ziti-fabric",
+				"ziti-fabric-test",
+				"ziti-router",
+			}
+			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries)
+		},
+	}
+	return nil
 }
 
-type consoleAction struct{}
+type kittingFactory struct{}

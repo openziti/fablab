@@ -22,7 +22,7 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/fablab/zitilib"
 	_ "github.com/netfoundry/fablab/zitilib"
-	_ "github.com/netfoundry/fablab/zitilib/characterization/ziti"
+	_ "github.com/netfoundry/fablab/zitilib/characterization"
 	_ "github.com/netfoundry/fablab/zitilib/examples"
 	_ "github.com/netfoundry/fablab/zitilib/mattermozt"
 	"github.com/netfoundry/ziti-foundation/transport"

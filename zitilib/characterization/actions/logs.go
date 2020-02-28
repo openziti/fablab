@@ -14,14 +14,14 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_ziti
+package zitilib_characterization_actions
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/fablab/zitilib/actions/logs"
 )
 
-func newLogsAction() model.ActionBinder {
+func NewLogsAction() model.ActionBinder {
 	action := &logsAction{}
 	return action.bind
 }
