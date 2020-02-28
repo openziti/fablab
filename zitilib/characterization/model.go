@@ -27,11 +27,13 @@ func init() {
 var Ziti = &model.Model{
 	Scope: model.Scope{
 		Variables: model.Variables{
-			"characterization": model.Variables{
-				"sample_minutes": &model.Variable{Default: 1},
+			"zitilib": model.Variables{
 				"fabric": model.Variables{
 					"data_plane_protocol": &model.Variable{Default: "tls"},
 				},
+			},
+			"characterization": model.Variables{
+				"sample_minutes": &model.Variable{Default: 1},
 				"tcpdump": model.Variables{
 					"enabled": &model.Variable{Default: true},
 					"snaplen": &model.Variable{Default: 128},

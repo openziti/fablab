@@ -46,7 +46,7 @@ var tiny = &model.Model{
 			Id: "us-east-1",
 			Az: "us-east-1c",
 			Hosts: model.Hosts{
-				"loop0": {
+				"001": {
 					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"}},
 					Components: model.Components{
 						"ctrl": {

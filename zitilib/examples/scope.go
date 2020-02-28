@@ -4,6 +4,11 @@ import "github.com/netfoundry/fablab/kernel/model"
 
 var modelScope = model.Scope{
 	Variables: model.Variables{
+		"zitilib": model.Variables{
+			"fabric": model.Variables{
+				"data_plane_protocol": &model.Variable{Default: "tls"},
+			},
+		},
 		"environment": &model.Variable{Required: true},
 		"credentials": model.Variables{
 			"aws": model.Variables{
