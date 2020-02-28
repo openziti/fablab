@@ -35,6 +35,7 @@ func (_ *infrastructureFactory) buildDisposal(m *model.Model) error {
 	m.Disposal = model.DisposalBinders{
 		func(m *model.Model) model.DisposalStage { return terraform6.Dispose() },
 	}
+	return nil
 }
 
 type infrastructureFactory struct{}
