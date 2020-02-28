@@ -25,6 +25,6 @@ var modelScope = model.Scope{
 			"rsync_bin": &model.Variable{Default: "rsync"},
 			"ssh_bin":   &model.Variable{Default: "ssh"},
 		},
-		"sample_minutes": &model.Variable{Default: 1},
+		"instance_type": &model.Variable{Default: "t2.micro"},
 	},
 }

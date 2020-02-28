@@ -16,7 +16,7 @@ identity:
   ca:                   /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.chain.pem
 
 ctrl:   
-  endpoint:             tls:{{ctrl_ip}}:6262
+  endpoint:             tls:{{$ctrl_ip}}:6262
 
 link:
   listener:             {{$protocol}}:0.0.0.0:6000
