@@ -20,8 +20,24 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
+func init() {
+	model.RegisterModel("zitilib/examples/diamondback", diamondback)
+}
+
 var diamondback = &model.Model{
-	Scope: kernelScope,
+	Scope: modelScope,
+
+	Factories: []model.Factory{
+		newHostsFactory(),
+		newActionsFactory(),
+		newInfrastructureFactory(),
+		newConfigurationFactory(),
+		newKittingFactory(),
+		newDistributionFactory(),
+		newActivationFactory(),
+		newOperationFactory(),
+	},
+
 	Regions: model.Regions{
 		"initiator": {
 			Scope: model.Scope{
@@ -31,10 +47,7 @@ var diamondback = &model.Model{
 			Az: "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"ctrl"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope: model.Scope{
@@ -48,15 +61,10 @@ var diamondback = &model.Model{
 					},
 				},
 				"001": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"router", "initiator"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"router", "initiator"}},
 					Components: model.Components{
 						"001": {
-							Scope: model.Scope{
-								Tags: model.Tags{"router"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "001.yml",
@@ -65,48 +73,29 @@ var diamondback = &model.Model{
 					},
 				},
 				"loop0": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-dialer"}},
 				},
 				"loop1": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-dialer"}},
 				},
 				"loop2": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-dialer"}},
 				},
 				"loop3": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-dialer"},
-						Variables: model.Variables{"instance_type": instanceType("t2.medium")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-dialer"}},
 				},
 			},
 		},
 		"transitA": {
-			Scope: model.Scope{
-				Tags: model.Tags{"router"},
-			},
-			Id: "us-west-1",
-			Az: "us-west-1b",
+			Scope: model.Scope{Tags: model.Tags{"router"}},
+			Id:    "us-west-1",
+			Az:    "us-west-1b",
 			Hosts: model.Hosts{
 				"002": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"002": {
-							Scope: model.Scope{
-								Tags: model.Tags{"router"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "transit_router.yml",
 							ConfigName:     "002.yml",
@@ -117,22 +106,15 @@ var diamondback = &model.Model{
 			},
 		},
 		"transitB": {
-			Scope: model.Scope{
-				Tags: model.Tags{"router"},
-			},
-			Id: "us-east-2",
-			Az: "us-east-2c",
+			Scope: model.Scope{Tags: model.Tags{"router"}},
+			Id:    "us-east-2",
+			Az:    "us-east-2c",
 			Hosts: model.Hosts{
 				"004": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"004": {
-							Scope: model.Scope{
-								Tags: model.Tags{"router"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "transit_router.yml",
 							ConfigName:     "004.yml",
@@ -143,22 +125,15 @@ var diamondback = &model.Model{
 			},
 		},
 		"terminator": {
-			Scope: model.Scope{
-				Tags: model.Tags{"router", "loop", "terminator"},
-			},
-			Id: "us-west-2",
-			Az: "us-west-2b",
+			Scope: model.Scope{Tags: model.Tags{"router", "loop", "terminator"}},
+			Id:    "us-west-2",
+			Az:    "us-west-2b",
 			Hosts: model.Hosts{
 				"003": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"router"},
-						Variables: model.Variables{"instance_type": instanceType("m5.large")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"003": {
-							Scope: model.Scope{
-								Tags: model.Tags{"router", "terminator"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "egress_router.yml",
 							ConfigName:     "003.yml",
@@ -167,38 +142,18 @@ var diamondback = &model.Model{
 					},
 				},
 				"loop0": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-listener"}},
 				},
 				"loop1": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-listener"}},
 				},
 				"loop2": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-listener"}},
 				},
 				"loop3": {
-					Scope: model.Scope{
-						Tags:      model.Tags{"loop-listener"},
-						Variables: model.Variables{"instance_type": instanceType("t2.micro")},
-					},
+					Scope: model.Scope{Tags: model.Tags{"loop-listener"}},
 				},
 			},
 		},
 	},
-
-	Actions:        commonActions(),
-	Infrastructure: commonInfrastructure(),
-	Configuration:  commonConfiguration(),
-	Kitting:        commonKitting(),
-	Distribution:   commonDistribution(),
-	Activation:     commonActivation(),
-	Disposal:       commonDisposal(),
 }

@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,24 +14,28 @@
 	limitations under the License.
 */
 
-package console
+package zitilib_examples
 
-import (
-	"github.com/netfoundry/fablab/kernel/model"
-	"net/http"
-	"path/filepath"
-)
+import "github.com/netfoundry/fablab/kernel/model"
 
-func Console() model.Action {
-	return &console{}
+func newHostsFactory() *hostsFactory {
+	return &hostsFactory{}
 }
 
-func (consoleAction *console) Execute(m *model.Model) error {
-	server := NewServer()
-	go server.Listen()
+func (f *hostsFactory) Build(m *model.Model) error {
+	for _, host := range m.GetAllHosts() {
+		host.InstanceType = "t2.micro"
+	}
 
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/examples/console/webroot"))))
-	return http.ListenAndServe(":8080", nil)
+	v, found := m.GetVariable("instance_type")
+	if found {
+		instanceType := v.(string)
+		for _, host := range m.GetAllHosts() {
+			host.InstanceType = instanceType
+		}
+	}
+
+	return nil
 }
 
-type console struct{}
+type hostsFactory struct{}

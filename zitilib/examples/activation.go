@@ -14,24 +14,21 @@
 	limitations under the License.
 */
 
-package console
+package zitilib_examples
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/4_activation/action"
 	"github.com/netfoundry/fablab/kernel/model"
-	"net/http"
-	"path/filepath"
 )
 
-func Console() model.Action {
-	return &console{}
+func newActivationFactory() model.Factory {
+	return &activationFactory{}
 }
 
-func (consoleAction *console) Execute(m *model.Model) error {
-	server := NewServer()
-	go server.Listen()
-
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/examples/console/webroot"))))
-	return http.ListenAndServe(":8080", nil)
+func (_ *activationFactory) Build(m *model.Model) error {
+	m.Activation = model.ActivationBinders{
+		func(m *model.Model) model.ActivationStage { return action.Activation("bootstrap", "start") },
+	}
 }
 
-type console struct{}
+type activationFactory struct{}

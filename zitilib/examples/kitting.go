@@ -14,24 +14,32 @@
 	limitations under the License.
 */
 
-package console
+package zitilib_examples
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/kernel/model"
-	"net/http"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
 	"path/filepath"
 )
 
-func Console() model.Action {
-	return &console{}
+func newKittingFactory() model.Factory {
+	return &kittingFactory{}
 }
 
-func (consoleAction *console) Execute(m *model.Model) error {
-	server := NewServer()
-	go server.Listen()
-
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/examples/console/webroot"))))
-	return http.ListenAndServe(":8080", nil)
+func (_ *kittingFactory) Build(m *model.Model) error {
+	m.Kitting = model.KittingBinders{
+		func(m *model.Model) model.KittingStage {
+			zitiBinaries := []string{
+				"ziti-controller",
+				"ziti-fabric",
+				"ziti-fabric-test",
+				"ziti-router",
+			}
+			return devkit.DevKit(filepath.Join(zitilib_bootstrap.ZitiDistRoot(), "bin"), zitiBinaries)
+		},
+	}
+	return nil
 }
 
-type console struct{}
+type kittingFactory struct{}

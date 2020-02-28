@@ -14,24 +14,21 @@
 	limitations under the License.
 */
 
-package console
+package zitilib_examples
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution/rsync"
 	"github.com/netfoundry/fablab/kernel/model"
-	"net/http"
-	"path/filepath"
 )
 
-func Console() model.Action {
-	return &console{}
+func newDistributionFactory() model.Factory {
+	return &distributionFactory{}
 }
 
-func (consoleAction *console) Execute(m *model.Model) error {
-	server := NewServer()
-	go server.Listen()
-
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/examples/console/webroot"))))
-	return http.ListenAndServe(":8080", nil)
+func (_ *distributionFactory) Build(m *model.Model) error {
+	m.Distribution = model.DistributionBinders{
+		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
+	}
 }
 
-type console struct{}
+type distributionFactory struct{}

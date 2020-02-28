@@ -20,8 +20,23 @@ import (
 	"github.com/netfoundry/fablab/kernel/model"
 )
 
+func init() {
+	model.RegisterModel("zitilib/examples/tiny", tiny)
+}
+
 var tiny = &model.Model{
-	Scope: kernelScope,
+	Scope: modelScope,
+
+	Factories: []model.Factory{
+		newHostsFactory(),
+		newActionsFactory(),
+		newInfrastructureFactory(),
+		newConfigurationFactory(),
+		newKittingFactory(),
+		newDistributionFactory(),
+		newActivationFactory(),
+		newOperationFactory(),
+	},
 
 	Regions: model.Regions{
 		"tiny": {
@@ -32,24 +47,17 @@ var tiny = &model.Model{
 			Az: "us-east-1c",
 			Hosts: model.Hosts{
 				"loop0": {
-					Scope: model.Scope{
-						Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"},
-					},
-					InstanceType: "m5.large",
+					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"}},
 					Components: model.Components{
 						"ctrl": {
-							Scope: model.Scope{
-								Tags: model.Tags{"ctrl"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl.yml",
 							ConfigName:     "ctrl.yml",
 							PublicIdentity: "ctrl",
 						},
 						"001": {
-							Scope: model.Scope{
-								Tags: model.Tags{"router", "terminator"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "001.yml",
@@ -60,12 +68,4 @@ var tiny = &model.Model{
 			},
 		},
 	},
-
-	Actions:        commonActions(),
-	Infrastructure: commonInfrastructure(),
-	Configuration:  commonConfiguration(),
-	Kitting:        commonKitting(),
-	Distribution:   commonDistribution(),
-	Activation:     commonActivation(),
-	Disposal:       commonDisposal(),
 }
