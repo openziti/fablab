@@ -48,15 +48,6 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
-	if iperfServer != nil {
-		terminatingRouters := m.GetComponentsByTag("terminator")
-		if len(terminatingRouters) < 1 {
-			logrus.Fatal("need at least 1 terminating router!")
-		}
-		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
-	}
-
 	components := m.GetComponentsByTag("terminator")
 	serviceActions, err := self.createServiceActions(m, components[0].PublicIdentity)
 	if err != nil {
@@ -64,6 +55,15 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	}
 	for _, serviceAction := range serviceActions {
 		workflow.AddAction(serviceAction)
+	}
+
+	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
+	if iperfServer != nil {
+		terminatingRouters := m.GetComponentsByTag("terminator")
+		if len(terminatingRouters) < 1 {
+			logrus.Fatal("need at least 1 terminating router!")
+		}
+		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
 	}
 
 	for _, h := range m.GetAllHosts() {

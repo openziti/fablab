@@ -41,13 +41,13 @@ var tiny = &model.Model{
 	Regions: model.Regions{
 		"tiny": {
 			Scope: model.Scope{
-				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "terminator"},
+				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "terminator", "iperf_server"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1c",
 			Hosts: model.Hosts{
 				"001": {
-					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator"}},
+					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator", "iperf_server"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},

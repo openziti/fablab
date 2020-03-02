@@ -19,6 +19,7 @@ package zitilib_examples
 import (
 	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/netfoundry/fablab/kernel/model"
+	zitilib_examples_5_operation "github.com/netfoundry/fablab/zitilib/examples/runlevel/5_operation"
 	__operation "github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
@@ -32,7 +33,8 @@ func (_ *operationFactory) Build(m *model.Model) error {
 	binders := model.OperatingBinders{
 		func(m *model.Model) model.OperatingStage { return __operation.Mesh(c) },
 		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
-		func(m *model.Model) model.OperatingStage { return operation.Timer(1 * time.Minute, c) },
+		func(m *model.Model) model.OperatingStage { return zitilib_examples_5_operation.Loop() },
+		func(m *model.Model) model.OperatingStage { return operation.Timer(1*time.Minute, c) },
 		func(m *model.Model) model.OperatingStage { return operation.Persist() },
 	}
 	m.Operation = binders

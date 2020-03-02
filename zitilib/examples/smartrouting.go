@@ -41,7 +41,7 @@ var smartrouting = &model.Model{
 	Regions: model.Regions{
 		"initiator": {
 			Scope: model.Scope{
-				Tags: model.Tags{"ctrl", "router", "loop", "initiator"},
+				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "iperf_server"},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
@@ -61,7 +61,7 @@ var smartrouting = &model.Model{
 					},
 				},
 				"001": {
-					Scope: model.Scope{Tags: model.Tags{"router", "initiator"}},
+					Scope: model.Scope{Tags: model.Tags{"router", "initiator", "iperf_server"}},
 					Components: model.Components{
 						"001": {
 							Scope:          model.Scope{Tags: model.Tags{"router"}},
