@@ -35,6 +35,7 @@ func (_ *operationFactory) Build(m *model.Model) error {
 		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
 		func(m *model.Model) model.OperatingStage { return zitilib_examples_5_operation.Loop() },
 		func(m *model.Model) model.OperatingStage { return operation.Timer(1*time.Minute, c) },
+		func(m *model.Model) model.OperatingStage { return zitilib_examples_5_operation.LoopCloser() },
 		func(m *model.Model) model.OperatingStage { return operation.Persist() },
 	}
 	m.Operation = binders
