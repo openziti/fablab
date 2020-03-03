@@ -235,6 +235,15 @@ func (r *Region) GetHostsByTag(hostTag string) []*Host {
 	return hosts
 }
 
+func (h *Host) HasTag(tag string) bool {
+	for _, hostTag := range h.Tags {
+		if hostTag == tag {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Host) GetComponents(componentSpec string) []*Component {
 	var components []*Component
 	if strings.HasPrefix(componentSpec, "@") {

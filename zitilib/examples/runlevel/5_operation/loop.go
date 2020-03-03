@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/netfoundry/fablab/kernel/fablib"
 	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/sirupsen/logrus"
 )
 
 func Loop() model.OperatingStage {
@@ -27,7 +28,7 @@ func Loop() model.OperatingStage {
 }
 
 func (self *loopOperation) Operate(m *model.Model, run string) error {
-	listenerHosts := m.GetHosts("@loop", "@loop-listener")
+	listenerHosts := m.GetHosts("@terminator", "@loop-listener")
 	if len(listenerHosts) < 1 {
 		return fmt.Errorf("no loop listener hosts in model")
 	}
@@ -39,9 +40,11 @@ func (self *loopOperation) Operate(m *model.Model, run string) error {
 
 	var dialerHosts []*model.Host
 	var dialerIds []string
-	for dialerId, dialerHost := range m.GetRegionByTag("terminator").Hosts {
-		dialerHosts = append(dialerHosts, dialerHost)
-		dialerIds = append(dialerIds, dialerId)
+	for dialerId, dialerHost := range m.GetRegionByTag("initiator").Hosts {
+		if dialerHost.HasTag("loop-dialer") {
+			dialerHosts = append(dialerHosts, dialerHost)
+			dialerIds = append(dialerIds, dialerId)
+		}
 	}
 	if len(dialerHosts) < 1 {
 		return fmt.Errorf("no loop dialer hosts in model")
@@ -81,18 +84,20 @@ func (_ *loopOperation) startListeners(m *model.Model, listenerHosts []*model.Ho
 		if output, err := fablib.RemoteExec(ssh, listenerCmd); err != nil {
 			return fmt.Errorf("error starting loop listener [%s] (%w)", output, err)
 		}
+		logrus.Infof(listenerHost.PublicIp, listenerCmd)
 	}
 	return nil
 }
 
 func (self *loopOperation) startDialers(m *model.Model, initiatorHost, dialerHosts []*model.Host, dialerIds []string) error {
-	endpoint := fmt.Sprintf("tls:%s:7001", initiatorHost[0].PublicIp)
+	endpoint := fmt.Sprintf("tls:%s:7002", initiatorHost[0].PublicIp)
 	for i := 0; i < len(dialerHosts); i++ {
 		ssh := fablib.NewSshConfigFactoryImpl(m, dialerHosts[i].PublicIp)
 		dialerCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s >> /home/%s/ziti-fabric-test-loop2-dialer.log 2>&1 &", ssh.User(), ssh.User(), self.loopScenario(m), endpoint, dialerIds[i], ssh.User())
 		if output, err := fablib.RemoteExec(ssh, dialerCmd); err != nil {
 			return fmt.Errorf("error starting loop dialer [%s] (%w)", output, err)
 		}
+		logrus.Infof(dialerHosts[i].PublicIp, dialerCmd)
 	}
 	return nil
 }

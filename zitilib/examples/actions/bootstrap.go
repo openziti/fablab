@@ -35,8 +35,6 @@ func NewBootstrapAction() model.ActionBinder {
 }
 
 func (self *bootstrapAction) bind(m *model.Model) model.Action {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
-
 	workflow := actions.Workflow()
 
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
@@ -57,15 +55,7 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(serviceAction)
 	}
 
-	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
-	if iperfServer != nil {
-		terminatingRouters := m.GetComponentsByTag("terminator")
-		if len(terminatingRouters) < 1 {
-			logrus.Fatal("need at least 1 terminating router!")
-		}
-		workflow.AddAction(cli.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
-	}
-
+	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 	for _, h := range m.GetAllHosts() {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
