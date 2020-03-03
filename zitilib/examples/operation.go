@@ -78,8 +78,9 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 	}
 
 	for _, host := range hosts {
+		boundHost := host
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopListener(host, nil)
+			return zitilib_5_operation.LoopListener(boundHost, nil)
 		})
 	}
 
