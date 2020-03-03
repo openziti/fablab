@@ -1,6 +1,6 @@
 v: 3
 
-db:                     /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/ctrl.db
+db:                     /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/ctrl.db
 
 identity:
   cert:                 /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/certs/{{ .Component.PublicIdentity }}-client.cert
