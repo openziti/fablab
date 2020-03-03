@@ -17,10 +17,10 @@
 package zitilib_examples
 
 import (
-	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
+	"fmt"
+	fablib_5_operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/netfoundry/fablab/kernel/model"
-	zitilib_examples_5_operation "github.com/netfoundry/fablab/zitilib/examples/runlevel/5_operation"
-	__operation "github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
+	zitilib_5_operation "github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 
@@ -28,19 +28,96 @@ func newOperationFactory() model.Factory {
 	return &operationFactory{}
 }
 
-func (_ *operationFactory) Build(m *model.Model) error {
-	c := make(chan struct{})
-	binders := model.OperatingBinders{
-		func(m *model.Model) model.OperatingStage { return __operation.Mesh(c) },
-		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
-		func(m *model.Model) model.OperatingStage { return zitilib_examples_5_operation.Loop() },
-		func(m *model.Model) model.OperatingStage { return operation.Timer(1*time.Minute, c) },
-		func(m *model.Model) model.OperatingStage { return zitilib_examples_5_operation.LoopCloser() },
-		func(m *model.Model) model.OperatingStage { return operation.Persist() },
+// operationFactory is a model.Factory that is responsible for building and connecting the model.OperatingBinders that
+// represent the operational phase of the model.
+//
+// In our case, this model launches mesh structure polling, fabric metrics listening, and then creates the correct
+// loop2 dialers and listeners that run against the model. When the dialers complete their operation, the joiner will
+// join with them, invoking the closer and ending the mesh and metrics pollers. Finally, the instance state is
+// persisted as a dump.
+//
+func (self *operationFactory) Build(m *model.Model) error {
+	closer := make(chan struct{})
+	var joiners []chan struct{}
+
+	m.Operation = append(m.Operation, model.OperatingBinders{
+		func(m *model.Model) model.OperatingStage { return zitilib_5_operation.Mesh(closer) },
+		func(m *model.Model) model.OperatingStage { return zitilib_5_operation.Metrics(closer) },
+	}...)
+
+	listeners, err := self.listeners(m)
+	if err != nil {
+		return fmt.Errorf("error creating listeners (%w)", err)
 	}
-	m.Operation = binders
+	m.Operation = append(m.Operation, listeners...)
+
+	m.Operation = append(m.Operation, func(m *model.Model) model.OperatingStage {
+		return fablib_5_operation.Timer(5*time.Second, nil)
+	})
+
+	dialers, dialerJoiners, err := self.dialers(m)
+	if err != nil {
+		return fmt.Errorf("error creating dialers (%w)", err)
+	}
+	joiners = append(joiners, dialerJoiners...)
+	m.Operation = append(m.Operation, dialers...)
+
+	m.Operation = append(m.Operation, model.OperatingBinders{
+		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Joiner(joiners) },
+		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Closer(closer) },
+		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Persist() },
+	}...)
 
 	return nil
+}
+
+func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
+	hosts := m.GetHosts("@terminator", "@loop-listener")
+	if len(hosts) < 1 {
+		return nil, fmt.Errorf("no '@terminator/@loop-listener' hosts in model")
+	}
+
+	for _, host := range hosts {
+		binders = append(binders, func(m *model.Model) model.OperatingStage {
+			return zitilib_5_operation.LoopListener(host, nil)
+		})
+	}
+
+	return binders, nil
+}
+
+func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
+	initiators := m.GetHosts("@initiator", "@initiator")
+	if len(initiators) != 1 {
+		return nil, nil, fmt.Errorf("expected 1 '@initiator/@initiator' host in model")
+	}
+
+	var hosts []*model.Host
+	var ids []string
+	for id, host := range m.GetRegionByTag("initiator").Hosts {
+		if host.HasTag("loop-dialer") {
+			hosts = append(hosts, host)
+			ids = append(ids, id)
+		}
+	}
+	if len(hosts) < 1 {
+		return nil, nil, fmt.Errorf("no '@initiator/@loop-dialer' hosts in model")
+	}
+
+	endpoint := fmt.Sprintf("tls:%s:7002", initiators[0].PublicIp)
+
+	binders = make([]model.OperatingBinder, 0)
+	for i := 0; i < len(hosts); i++ {
+		joiner := make(chan struct{}, 1)
+		binderHost := hosts[i]
+		binderId := ids[i]
+		binders = append(binders, func(m *model.Model) model.OperatingStage {
+			return zitilib_5_operation.LoopDialer(binderHost, binderId, "10-ambient.loop2.yml", endpoint, joiner)
+		})
+		joiners = append(joiners, joiner)
+	}
+
+	return binders, joiners, nil
 }
 
 type operationFactory struct{}

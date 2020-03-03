@@ -23,18 +23,20 @@ import (
 )
 
 func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, close: closer}
+	return &timer{duration: duration, closer: closer}
 }
 
 func (timer *timer) Operate(_ *model.Model, _ string) error {
 	logrus.Infof("waiting for %s", timer.duration)
 	time.Sleep(timer.duration)
-	logrus.Infof("closing")
-	close(timer.close)
+	if timer.closer != nil {
+		logrus.Infof("closing")
+		close(timer.closer)
+	}
 	return nil
 }
 
 type timer struct {
 	duration time.Duration
-	close    chan struct{}
+	closer   chan struct{}
 }
