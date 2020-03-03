@@ -16,7 +16,11 @@
 
 package zitilib_examples
 
-import "github.com/netfoundry/fablab/kernel/model"
+import (
+	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/fablab/zitilib/actions/logs"
+	"github.com/netfoundry/fablab/zitilib/console"
+)
 import "github.com/netfoundry/fablab/zitilib/examples/actions"
 
 func newActionsFactory() model.Factory {
@@ -28,7 +32,8 @@ func (_ *actionsFactory) Build(m *model.Model) error {
 		"bootstrap": zitilib_examples_actions.NewBootstrapAction(),
 		"start":     zitilib_examples_actions.NewStartAction(),
 		"stop":      zitilib_examples_actions.NewStopAction(),
-		"console":   zitilib_examples_actions.NewConsoleAction(),
+		"console":   func(m *model.Model) model.Action { return console.Console() },
+		"logs":      func(m *model.Model) model.Action { return logs.Logs() },
 	}
 	return nil
 }

@@ -18,7 +18,10 @@ package zitilib_characterization
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/netfoundry/fablab/zitilib/actions/logs"
 	zitilib_characterization_actions "github.com/netfoundry/fablab/zitilib/characterization/actions"
+	"github.com/netfoundry/fablab/zitilib/characterization/reporting"
+	"github.com/netfoundry/fablab/zitilib/console"
 )
 
 func newActionsFactory() model.Factory {
@@ -30,9 +33,9 @@ func (f *actionsFactory) Build(m *model.Model) error {
 		"bootstrap": zitilib_characterization_actions.NewBootstrapAction(),
 		"start":     zitilib_characterization_actions.NewStartAction(),
 		"stop":      zitilib_characterization_actions.NewStopAction(),
-		"console":   zitilib_characterization_actions.NewConsoleAction(),
-		"report":    zitilib_characterization_actions.NewReportAction(),
-		"logs":      zitilib_characterization_actions.NewLogsAction(),
+		"report":    func(m *model.Model) model.Action { return reporting.Report() },
+		"console":   func(m *model.Model) model.Action { return console.Console() },
+		"logs":      func(m *model.Model) model.Action { return logs.Logs() },
 	}
 	return nil
 }

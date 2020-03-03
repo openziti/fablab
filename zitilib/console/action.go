@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,20 +14,24 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_actions
+package console
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/characterization/reporting"
+	"net/http"
+	"path/filepath"
 )
 
-func NewReportAction() model.ActionBinder {
-	action := &reportAction{}
-	return action.bind
+func Console() model.Action {
+	return &console{}
 }
 
-func (a *reportAction) bind(m *model.Model) model.Action {
-	return reporting.Report()
+func (consoleAction *console) Execute(m *model.Model) error {
+	server := NewServer()
+	go server.Listen()
+
+	http.Handle("/", http.FileServer(http.Dir(filepath.Join(model.FablabRoot(), "zitilib/console/webroot"))))
+	return http.ListenAndServe(":8080", nil)
 }
 
-type reportAction struct{}
+type console struct{}
