@@ -40,6 +40,7 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
 
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(host.Exec(m.GetHostByTags("ctrl", "ctrl"), "rm -f ~/ctrl.db"))
 	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
