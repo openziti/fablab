@@ -18,7 +18,9 @@ _Programmers_ solved these kinds of problems long ago with general purpose progr
 
 ## The Components of fablab
 
-![0.4.architecture](docs/0.4.architecture.png)
+<p align="center">
+	<img src="docs/0.4.architecture.png"/>
+</p>
 
 Like many other software tools that offer multiple degrees of freedom and extensibility, `fablab` is best described as a set of orthogonal ideas, which combine to facilitate extremely powerful, extensible software models. In order to understand the entirety of `fablab`, you'll want to make sure you understand each of the core capabilities that it provides.
 
