@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package cli
+package zitilib_actions
 
 import (
 	"bytes"

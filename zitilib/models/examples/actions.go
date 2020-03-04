@@ -18,10 +18,10 @@ package zitilib_examples
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions/logs"
+	"github.com/netfoundry/fablab/zitilib/actions"
 	"github.com/netfoundry/fablab/zitilib/console"
 )
-import "github.com/netfoundry/fablab/zitilib/examples/actions"
+import "github.com/netfoundry/fablab/zitilib/models/examples/actions"
 
 func newActionsFactory() model.Factory {
 	return &actionsFactory{}
@@ -33,7 +33,7 @@ func (_ *actionsFactory) Build(m *model.Model) error {
 		"start":     zitilib_examples_actions.NewStartAction(),
 		"stop":      zitilib_examples_actions.NewStopAction(),
 		"console":   func(m *model.Model) model.Action { return console.Console() },
-		"logs":      func(m *model.Model) model.Action { return logs.Logs() },
+		"logs":      func(m *model.Model) model.Action { return zitilib_actions.Logs() },
 	}
 	return nil
 }

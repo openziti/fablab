@@ -1,4 +1,4 @@
-package __operation
+package zitilib_runlevel_5_operation
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ func (self *loopListener) run(m *model.Model, run string) {
 	logFile := fmt.Sprintf("/home/%s/logs/loop2-listener-%s.log", ssh.User(), run)
 	listenerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 listener -b tcp:0.0.0.0:8171 >> %s 2>&1", ssh.User(), logFile)
 	if output, err := fablib.RemoteExec(ssh, listenerCmd); err != nil {
-		logrus.Error("error starting loop listener [%s] (%w)", output, err)
+		logrus.Errorf("error starting loop listener [%s] (%w)", output, err)
 	}
 }
 

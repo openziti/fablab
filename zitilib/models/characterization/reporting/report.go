@@ -52,7 +52,7 @@ func (report *report) Execute(m *model.Model) error {
 			}
 			reportData.Dump = dump
 
-			tPath := filepath.Join(model.FablabRoot(), "zitilib/characterization/reporting/templates/index.html")
+			tPath := filepath.Join(model.FablabRoot(), "zitilib/models/characterization/reporting/templates/index.html")
 
 			reportPath := filepath.Join(model.ActiveInstancePath(), fmt.Sprintf("reports/%d.html", i))
 			if err := os.MkdirAll(filepath.Dir(reportPath), os.ModePerm); err != nil {

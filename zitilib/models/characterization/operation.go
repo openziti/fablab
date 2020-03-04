@@ -69,8 +69,8 @@ func (f *operationFactory) Build(m *model.Model) error {
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
-		func(m *model.Model) model.OperatingStage { return __operation.Mesh(c) },
-		func(m *model.Model) model.OperatingStage { return __operation.Metrics(c) },
+		func(m *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Mesh(c) },
+		func(m *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
 	}
 
 	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)

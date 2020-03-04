@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package logs
+package zitilib_actions
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ func (self *logs) Execute(m *model.Model) error {
 func (self *logs) forHost(snapshot, rn, hn string, ssh fablib.SshConfigFactory) error {
 	path := filepath.Join(model.AllocateForensicScenario(snapshot, "logs"), rn, hn)
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating logs path [%s] for host [%s/%s] (%w)", path, rn, hn)
+		return fmt.Errorf("error creating logs path [%s] for host [%s/%s] (%w)", path, rn, hn, err)
 	}
 	logrus.Infof("=> [%s]", path)
 

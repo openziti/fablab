@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package pki
+package zitilib_runlevel_1_configuration
 
 import (
 	"fmt"

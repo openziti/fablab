@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package __operation
+package zitilib_runlevel_5_operation
 
 import (
 	"fmt"

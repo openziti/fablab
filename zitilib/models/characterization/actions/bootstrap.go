@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_examples_actions
+package zitilib_characterization_actions
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"github.com/netfoundry/fablab/kernel/fablib/actions/host"
 	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions/cli"
+	actions2 "github.com/netfoundry/fablab/zitilib/actions"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -34,7 +34,9 @@ func NewBootstrapAction() model.ActionBinder {
 	return action.bind
 }
 
-func (self *bootstrapAction) bind(m *model.Model) model.Action {
+func (a *bootstrapAction) bind(m *model.Model) model.Action {
+	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+
 	workflow := actions.Workflow()
 
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
@@ -44,19 +46,19 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 
 	for _, router := range m.GetComponentsByTag("router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
-		workflow.AddAction(cli.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
+		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	components := m.GetComponentsByTag("terminator")
-	serviceActions, err := self.createServiceActions(m, components[0].PublicIdentity)
-	if err != nil {
-		logrus.Fatalf("error creating service actions (%w)", err)
-	}
-	for _, serviceAction := range serviceActions {
-		workflow.AddAction(serviceAction)
+	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
+	if iperfServer != nil {
+		terminatingRouters := m.GetComponentsByTag("terminator")
+		if len(terminatingRouters) < 1 {
+			logrus.Fatal("need at least 1 terminating router!")
+		}
+		workflow.AddAction(actions2.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
+		workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp", "udp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity, "--binding", "transport_udp"))
 	}
 
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
 	for _, h := range m.GetAllHosts() {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
@@ -66,24 +68,6 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
 
 	return workflow
-}
-
-func (_ *bootstrapAction) createServiceActions(m *model.Model, terminatorId string) ([]model.Action, error) {
-	terminatorRegion := m.GetRegionByTag("terminator")
-	if terminatorRegion == nil {
-		return nil, fmt.Errorf("unable to find 'terminator' region")
-	}
-
-	serviceActions := make([]model.Action, 0)
-	for hostId, host := range terminatorRegion.Hosts {
-		for _, tag := range host.Tags {
-			if tag == "loop-listener" {
-				serviceActions = append(serviceActions, cli.Fabric("create", "service", hostId, fmt.Sprintf("tcp:%s:8171", host.PrivateIp), terminatorId))
-			}
-		}
-	}
-
-	return serviceActions, nil
 }
 
 type bootstrapAction struct{}

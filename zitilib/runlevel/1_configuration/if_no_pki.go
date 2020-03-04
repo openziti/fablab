@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package pki
+package zitilib_runlevel_1_configuration
 
 import (
 	"fmt"
@@ -22,11 +22,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Group(stages ...model.ConfigurationStage) model.ConfigurationStage {
-	return &group{stages: stages}
+func IfNoPki(stages ...model.ConfigurationStage) model.ConfigurationStage {
+	return &ifNoPki{stages: stages}
 }
 
-func (group *group) Configure(m *model.Model) error {
+func (self *ifNoPki) Configure(m *model.Model) error {
 	if existing, err := hasExisitingPki(); err == nil {
 		if existing {
 			logrus.Infof("skipping configuration. existing pki system at [%s]", model.PkiBuild())
@@ -36,7 +36,7 @@ func (group *group) Configure(m *model.Model) error {
 		return fmt.Errorf("error checking pki existence at [%s] (%s)", model.PkiBuild(), err)
 	}
 
-	for _, stage := range group.stages {
+	for _, stage := range self.stages {
 		if err := stage.Configure(m); err != nil {
 			return fmt.Errorf("error running configuration stage (%w)", err)
 		}
@@ -45,6 +45,6 @@ func (group *group) Configure(m *model.Model) error {
 	return nil
 }
 
-type group struct {
+type ifNoPki struct {
 	stages []model.ConfigurationStage
 }
