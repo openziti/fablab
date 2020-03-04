@@ -74,4 +74,4 @@ The kernel includes primitives for remote puppetry using `ssh`, along with relia
 
 ## Getting Started with the Examples
 
-See the [Getting Started with the Examples](docs/examples.md) guide for details about how to get started with the stock example models.
+See the [Getting Started with the Examples](docs/examples/00.index.md) guide for details about how to get started with the stock example models.
