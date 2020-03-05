@@ -28,7 +28,7 @@ Once you've grokked those ideas, you'll begin to see how they can be combined to
 
 ### The Model
 
-All `fablab` environments are represented by a "model" (`model.Model`). The model contains all of the data structures (`model.Host`, `model.Region`, etc.), static definitions (`model.Scope`, etc.), dynamically (late) bound components, and the logic (`model.Action`, lifecycle stages (`model.InfrastructureStage`, etc.), `model.Factory`) that comprise the entirety (or a representative portion) of your distributed system.
+All `fablab` environments are represented by a "model" (`model.Model`). The model contains all of the data structures (`model.Host`, `model.Region`, etc.), static definitions (`model.Scope`, etc.), dynamically (late) bound components, and the logic (`model.Action`, lifecycle stages (`model.InfrastructureStage`, etc.), `model.Factory`) that comprise your distributed system.
 
 `fablab` also includes a comfortable, convenient command-line user interface for working with and manipulating instances of models. The `fablab` command-line interface is conceptually similar to tools like `docker` and `vagrant`, where you can manage and work with multiple runtime environments ("model instances") from a host (typically a developer workstation).
 
@@ -40,7 +40,7 @@ The structural model maintains a "digital twin" of the distributed environment a
 
 You can generate your `Model` statically in code, or programmatically in response to any stimulus you might want to observe. You can reconfigure the shape of your `Model` according to stimulus as well, and `fablab` will reconfigure your concrete environment to match.
 
-Define the structural model directly. Define it programmatically by reverse engineering existing environments. Define it dynamically according to external data sources (dynamic, workload-responsive deployments?). Define it how it best way that makes sense for your domain, and allow other parts of your deployment get developed without having to understand anything about how the structure was derived.
+Define the structural model directly. Define it programmatically by reverse engineering existing environments. Define it dynamically according to external data sources (dynamic, workload-responsive deployments?). Define it how it best way that makes sense for your domain, and allow the other parts of your deployment to develop without having to understand anything about how the underlying model structure was derived.
 
 ### The Behavioral Model
 
