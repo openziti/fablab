@@ -4,7 +4,7 @@
 
 _(This is a work-in-progress document where sections may end randomly and abrubptly. Stay tuned)_
 
-The Fabulous Laboratory (`fablab`) is incubating an evolved set of tooling addressing operational development concerns for large-scale, distributed deployment models. These tools are being created to directly address the needs of developing, deploying, researching, and managing geo-scale Ziti networks (and Ziti network applications) in development and testing environments. We also foresee these tools being useful beyond our specific purpose, and finding uses in many areas of operational development.
+The Fabulous Laboratory (`fablab`) is incubating an evolved set of tooling addressing operational development concerns for large-scale, distributed deployment models. These tools are being created to directly address the needs of developing, deploying, researching, and managing geo-scale [Ziti](https://ziti.dev) networks (and Ziti network applications) in development and testing environments. We also foresee these tools being useful beyond our specific purpose, and finding uses in many areas of operational development.
 
 ## "As Code" as Actual Code
 
