@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,6 +14,28 @@
 	limitations under the License.
 */
 
-package model
+package zitilib_examples
 
-const Version = "0.3.6 (sp1r4l)"
+import "github.com/netfoundry/fablab/kernel/model"
+
+func newHostsFactory() *hostsFactory {
+	return &hostsFactory{}
+}
+
+func (f *hostsFactory) Build(m *model.Model) error {
+	for _, host := range m.GetAllHosts() {
+		host.InstanceType = "t2.micro"
+	}
+
+	v, found := m.GetVariable("instance_type")
+	if found {
+		instanceType := v.(string)
+		for _, host := range m.GetAllHosts() {
+			host.InstanceType = instanceType
+		}
+	}
+
+	return nil
+}
+
+type hostsFactory struct{}

@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,29 +14,24 @@
 	limitations under the License.
 */
 
-package operation
+package zitilib_characterization_actions
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/actions"
+	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, closer: closer}
+func NewStopAction() model.ActionBinder {
+	action := &stopAction{}
+	return action.bind
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	if timer.closer != nil {
-		logrus.Infof("closing")
-		close(timer.closer)
-	}
-	return nil
+func (a *stopAction) bind(m *model.Model) model.Action {
+	return actions.Workflow(
+		component.Stop("@router", "@router", "@router"),
+		component.Stop("@ctrl", "@ctrl", "@ctrl"),
+	)
 }
 
-type timer struct {
-	duration time.Duration
-	closer   chan struct{}
-}
+type stopAction struct{}

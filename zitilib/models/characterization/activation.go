@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,6 +14,24 @@
 	limitations under the License.
 */
 
-package model
+package zitilib_characterization
 
-const Version = "0.3.6 (sp1r4l)"
+import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/4_activation/action"
+	"github.com/netfoundry/fablab/kernel/model"
+)
+
+func newActivationFactory() model.Factory {
+	return &activationFactory{}
+}
+
+func (f *activationFactory) Build(m *model.Model) error {
+	m.Activation = model.ActivationBinders{
+		func(m *model.Model) model.ActivationStage {
+			return action.Activation("bootstrap", "start")
+		},
+	}
+	return nil
+}
+
+type activationFactory struct{}

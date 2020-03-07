@@ -14,29 +14,32 @@
 	limitations under the License.
 */
 
-package operation
+package zitilib_examples
 
 import (
+	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
+	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
+	"path/filepath"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, closer: closer}
+func newKittingFactory() model.Factory {
+	return &kittingFactory{}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	if timer.closer != nil {
-		logrus.Infof("closing")
-		close(timer.closer)
+func (_ *kittingFactory) Build(m *model.Model) error {
+	m.Kitting = model.KittingBinders{
+		func(m *model.Model) model.KittingStage {
+			zitiBinaries := []string{
+				"ziti-controller",
+				"ziti-fabric",
+				"ziti-fabric-test",
+				"ziti-router",
+			}
+			return devkit.DevKit(filepath.Join(zitilib_bootstrap.ZitiDistRoot(), "bin"), zitiBinaries)
+		},
 	}
 	return nil
 }
 
-type timer struct {
-	duration time.Duration
-	closer   chan struct{}
-}
+type kittingFactory struct{}

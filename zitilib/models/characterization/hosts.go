@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,29 +14,30 @@
 	limitations under the License.
 */
 
-package operation
+package zitilib_characterization
 
 import (
 	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
-	return &timer{duration: duration, closer: closer}
+func newHostsFactory() *hostsFactory {
+	return &hostsFactory{}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
-	logrus.Infof("waiting for %s", timer.duration)
-	time.Sleep(timer.duration)
-	if timer.closer != nil {
-		logrus.Infof("closing")
-		close(timer.closer)
+func (f *hostsFactory) Build(m *model.Model) error {
+	for _, host := range m.GetAllHosts() {
+		host.InstanceType = "t2.micro"
 	}
+
+	l := model.GetLabel()
+	if l.Has("instance_type") {
+		instanceType := l.Must("instance_type")
+		for _, host := range m.GetAllHosts() {
+			host.InstanceType = instanceType.(string)
+		}
+	}
+
 	return nil
 }
 
-type timer struct {
-	duration time.Duration
-	closer   chan struct{}
-}
+type hostsFactory struct{}

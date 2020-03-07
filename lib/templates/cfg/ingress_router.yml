@@ -1,6 +1,6 @@
 {{$ssh_username := .Model.MustVariable "credentials" "ssh" "username"}}
 {{$identity := .Component.PublicIdentity}}
-{{$protocol := .Model.MustVariable "characterization" "fabric" "data_plane_protocol"}}
+{{$protocol := .Model.MustVariable "zitilib" "fabric" "data_plane_protocol"}}
 {{$ctrl_ip := publicIp "ctrl" "ctrl"}}
 {{$router_ip := .Host.PublicIp}}
   

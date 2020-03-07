@@ -14,6 +14,36 @@
 	limitations under the License.
 */
 
-package model
+package zitilib
 
-const Version = "0.3.6 (sp1r4l)"
+import "path/filepath"
+
+func ZitiRoot() string {
+	return zitiRoot
+}
+
+func ZitiDistRoot() string {
+	if zitiDistRoot == "" {
+		return ZitiRoot()
+	}
+	return zitiDistRoot
+}
+
+func zitiBinaries() string {
+	return filepath.Join(zitiRoot, "bin")
+}
+
+func ZitiDistBinaries() string {
+	return filepath.Join(ZitiDistRoot(), "bin")
+}
+
+func ZitiCli() string {
+	return filepath.Join(zitiBinaries(), "ziti")
+}
+
+func ZitiFabricCli() string {
+	return filepath.Join(zitiBinaries(), "ziti-fabric")
+}
+
+var zitiRoot string
+var zitiDistRoot string
