@@ -65,5 +65,7 @@ var transwarp = &model.Model{
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newInfrastructureFactory(),
+		newKittingFactory(),
+		newDistributionFactory(),
 	},
 }
