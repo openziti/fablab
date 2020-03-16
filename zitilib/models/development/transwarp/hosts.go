@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_examples
+package transwarp
 
 import "github.com/netfoundry/fablab/kernel/model"
 
@@ -24,17 +24,15 @@ func newHostsFactory() model.Factory {
 
 func (_ *hostsFactory) Build(m *model.Model) error {
 	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro"
+		host.InstanceType = "t2.micro";
 	}
 
 	v, found := m.GetVariable("instance_type")
 	if found {
-		instanceType := v.(string)
 		for _, host := range m.GetAllHosts() {
-			host.InstanceType = instanceType
+			host.InstanceType = v.(string)
 		}
 	}
-
 	return nil
 }
 
