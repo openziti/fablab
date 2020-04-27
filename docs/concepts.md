@@ -8,7 +8,7 @@
 
 ![Model](concepts/02-model.png)
 
-## Instance:
+## Instances:
 
 ![Instance](concepts/03-instance.png)
 
