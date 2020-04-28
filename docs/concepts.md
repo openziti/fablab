@@ -12,26 +12,30 @@
 
 ![Instance](images/concepts/03-instance.png)
 
+## Lifecycle:
+
+![Lifecycle](images/concepts/04-lifecycle.png)
+
 ## Packaging:
 
-![Packaging](images/concepts/04-packaging.png)
+![Packaging](images/concepts/05-packaging.png)
 
 ## Data Set:
 
-![Data Set](images/concepts/05-data-set.png)
+![Data Set](images/concepts/06-data-set.png)
 
 ## Structural Model:
 
-![Structural Model](images/concepts/06-structural-model.png)
+![Structural Model](images/concepts/07-structural-model.png)
 
 ## Behavioral Model:
 
-![Behavioral Model](images/concepts/07-behavioral-model.png)
+![Behavioral Model](images/concepts/08-behavioral-model.png)
 
 ## Instance Model:
 
-![Instance Model](images/concepts/08-instance-model.png)
+![Instance Model](images/concepts/09-instance-model.png)
 
 ## Kernel:
 
-![Kernel](images/concepts/09-kernel.png)
+![Kernel](images/concepts/10-kernel.png)
