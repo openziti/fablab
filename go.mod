@@ -12,7 +12,7 @@ require (
 	github.com/netfoundry/ziti-foundation v0.0.0-20191204161457-1913130f80f6
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/pkg/sftp v1.11.0
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
