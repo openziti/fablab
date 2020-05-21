@@ -18,8 +18,8 @@ package semaphore_0
 
 import (
 	"errors"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -41,7 +41,7 @@ func (restartStage *restartStage) Express(m *model.Model, l *model.Label) error 
 				sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 
 				if output, err := fablib.RemoteExec(sshConfigFactory, "uptime"); err != nil {
-					logrus.Warnf("host not restarted [%s] (%w)", h.PublicIp, err)
+					logrus.Warnf("host not restarted [%s] (%v)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {
 					logrus.Infof("%s", strings.Trim(output, " \t\r\n"))

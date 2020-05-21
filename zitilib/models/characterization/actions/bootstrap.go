@@ -18,12 +18,12 @@ package zitilib_characterization_actions
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib/actions"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/host"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
-	"github.com/netfoundry/fablab/kernel/model"
-	actions2 "github.com/netfoundry/fablab/zitilib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
+	"github.com/openziti/fablab/kernel/fablib/actions/host"
+	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
+	"github.com/openziti/fablab/kernel/model"
+	actions2 "github.com/openziti/fablab/zitilib/actions"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"

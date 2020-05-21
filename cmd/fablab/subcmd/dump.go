@@ -19,7 +19,7 @@ package subcmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +55,7 @@ func dump(_ *cobra.Command, _ []string) {
 			fmt.Println()
 			fmt.Println(string(data))
 		} else {
-			logrus.Fatalf("error marshaling model dump (%w)", err)
+			logrus.Fatalf("error marshaling model dump (%v)", err)
 		}
 
 	} else {

@@ -19,9 +19,9 @@ package reporting
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
 	"github.com/oliveagle/jsonpath"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -89,28 +89,28 @@ func (report *report) buildReportData(data []byte, regionKeys []string) (*Report
 		if iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_ziti_metrics", regionKey)); err == nil {
 			regionData.Ziti.IPerf = iperfSummary
 		} else {
-			logrus.Warnf("error getting ziti iperf summary (%w)", err)
+			logrus.Warnf("error getting ziti iperf summary (%v)", err)
 			regionData.Ziti.IPerf = &model.IperfSummary{}
 		}
 
 		if iperfSummary, err := report.getIperfSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_internet_metrics", regionKey)); err == nil {
 			regionData.Internet.IPerf = iperfSummary
 		} else {
-			logrus.Warnf("error getting internet iperf summary (%w)", err)
+			logrus.Warnf("error getting internet iperf summary (%v)", err)
 			regionData.Internet.IPerf = &model.IperfSummary{}
 		}
 
 		if iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_ziti_1m_metrics", regionKey)); err == nil {
 			regionData.Ziti.IPerfUdp = iperfUdpSummary
 		} else {
-			logrus.Warnf("error getting ziti iperf udp summary (%w)", err)
+			logrus.Warnf("error getting ziti iperf udp summary (%v)", err)
 			regionData.Ziti.IPerfUdp = &model.IperfUdpSummary{}
 		}
 
 		if iperfUdpSummary, err := report.getIperfUdpSummary(jsonData, fmt.Sprintf("$.regions.%s.hosts.client.scope.data.iperf_udp_internet_1m_metrics", regionKey)); err == nil {
 			regionData.Internet.IPerfUdp = iperfUdpSummary
 		} else {
-			logrus.Warnf("error getting internet iperf udp summary (%w)", err)
+			logrus.Warnf("error getting internet iperf udp summary (%v)", err)
 			regionData.Internet.IPerfUdp = &model.IperfUdpSummary{}
 		}
 
@@ -196,7 +196,7 @@ func (report *report) templateFuncs() template.FuncMap {
 		"json": func(i interface{}) string {
 			data, err := json.MarshalIndent(i, "", "  ")
 			if err != nil {
-				logrus.Fatalf("error marshaling json (%w)", err)
+				logrus.Fatalf("error marshaling json (%v)", err)
 			}
 			return string(data)
 		},

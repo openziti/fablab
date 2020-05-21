@@ -18,10 +18,10 @@ package mattermozt
 
 import (
 	"fmt"
-	semaphore0 "github.com/netfoundry/fablab/kernel/fablib/runlevel/0_infrastructure/semaphore"
-	terraform0 "github.com/netfoundry/fablab/kernel/fablib/runlevel/0_infrastructure/terraform"
-	terraform6 "github.com/netfoundry/fablab/kernel/fablib/runlevel/6_disposal/terraform"
-	"github.com/netfoundry/fablab/kernel/model"
+	semaphore0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/semaphore"
+	terraform0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/terraform"
+	terraform6 "github.com/openziti/fablab/kernel/fablib/runlevel/6_disposal/terraform"
+	"github.com/openziti/fablab/kernel/model"
 	"time"
 )
 

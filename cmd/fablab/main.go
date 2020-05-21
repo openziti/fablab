@@ -18,18 +18,17 @@ package main
 
 import (
 	"github.com/michaelquigley/pfxlog"
-	"github.com/netfoundry/fablab/cmd/fablab/subcmd"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib"
-	_ "github.com/netfoundry/fablab/zitilib"
-	_ "github.com/netfoundry/fablab/zitilib/models/characterization"
-	_ "github.com/netfoundry/fablab/zitilib/models/development/transwarp"
-	_ "github.com/netfoundry/fablab/zitilib/models/examples"
-	_ "github.com/netfoundry/fablab/zitilib/models/mattermozt"
 	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/netfoundry/ziti-foundation/transport/quic"
 	"github.com/netfoundry/ziti-foundation/transport/tcp"
 	"github.com/netfoundry/ziti-foundation/transport/tls"
+	"github.com/openziti/fablab/cmd/fablab/subcmd"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib"
+	_ "github.com/openziti/fablab/zitilib"
+	_ "github.com/openziti/fablab/zitilib/models/characterization"
+	_ "github.com/openziti/fablab/zitilib/models/examples"
+	_ "github.com/openziti/fablab/zitilib/models/mattermozt"
 	"github.com/sirupsen/logrus"
 )
 

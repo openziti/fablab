@@ -18,12 +18,12 @@ package zitilib_examples_actions
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib/actions"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/host"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
-	"github.com/netfoundry/fablab/kernel/model"
-	actions2 "github.com/netfoundry/fablab/zitilib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
+	"github.com/openziti/fablab/kernel/fablib/actions/host"
+	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
+	"github.com/openziti/fablab/kernel/model"
+	actions2 "github.com/openziti/fablab/zitilib/actions"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -50,7 +50,7 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	components := m.GetComponentsByTag("terminator")
 	serviceActions, err := self.createServiceActions(m, components[0].PublicIdentity)
 	if err != nil {
-		logrus.Fatalf("error creating service actions (%w)", err)
+		logrus.Fatalf("error creating service actions (%v)", err)
 	}
 	for _, serviceAction := range serviceActions {
 		workflow.AddAction(serviceAction)

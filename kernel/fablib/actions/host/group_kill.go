@@ -18,8 +18,8 @@ package host
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func GroupKill(regionSpec, hostSpec, match string) model.Action {

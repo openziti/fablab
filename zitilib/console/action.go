@@ -17,7 +17,7 @@
 package console
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"net/http"
 	"path/filepath"
 )

@@ -54,7 +54,7 @@ func PkiBuild() string {
 func configRoot() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		logrus.Fatalf("unable to get user home directory (%w)", err)
+		logrus.Fatalf("unable to get user home directory (%v)", err)
 	}
 	return filepath.Join(home, ".fablab")
 }

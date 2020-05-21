@@ -17,11 +17,11 @@
 package zitilib_examples
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions"
-	"github.com/netfoundry/fablab/zitilib/console"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/console"
 )
-import "github.com/netfoundry/fablab/zitilib/models/examples/actions"
+import "github.com/openziti/fablab/zitilib/models/examples/actions"
 
 func newActionsFactory() model.Factory {
 	return &actionsFactory{}

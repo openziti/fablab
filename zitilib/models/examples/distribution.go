@@ -17,9 +17,9 @@
 package zitilib_examples
 
 import (
-	distribution "github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution"
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution/rsync"
-	"github.com/netfoundry/fablab/kernel/model"
+	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func newDistributionFactory() model.Factory {
@@ -30,8 +30,12 @@ func (_ *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
 		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@ctrl", "logs") },
 		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@router", "logs") },
-		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@loop-listener", "logs")},
-		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "@loop-dialer", "logs")},
+		func(m *model.Model) model.DistributionStage {
+			return distribution.Locations("*", "@loop-listener", "logs")
+		},
+		func(m *model.Model) model.DistributionStage {
+			return distribution.Locations("*", "@loop-dialer", "logs")
+		},
 
 		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}

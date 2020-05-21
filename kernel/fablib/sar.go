@@ -20,7 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"

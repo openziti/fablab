@@ -17,8 +17,8 @@
 package transwarp
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution/rsync"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func newDistributionFactory() model.Factory {

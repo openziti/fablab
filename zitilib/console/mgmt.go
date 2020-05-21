@@ -62,18 +62,18 @@ func (mgmt *mgmt) execute() error {
 	}
 	body, err := proto.Marshal(request)
 	if err != nil {
-		logrus.Fatalf("error marshaling metrics request (%w)", err)
+		logrus.Fatalf("error marshaling metrics request (%v)", err)
 	}
 
 	requestMsg := channel2.NewMessage(int32(mgmt_pb.ContentType_StreamMetricsRequestType), body)
 	errCh, err := mgmt.ch.SendAndSync(requestMsg)
 	if err != nil {
-		logrus.Fatalf("error queuing metrics request (%w)", err)
+		logrus.Fatalf("error queuing metrics request (%v)", err)
 	}
 	select {
 	case err := <-errCh:
 		if err != nil {
-			logrus.Fatalf("error sending metrics request (%w)", err)
+			logrus.Fatalf("error sending metrics request (%v)", err)
 		}
 	case <-time.After(5 * time.Second):
 		logrus.Fatal("timeout")
@@ -89,23 +89,23 @@ func (mgmt *mgmt) pollNetworkShape() {
 		routersRequest := &mgmt_pb.ListRoutersRequest{}
 		body, err := proto.Marshal(routersRequest)
 		if err != nil {
-			logrus.Fatalf("error marshaling list routers request (%w)", err)
+			logrus.Fatalf("error marshaling list routers request (%v)", err)
 		}
 		routersRequestMsg := channel2.NewMessage(int32(mgmt_pb.ContentType_ListRoutersRequestType), body)
 		err = mgmt.ch.Send(routersRequestMsg)
 		if err != nil {
-			logrus.Fatalf("error queuing list routers request (%w)", err)
+			logrus.Fatalf("error queuing list routers request (%v)", err)
 		}
 
 		linksRequest := &mgmt_pb.ListLinksRequest{}
 		body, err = proto.Marshal(linksRequest)
 		if err != nil {
-			logrus.Fatalf("error marshaling list links request (%w)", err)
+			logrus.Fatalf("error marshaling list links request (%v)", err)
 		}
 		linksRequestMsg := channel2.NewMessage(int32(mgmt_pb.ContentType_ListLinksRequestType), body)
 		err = mgmt.ch.Send(linksRequestMsg)
 		if err != nil {
-			logrus.Fatalf("error queuing list links request (%w)", err)
+			logrus.Fatalf("error queuing list links request (%v)", err)
 		}
 
 		time.Sleep(5 * time.Second)

@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

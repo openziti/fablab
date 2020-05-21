@@ -19,8 +19,8 @@ package operation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -62,17 +62,17 @@ func (s *sar) runSar(ssh fablib.SshConfigFactory) {
 	sar := fmt.Sprintf("sar -u -r -q %d", s.intervalSeconds)
 	output, err := fablib.RemoteExec(ssh, sar)
 	if err != nil {
-		logrus.Warnf("sar exited (%w)", err)
+		logrus.Warnf("sar exited (%v)", err)
 	}
 
 	summary, err := fablib.SummarizeSar([]byte(output))
 	if err != nil {
-		logrus.Errorf("sar summary failed (%w) [%s]", err, output)
+		logrus.Errorf("sar summary failed (%v) [%s]", err, output)
 		return
 	}
 	j, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
-		logrus.Errorf("error marshaling summary (%w)", err)
+		logrus.Errorf("error marshaling summary (%v)", err)
 		return
 	}
 	logrus.Debugf("summary = %s", j)

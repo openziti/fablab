@@ -52,7 +52,7 @@ func (client *Client) listenWrite() {
 		select {
 		case msg := <-client.ch:
 			if err := websocket.JSON.Send(client.ws, msg); err != nil {
-				logrus.Errorf("error sending to client [#%d] (%w)", client.id, err)
+				logrus.Errorf("error sending to client [#%d] (%v)", client.id, err)
 			}
 
 		case <-client.doneCh:

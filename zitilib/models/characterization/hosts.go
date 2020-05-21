@@ -17,7 +17,7 @@
 package zitilib_characterization
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func newHostsFactory() *hostsFactory {

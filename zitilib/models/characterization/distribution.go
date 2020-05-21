@@ -17,9 +17,9 @@
 package zitilib_characterization
 
 import (
-	distribution "github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution"
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/3_distribution/rsync"
-	"github.com/netfoundry/fablab/kernel/model"
+	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func newDistributionFactory() model.Factory {

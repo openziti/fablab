@@ -18,9 +18,9 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"path/filepath"
@@ -31,9 +31,9 @@ func init() {
 }
 
 var exportCmd = &cobra.Command{
-	Use: "export",
+	Use:   "export",
 	Short: "export the instance data to a zip archive",
-	Run: export,
+	Run:   export,
 }
 
 func export(_ *cobra.Command, _ []string) {
@@ -55,7 +55,7 @@ func export(_ *cobra.Command, _ []string) {
 		zipName := fmt.Sprintf("%s-%d.zip", filepath.Base(model.ActiveInstancePath()), info.NowInMilliseconds())
 
 		if err := fablib.Export(zipName, m); err != nil {
-			logrus.Fatalf("error exporting (%w)", err)
+			logrus.Fatalf("error exporting (%v)", err)
 		}
 
 	} else {
