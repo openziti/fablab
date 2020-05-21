@@ -17,10 +17,10 @@
 package zitilib_characterization_actions
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/actions"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/component"
-	"github.com/netfoundry/fablab/kernel/fablib/actions/semaphore"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
+	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
+	"github.com/openziti/fablab/kernel/model"
 	"time"
 )
 

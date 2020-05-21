@@ -18,8 +18,8 @@ package terraform_0
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"

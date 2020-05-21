@@ -18,8 +18,8 @@ package zitilib_runlevel_1_configuration
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"

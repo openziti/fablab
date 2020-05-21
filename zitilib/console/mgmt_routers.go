@@ -35,7 +35,7 @@ func (mgmtRouters *mgmtRouters) HandleReceive(msg *channel2.Message, ch channel2
 	response := &mgmt_pb.ListRoutersResponse{}
 	err := proto.Unmarshal(msg.Body, response)
 	if err != nil {
-		logrus.Fatalf("error handling receive routers list (%w)", err)
+		logrus.Fatalf("error handling receive routers list (%v)", err)
 	}
 	mgmtRouters.server.Routers(response.Routers)
 	logrus.Infof("updated [%d] routers", len(response.Routers))

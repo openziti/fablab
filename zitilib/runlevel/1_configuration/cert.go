@@ -19,8 +19,8 @@ package zitilib_runlevel_1_configuration
 import (
 	"bytes"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib"
 	"github.com/sirupsen/logrus"
 	"os/exec"
 	"strings"

@@ -16,7 +16,7 @@
 
 package mattermozt
 
-import "github.com/netfoundry/fablab/kernel/model"
+import "github.com/openziti/fablab/kernel/model"
 
 func init() {
 	model.RegisterModel("zitilib/mattermozt", mattermozt)

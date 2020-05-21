@@ -19,12 +19,12 @@ package zitilib_runlevel_5_operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/netfoundry/ziti-foundation/identity/dotziti"
 	"github.com/netfoundry/ziti-foundation/transport"
 	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -64,7 +64,7 @@ func (mesh *mesh) runMesh() {
 		select {
 		case <-time.After(15 * time.Second):
 			if err := mesh.interrogate(); err != nil {
-				logrus.Errorf("error querying mesh state (%w)", err)
+				logrus.Errorf("error querying mesh state (%v)", err)
 			}
 
 		case <-mesh.closer:

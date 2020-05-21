@@ -19,12 +19,12 @@ package zitilib_runlevel_5_operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
 	"github.com/netfoundry/ziti-foundation/channel2"
 	"github.com/netfoundry/ziti-foundation/identity/dotziti"
 	"github.com/netfoundry/ziti-foundation/transport"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -65,7 +65,7 @@ func (metrics *metrics) Operate(m *model.Model, _ string) error {
 	requestMsg := channel2.NewMessage(int32(mgmt_pb.ContentType_StreamMetricsRequestType), body)
 	errCh, err := metrics.ch.SendAndSync(requestMsg)
 	if err != nil {
-		logrus.Fatalf("error queuing metrics request (%w)", err)
+		logrus.Fatalf("error queuing metrics request (%v)", err)
 	}
 	select {
 	case err := <-errCh:
@@ -113,7 +113,7 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		}
 
 	} else {
-		logrus.Errorf("unable to find host (%w)", err)
+		logrus.Errorf("unable to find host (%v)", err)
 	}
 }
 

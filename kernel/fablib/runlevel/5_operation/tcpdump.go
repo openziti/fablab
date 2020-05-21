@@ -18,8 +18,8 @@ package operation
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path/filepath"
@@ -63,7 +63,7 @@ func (t *tcpdump) runTcpdump(ssh fablib.SshConfigFactory) {
 
 	pcapPath, err := ioutil.TempFile("", fmt.Sprintf("%s_*.pcap", t.scenario))
 	if err != nil {
-		logrus.Fatalf("error creating pcap filename (%w)", err)
+		logrus.Fatalf("error creating pcap filename (%v)", err)
 	}
 
 	output, err := fablib.RemoteExec(ssh, fmt.Sprintf("sudo tcpdump -s %d -w %s", t.snaplen, filepath.Base(pcapPath.Name())))

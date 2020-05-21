@@ -17,11 +17,11 @@
 package zitilib_characterization
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions"
-	"github.com/netfoundry/fablab/zitilib/console"
-	zitilib_characterization_actions "github.com/netfoundry/fablab/zitilib/models/characterization/actions"
-	"github.com/netfoundry/fablab/zitilib/models/characterization/reporting"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/console"
+	zitilib_characterization_actions "github.com/openziti/fablab/zitilib/models/characterization/actions"
+	"github.com/openziti/fablab/zitilib/models/characterization/reporting"
 )
 
 func newActionsFactory() model.Factory {

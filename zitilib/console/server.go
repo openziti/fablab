@@ -76,7 +76,7 @@ func (server *Server) Listen() {
 
 	go func() {
 		if err := newMgmt(server).execute(); err != nil {
-			logrus.Fatalf("error executing mgmt backend (%w)", err)
+			logrus.Fatalf("error executing mgmt backend (%v)", err)
 		}
 	}()
 
@@ -112,7 +112,7 @@ func (server *Server) Listen() {
 			server.sendAll(msg)
 
 		case err := <-server.errCh:
-			logrus.Errorf("error (%w)", err)
+			logrus.Errorf("error (%v)", err)
 
 		case <-server.doneCh:
 			return

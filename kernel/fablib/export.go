@@ -19,8 +19,8 @@ package fablib
 import (
 	"archive/zip"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"io"
 	"os"

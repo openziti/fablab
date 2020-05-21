@@ -37,7 +37,7 @@ func (mgmt *mgmtMetrics) HandleReceive(msg *channel2.Message, ch channel2.Channe
 	response := &mgmt_pb.StreamMetricsEvent{}
 	err := proto.Unmarshal(msg.Body, response)
 	if err != nil {
-		logrus.Fatalf("error handling metrics receive (%w)", err)
+		logrus.Fatalf("error handling metrics receive (%v)", err)
 	}
 
 	wsMsg := &Message{Source: response.SourceId}
