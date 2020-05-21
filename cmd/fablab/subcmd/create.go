@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -43,20 +43,20 @@ func create(_ *cobra.Command, args []string) {
 		if err := model.NewNamedInstance(createName); err == nil {
 			instanceId = createName
 		} else {
-			logrus.Fatalf("error creating named instance [%s] (%w)", createName, err)
+			logrus.Fatalf("error creating named instance [%s] (%v)", createName, err)
 		}
 	} else {
 		if id, err := model.NewInstance(); err == nil {
 			instanceId = id
 		} else {
-			logrus.Fatalf("error creating instance (%w)", err)
+			logrus.Fatalf("error creating instance (%v)", err)
 		}
 	}
 	logrus.Infof("allocated new instance [%s]", instanceId)
 
 	modelName := args[0]
 	if err := model.CreateLabel(instanceId, modelName); err != nil {
-		logrus.Fatalf("unable to create instance label [%s] (%w)", instanceId, err)
+		logrus.Fatalf("unable to create instance label [%s] (%v)", instanceId, err)
 	}
 	if createBindings != nil {
 		logrus.Infof("setting label bindings = [%v]", createBindings)
@@ -68,10 +68,10 @@ func create(_ *cobra.Command, args []string) {
 				l.Bindings[k] = v
 			}
 			if err := l.Save(); err != nil {
-				logrus.Fatalf("error saving label bindings (%w)", err)
+				logrus.Fatalf("error saving label bindings (%v)", err)
 			}
 		} else {
-			logrus.Fatalf("error loading label (%w)", err)
+			logrus.Fatalf("error loading label (%v)", err)
 		}
 	}
 
@@ -82,6 +82,6 @@ func create(_ *cobra.Command, args []string) {
 	logrus.Infof("using model [%s]", modelName)
 
 	if err := model.SetActiveInstance(instanceId); err != nil {
-		logrus.Fatalf("unable to set active instance (%w)", err)
+		logrus.Fatalf("unable to set active instance (%v)", err)
 	}
 }

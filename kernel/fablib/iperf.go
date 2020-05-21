@@ -19,8 +19,8 @@ package fablib
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
 	"github.com/oliveagle/jsonpath"
+	"github.com/openziti/fablab/kernel/model"
 	"time"
 )
 

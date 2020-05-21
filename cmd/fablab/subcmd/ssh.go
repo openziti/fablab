@@ -17,8 +17,8 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -60,7 +60,7 @@ func ssh(_ *cobra.Command, args []string) {
 		}
 
 		if err := fablib.RemoteShell(fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)); err != nil {
-			logrus.Fatalf("error executing remote shell (%w)", err)
+			logrus.Fatalf("error executing remote shell (%v)", err)
 		}
 	}
 }

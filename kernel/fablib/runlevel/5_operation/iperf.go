@@ -18,8 +18,8 @@ package operation
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -79,7 +79,7 @@ func (i *iperf) Operate(m *model.Model, _ string) error {
 
 func (i *iperf) runServer(factory fablib.SshConfigFactory) {
 	if err := fablib.RemoteKill(factory, "iperf3"); err != nil {
-		logrus.Errorf("error killing iperf3 servers (%w)", err)
+		logrus.Errorf("error killing iperf3 servers (%v)", err)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (i *iperf) runServer(factory fablib.SshConfigFactory) {
 	if err == nil {
 		logrus.Infof("iperf3 server completed")
 	} else {
-		logrus.Errorf("iperf3 server failure [%s] (%w)", output, err)
+		logrus.Errorf("iperf3 server failure [%s] (%v)", output, err)
 	}
 }
 

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Jeffail/gabs"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions/cli"
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -67,7 +67,7 @@ func (ar *ctrlAddRouters) Execute(m *model.Model) error {
 
 func (ar *ctrlAddRouters) getRouter(m *model.Model, c *model.Component) (*gabs.Container, error) {
 	filter := fmt.Sprintf(`name="%s"`, c.PublicIdentity)
-	out, err := cli.Edge("edge", "controller", "list", "edge-routers", filter, "-j").ExecuteWithOutput(m)
+	out, err := zitilib_actions.Edge("edge", "controller", "list", "edge-routers", filter, "-j").ExecuteWithOutput(m)
 
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (ar *ctrlAddRouters) getRouter(m *model.Model, c *model.Component) (*gabs.C
 }
 
 func (ar *ctrlAddRouters) createRouter(m *model.Model, c *model.Component) (*gabs.Container, error) {
-	out, err := cli.Edge("edge", "controller", "create", "edge-router", c.PublicIdentity, "-j").ExecuteWithOutput(m)
+	out, err := zitilib_actions.Edge("edge", "controller", "create", "edge-router", c.PublicIdentity, "-j").ExecuteWithOutput(m)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (ar *ctrlAddRouters) createRouter(m *model.Model, c *model.Component) (*gab
 	}
 
 	filter := fmt.Sprintf(`id="%s"`, id)
-	out, err = cli.Edge("edge", "controller", "list", "edge-routers", filter, "-j").ExecuteWithOutput(m)
+	out, err = zitilib_actions.Edge("edge", "controller", "list", "edge-routers", filter, "-j").ExecuteWithOutput(m)
 
 	if err != nil {
 		return nil, err

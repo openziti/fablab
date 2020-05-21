@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +36,7 @@ var useCmd = &cobra.Command{
 
 func use(_ *cobra.Command, args []string) {
 	if err := model.SetActiveInstance(args[0]); err != nil {
-		logrus.Fatalf("error setting active instance (%w)", err)
+		logrus.Fatalf("error setting active instance (%v)", err)
 	}
 	fmt.Println("success")
 }

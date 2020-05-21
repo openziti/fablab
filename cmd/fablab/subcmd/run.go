@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func run(_ *cobra.Command, _ []string) {
 		}
 
 		if err := m.Operate(l); err != nil {
-			logrus.Fatalf("error operating model (%w)", err)
+			logrus.Fatalf("error operating model (%v)", err)
 		}
 	}
 }

@@ -2,8 +2,8 @@ package edge
 
 import (
 	"errors"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/actions/cli"
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
 	"path/filepath"
 )
 
@@ -29,7 +29,7 @@ func (l *login) Execute(m *model.Model) error {
 		return errors.New("variable credentials/edge/password must be a string")
 	}
 
-	return cli.Edge("edge", "controller", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password).Execute(m)
+	return zitilib_actions.Edge("edge", "controller", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password).Execute(m)
 }
 
 type login struct {

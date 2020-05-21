@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func kit(_ *cobra.Command, _ []string) {
 		}
 
 		if err := m.Kit(l); err != nil {
-			logrus.Fatalf("error building configuration (%w)", err)
+			logrus.Fatalf("error building configuration (%v)", err)
 		}
 
 	} else {

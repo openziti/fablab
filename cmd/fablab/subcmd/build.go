@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,7 @@ var buildCmd = &cobra.Command{
 
 func build(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%w)", err)
+		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
 	l := model.GetLabel()
@@ -50,7 +50,7 @@ func build(_ *cobra.Command, _ []string) {
 		}
 
 		if err := m.Build(l); err != nil {
-			logrus.Fatalf("error building configuration (%w)", err)
+			logrus.Fatalf("error building configuration (%v)", err)
 		}
 
 	} else {
