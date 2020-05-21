@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func express(_ *cobra.Command, _ []string) {
 		}
 
 		if err := m.Express(l); err != nil {
-			logrus.Fatalf("error expressing infrastructure (%w)", err)
+			logrus.Fatalf("error expressing infrastructure (%v)", err)
 		}
 
 	} else {

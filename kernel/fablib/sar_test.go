@@ -1433,12 +1433,12 @@ func TestSummarizeSar(t *testing.T) {
 
 	summary, err := SummarizeSar(sarOutput[:])
 	if err != nil {
-		t.Fatalf("unexpected error (%w)", err)
+		t.Fatalf("unexpected error (%v)", err)
 	}
 
 	j, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
-		t.Fatalf("unexpected error (%w)", err)
+		t.Fatalf("unexpected error (%v)", err)
 	}
 	log.Printf("summary = [%s]", j)
 }

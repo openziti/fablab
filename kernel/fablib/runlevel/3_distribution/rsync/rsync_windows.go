@@ -18,7 +18,7 @@ package rsync
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/sirupsen/logrus"
 	"strings"
 )

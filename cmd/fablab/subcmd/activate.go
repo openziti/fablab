@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func activate(_ *cobra.Command, _ []string) {
 		}
 
 		if err := m.Activate(l); err != nil {
-			logrus.Fatalf("error synchronizing all hosts (%w)", err)
+			logrus.Fatalf("error synchronizing all hosts (%v)", err)
 		}
 	}
 }

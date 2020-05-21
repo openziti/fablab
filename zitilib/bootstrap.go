@@ -18,7 +18,7 @@ package zitilib
 
 import (
 	"fmt"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"

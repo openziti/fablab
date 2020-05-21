@@ -1,6 +1,6 @@
 package zitilib_examples
 
-import "github.com/netfoundry/fablab/kernel/model"
+import "github.com/openziti/fablab/kernel/model"
 
 var modelScope = model.Scope{
 	Variables: model.Variables{

@@ -1,4 +1,4 @@
-module github.com/netfoundry/fablab
+module github.com/openziti/fablab
 
 go 1.13
 

@@ -18,9 +18,9 @@ package zitilib_examples
 
 import (
 	"fmt"
-	fablib_5_operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
-	"github.com/netfoundry/fablab/kernel/model"
-	zitilib_5_operation "github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
+	fablib_5_operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_5_operation "github.com/openziti/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 

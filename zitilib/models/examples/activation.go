@@ -17,8 +17,8 @@
 package zitilib_examples
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/4_activation/action"
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/4_activation/action"
+	"github.com/openziti/fablab/kernel/model"
 )
 
 func newActivationFactory() model.Factory {

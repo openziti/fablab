@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/netfoundry/fablab/kernel/model"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,12 +35,12 @@ var cleanCmd = &cobra.Command{
 
 func clean(_ *cobra.Command, _ []string) {
 	if err := model.BootstrapInstance(); err != nil {
-		logrus.Fatalf("error bootstrapping instance (%w)", err)
+		logrus.Fatalf("error bootstrapping instance (%v)", err)
 	}
 
 	instanceIds, err := model.ListInstances()
 	if err != nil {
-		logrus.Fatalf("error listing instances (%w)", err)
+		logrus.Fatalf("error listing instances (%v)", err)
 	}
 
 	activeInstanceId := model.ActiveInstanceId()
@@ -48,17 +48,17 @@ func clean(_ *cobra.Command, _ []string) {
 		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
 			if l.State == model.Created || l.State == model.Disposed {
 				if err := model.RemoveInstance(instanceId); err != nil {
-					logrus.Fatalf("error removing instance [%s] (%w)", instanceId, err)
+					logrus.Fatalf("error removing instance [%s] (%v)", instanceId, err)
 				}
 				if instanceId == activeInstanceId {
 					if err := model.ClearActiveInstance(); err != nil {
-						logrus.Errorf("error clearing active instance (%w)", err)
+						logrus.Errorf("error clearing active instance (%v)", err)
 					}
 				}
 				logrus.Infof("removed instance [%s]", instanceId)
 			}
 		} else {
-			logrus.Warnf("error loading label for instance [%s] (%w)", instanceId, err)
+			logrus.Warnf("error loading label for instance [%s] (%v)", instanceId, err)
 		}
 	}
 }

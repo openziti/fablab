@@ -35,7 +35,7 @@ func (mgmtLinks *mgmtLinks) HandleReceive(msg *channel2.Message, ch channel2.Cha
 	response := &mgmt_pb.ListLinksResponse{}
 	err := proto.Unmarshal(msg.Body, response)
 	if err != nil {
-		logrus.Fatalf("error handling receive links list (%w)", err)
+		logrus.Fatalf("error handling receive links list (%v)", err)
 	}
 	mgmtLinks.server.Links(response.Links)
 	logrus.Infof("updated [%d] links", len(response.Links))

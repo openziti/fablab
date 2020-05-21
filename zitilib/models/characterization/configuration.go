@@ -17,9 +17,9 @@
 package zitilib_characterization
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/1_configuration/config"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/runlevel/1_configuration"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/runlevel/1_configuration"
 )
 
 func newConfigurationFactory() model.Factory {
@@ -28,7 +28,9 @@ func newConfigurationFactory() model.Factory {
 
 func (f *configurationFactory) Build(m *model.Model) error {
 	m.Configuration = model.ConfigurationBinders{
-		func(m *model.Model) model.ConfigurationStage { return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()) },
+		func(m *model.Model) model.ConfigurationStage {
+			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
+		},
 		func(m *model.Model) model.ConfigurationStage { return config.Component() },
 	}
 	return nil

@@ -18,9 +18,9 @@ package zitilib_characterization
 
 import (
 	"fmt"
-	operation "github.com/netfoundry/fablab/kernel/fablib/runlevel/5_operation"
-	"github.com/netfoundry/fablab/kernel/model"
-	"github.com/netfoundry/fablab/zitilib/runlevel/5_operation"
+	operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 

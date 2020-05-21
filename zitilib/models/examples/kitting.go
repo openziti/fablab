@@ -17,9 +17,9 @@
 package zitilib_examples
 
 import (
-	"github.com/netfoundry/fablab/kernel/fablib/runlevel/2_kitting/devkit"
-	"github.com/netfoundry/fablab/kernel/model"
-	zitilib_bootstrap "github.com/netfoundry/fablab/zitilib"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 	"path/filepath"
 )
 
