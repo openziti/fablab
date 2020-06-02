@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/foundation/util/info"
 	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"

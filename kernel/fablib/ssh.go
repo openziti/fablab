@@ -20,7 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/foundation/util/info"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"

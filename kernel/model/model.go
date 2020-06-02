@@ -18,7 +18,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/foundation/util/info"
 )
 
 func (m *Model) Express(l *Label) error {
