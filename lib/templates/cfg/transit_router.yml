@@ -4,7 +4,7 @@
 {{$ctrl_ip := publicIp "ctrl" "ctrl"}}
 {{$router_ip := .Host.PublicIp}}
 
-v: 2
+v: 3
 
 forwarder:
   latencyProbeInterval: 1000
@@ -19,5 +19,9 @@ ctrl:
   endpoint:             tls:{{$ctrl_ip}}:6262
 
 link:
-  listener:             {{$protocol}}:0.0.0.0:6000
-  advertise:            {{$protocol}}:{{$router_ip}}:6000
+  listeners:
+    - binding:          transport
+      bind:             {{$protocol}}:0.0.0.0:6000
+      advertise:        {{$protocol}}:{{$router_ip}}:6000
+  dialers:
+    - binding:          transport

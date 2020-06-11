@@ -24,7 +24,20 @@ func newHostsFactory() model.Factory {
 
 func (_ *hostsFactory) Build(m *model.Model) error {
 	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro"
+		if host.InstanceType == "" {
+			host.InstanceType = "t2.micro"
+		}
+		if host.InstanceResourceType == "" {
+			host.InstanceResourceType = "ondemand"
+		}
+		if host.InstanceResourceType == "spot" {
+			if host.SpotPrice == "" {
+				host.SpotPrice = "0.02"
+			}
+			if host.SpotType == "" {
+				host.SpotType = "one-time"
+			}
+		}
 	}
 
 	v, found := m.GetVariable("instance_type")
@@ -32,6 +45,30 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 		instanceType := v.(string)
 		for _, host := range m.GetAllHosts() {
 			host.InstanceType = instanceType
+		}
+	}
+
+	v, found = m.GetVariable("instance_resource_type")
+	if found {
+		instanceResourceType := v.(string)
+		for _, host := range m.GetAllHosts() {
+			host.InstanceResourceType = instanceResourceType
+		}
+	}
+
+	v, found = m.GetVariable("spot_price")
+	if found {
+		spotPrice := v.(string)
+		for _, host := range m.GetAllHosts() {
+			host.SpotPrice = spotPrice
+		}
+	}
+
+	v, found = m.GetVariable("spot_type")
+	if found {
+		spotType := v.(string)
+		for _, host := range m.GetAllHosts() {
+			host.SpotType = spotType
 		}
 	}
 

@@ -43,7 +43,7 @@ module "{{ $regionId }}_region" {
 }
 {{ range $hostId, $host := $region.Hosts }}
 module "{{ $regionId }}_host_{{ $hostId }}" {
-  source            = "{{ $.TerraformLib }}/instance"
+  source            = "{{ $.TerraformLib }}/{{ $host.InstanceResourceType }}_instance"
   access_key        = var.aws_access_key
   secret_key        = var.aws_secret_key
   amis              = var.amis
@@ -54,6 +54,8 @@ module "{{ $regionId }}_host_{{ $hostId }}" {
   region            = "{{ $region.Id }}"
   security_group_id = module.{{ $regionId }}_region.security_group_id
   subnet_id         = module.{{ $regionId }}_region.subnet_id
+  spot_price        = "{{ $host.SpotPrice }}"
+  spot_type         = "{{ $host.SpotType }}"
 }
 
 output "{{ $regionId }}_host_{{ $hostId }}_public_ip" { value = module.{{ $regionId }}_host_{{ $hostId }}.public_ip }

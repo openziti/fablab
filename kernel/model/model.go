@@ -18,7 +18,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/netfoundry/ziti-foundation/util/info"
+	"github.com/openziti/foundation/util/info"
 )
 
 func (m *Model) Express(l *Label) error {
@@ -150,10 +150,13 @@ type Region struct {
 
 type Host struct {
 	Scope
-	PublicIp     string
-	PrivateIp    string
-	InstanceType string
-	Components   Components
+	PublicIp             string
+	PrivateIp            string
+	InstanceType         string
+	InstanceResourceType string
+	SpotPrice            string
+	SpotType             string
+	Components           Components
 }
 
 type Hosts map[string]*Host

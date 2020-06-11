@@ -55,8 +55,10 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		if len(terminatingRouters) < 1 {
 			logrus.Fatal("need at least 1 terminating router!")
 		}
-		workflow.AddAction(actions2.Fabric("create", "service", "iperf", "tcp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity))
-		workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp", "udp:"+iperfServer.PublicIp+":7001", terminatingRouters[0].PublicIdentity, "--binding", "transport_udp"))
+		workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
+		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
+		workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp"))
+		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
 	}
 
 	for _, h := range m.GetAllHosts() {

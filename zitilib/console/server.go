@@ -17,7 +17,7 @@
 package console
 
 import (
-	"github.com/netfoundry/ziti-fabric/pb/mgmt_pb"
+	"github.com/openziti/fabric/pb/mgmt_pb"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 	"net/http"
