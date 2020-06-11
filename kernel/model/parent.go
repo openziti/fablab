@@ -216,7 +216,15 @@ func (h *Host) Merge(parent *Host) (*Host, error) {
 	if h.InstanceType != "" {
 		merged.InstanceType = h.InstanceType
 	}
-
+	if h.InstanceResourceType != "" {
+		merged.InstanceResourceType = h.InstanceResourceType
+	}
+	if h.SpotPrice != "" {
+		merged.SpotPrice = h.SpotPrice
+	}
+	if h.SpotType != "" {
+		merged.SpotType = h.SpotType
+	}
 	if merged.Components, err = h.Components.Merge(parent.Components); err != nil {
 		return nil, fmt.Errorf("error merging components (%w)", err)
 	}
