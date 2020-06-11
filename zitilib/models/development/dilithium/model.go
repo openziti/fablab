@@ -37,7 +37,11 @@ var transwarp = &model.Model{
 		},
 		"left": {
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {
+					Scope: model.Scope{
+						Tags: model.Tags{"host"},
+					},
+				},
 			},
 			Id: "us-west-1",
 			Az: "us-west-1b",
@@ -68,6 +72,7 @@ var transwarp = &model.Model{
 
 	Factories: []model.Factory{
 		newHostsFactory(),
+		newActionsFactory(),
 		newInfrastructureFactory(),
 		newKittingFactory(),
 		newDistributionFactory(),
