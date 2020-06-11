@@ -32,7 +32,6 @@ func Express() model.InfrastructureStage {
 }
 
 func (t *terraform) Express(m *model.Model, l *model.Label) error {
-	logrus.Infof("expressing")
 	if err := t.generate(m); err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -123,12 +122,11 @@ func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
 			return fmt.Errorf("error creating parent directories [%s] (%w)", outputPath, err)
 		}
 
-		logrus.Infof("rendering")
 		err = fablib.RenderTemplate(path, outputPath, t.model, struct {
-			Model *model.Model
+			Model        *model.Model
 			TerraformLib string
 		}{
-			Model: t.model,
+			Model:        t.model,
 			TerraformLib: filepath.ToSlash(terraformLib()),
 		})
 		if err != nil {
