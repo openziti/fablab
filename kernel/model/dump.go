@@ -115,10 +115,13 @@ func dumpHosts(hs map[string]*Host) map[string]*HostDump {
 
 func dumpHost(h *Host) *HostDump {
 	return &HostDump{
-		Scope:        dumpScope(h.Scope),
-		PublicIp:     h.PublicIp,
-		PrivateIp:    h.PrivateIp,
-		InstanceType: h.InstanceType,
+		Scope:                dumpScope(h.Scope),
+		PublicIp:             h.PublicIp,
+		PrivateIp:            h.PrivateIp,
+		InstanceType:         h.InstanceType,
+		InstanceResourceType: h.InstanceResourceType,
+		SpotPrice:            h.SpotPrice,
+		SpotType:             h.SpotType,
 	}
 }
 
@@ -174,11 +177,14 @@ type RegionDump struct {
 }
 
 type HostDump struct {
-	Scope        *ScopeDump                `json:"scope,omitempty"`
-	PublicIp     string                    `json:"public_ip,omitempty"`
-	PrivateIp    string                    `json:"private_ip,omitempty"`
-	InstanceType string                    `json:"instance_type,omitempty"`
-	Components   map[string]*ComponentDump `json:"components,omitempty"`
+	Scope                *ScopeDump                `json:"scope,omitempty"`
+	PublicIp             string                    `json:"public_ip,omitempty"`
+	PrivateIp            string                    `json:"private_ip,omitempty"`
+	InstanceType         string                    `json:"instance_type,omitempty"`
+	InstanceResourceType string                    `json:"instance_resource_type,omitempty"`
+	SpotPrice            string                    `json:"spot_price,omitempty"`
+	SpotType             string                    `json:"spot_type,omitempty"`
+	Components           map[string]*ComponentDump `json:"components,omitempty"`
 }
 
 type ComponentDump struct {

@@ -150,10 +150,13 @@ type Region struct {
 
 type Host struct {
 	Scope
-	PublicIp     string
-	PrivateIp    string
-	InstanceType string
-	Components   Components
+	PublicIp             string
+	PrivateIp            string
+	InstanceType         string
+	InstanceResourceType string
+	SpotPrice            string
+	SpotType             string
+	Components           Components
 }
 
 type Hosts map[string]*Host
