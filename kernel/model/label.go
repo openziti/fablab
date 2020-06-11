@@ -137,6 +137,13 @@ func CreateLabel(instanceId, modelName string) error {
 	return nil
 }
 
+func ValidateModelName(modelName string) error {
+	if _, found := modelRegistry[modelName]; !found {
+		return fmt.Errorf("no such model [%s]", modelName)
+	}
+	return nil
+}
+
 func LoadLabelForInstance(instanceId string) (*Label, error) {
 	labelPath := instancePath(instanceId)
 	return LoadLabel(labelPath)

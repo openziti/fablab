@@ -59,6 +59,9 @@ func clean(_ *cobra.Command, _ []string) {
 			}
 		} else {
 			logrus.Warnf("error loading label for instance [%s] (%v)", instanceId, err)
+			if err := model.RemoveInstance(instanceId); err != nil {
+				logrus.Fatalf("error removing instance [%s] (%v)", instanceId, err)
+			}
 		}
 	}
 }
