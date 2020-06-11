@@ -23,16 +23,36 @@ import (
 	"github.com/pkg/errors"
 )
 
-type dilithiumTunnelServer struct {
+type stopDilithiumTunnel struct {
 	regionSpec string
 	hostSpec   string
 }
 
-func DilithiumTunnelServer(regionSpec, hostSpec string) model.Action {
-	return &dilithiumTunnelServer{regionSpec, hostSpec}
+func StopDilithiumTunnel(regionSpec, hostSpec string) model.Action {
+	return &stopDilithiumTunnel{regionSpec, hostSpec}
 }
 
-func (self *dilithiumTunnelServer) Execute(m *model.Model) error {
+func (self *stopDilithiumTunnel) Execute(m *model.Model) error {
+	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	for _, host := range hosts {
+		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
+		if err := fablib.RemoteKill(ssh, "dilithium tunnel"); err != nil {
+			return errors.Wrap(err, "kill dilithium tunnel")
+		}
+	}
+	return nil
+}
+
+type startDilithiumTunnelServer struct {
+	regionSpec string
+	hostSpec   string
+}
+
+func StartDilithiumTunnelServer(regionSpec, hostSpec string) model.Action {
+	return &startDilithiumTunnelServer{regionSpec, hostSpec}
+}
+
+func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
 	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
 	if len(hosts) != 1 {
 		return errors.Errorf("expected [1] diltihium tunnel server host, got [%d]", len(hosts))
@@ -47,18 +67,18 @@ func (self *dilithiumTunnelServer) Execute(m *model.Model) error {
 	return nil
 }
 
-type dilithiumTunnelClient struct {
+type stasrtDilithiumTunnelClient struct {
 	regionSpec       string
 	hostSpec         string
 	serverRegionSpec string
 	serverHostSpec   string
 }
 
-func DilithiumTunnelClient(regionSpec, hostSpec, serverRegionSpec, serverHostSpec string) model.Action {
-	return &dilithiumTunnelClient{regionSpec, hostSpec, serverRegionSpec, serverHostSpec}
+func StartDilithiumTunnelClient(regionSpec, hostSpec, serverRegionSpec, serverHostSpec string) model.Action {
+	return &stasrtDilithiumTunnelClient{regionSpec, hostSpec, serverRegionSpec, serverHostSpec}
 }
 
-func (self *dilithiumTunnelClient) Execute(m *model.Model) error {
+func (self *stasrtDilithiumTunnelClient) Execute(m *model.Model) error {
 	clientHosts := m.GetHosts(self.regionSpec, self.hostSpec)
 	if len(clientHosts) != 1 {
 		return errors.Errorf("expected [1] dilithium tunnel client host, got [%d]", len(clientHosts))

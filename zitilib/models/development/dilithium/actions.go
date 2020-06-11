@@ -33,9 +33,12 @@ func (self *actionsFactory) Build(m *model.Model) error {
 	m.Actions = model.ActionBinders{
 		"start": func(m *model.Model) model.Action {
 			return actions.Workflow([]model.Action{
-				dilithium_actions.DilithiumTunnelServer("left", "host"),
-				dilithium_actions.DilithiumTunnelClient("right", "host", "left", "host"),
+				dilithium_actions.StartDilithiumTunnelServer("left", "host"),
+				dilithium_actions.StartDilithiumTunnelClient("right", "host", "left", "host"),
 			}...)
+		},
+		"stop": func(m *model.Model) model.Action {
+			return dilithium_actions.StopDilithiumTunnel("*", "host")
 		},
 		"logs": func(m *model.Model) model.Action { return zitilib_actions.Logs() },
 	}
