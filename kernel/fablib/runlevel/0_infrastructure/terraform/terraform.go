@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 )
 
 func Express() model.InfrastructureStage {
@@ -32,6 +32,7 @@ func Express() model.InfrastructureStage {
 }
 
 func (t *terraform) Express(m *model.Model, l *model.Label) error {
+	logrus.Infof("expressing")
 	if err := t.generate(m); err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -117,31 +118,21 @@ func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
 			return fmt.Errorf("error relativizing path [%s] (%w)", path, err)
 		}
 
-		tp, err := template.ParseFiles(path)
-		if err != nil {
-			return fmt.Errorf("error parsing template [%s] (%w)", path, err)
-		}
-
 		outputPath := filepath.Join(terraformRun(), rel)
 		if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 			return fmt.Errorf("error creating parent directories [%s] (%w)", outputPath, err)
 		}
 
-		outputF, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("error creating terraform output [%s] (%w)", outputPath, err)
-		}
-		defer func() { _ = outputF.Close() }()
-
-		err = tp.Execute(outputF, struct {
-			Model        *model.Model
+		logrus.Infof("rendering")
+		err = fablib.RenderTemplate(path, outputPath, t.model, struct {
+			Model *model.Model
 			TerraformLib string
 		}{
-			Model:        t.model,
+			Model: t.model,
 			TerraformLib: filepath.ToSlash(terraformLib()),
 		})
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error rendering template")
 		}
 
 		logrus.Infof("=> [%s]", rel)

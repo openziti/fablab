@@ -11,6 +11,7 @@ require (
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/openziti/fabric v0.11.35
 	github.com/openziti/foundation v0.10.4
+	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.11.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.7

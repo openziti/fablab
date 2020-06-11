@@ -35,6 +35,12 @@ func TemplateFuncMap(m *model.Model) template.FuncMap {
 			}
 			return ""
 		},
+		"instanceTemplate": func(h *model.Host) string {
+			if h.InstanceResourceType == "" {
+				return "ondemand"
+			}
+			return h.InstanceResourceType
+		},
 	}
 }
 

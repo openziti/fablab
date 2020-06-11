@@ -43,7 +43,7 @@ module "{{ $regionId }}_region" {
 }
 {{ range $hostId, $host := $region.Hosts }}
 module "{{ $regionId }}_host_{{ $hostId }}" {
-  source            = "{{ $.TerraformLib }}/{{ $host.InstanceResourceType }}_instance"
+  source            = "{{ $.TerraformLib }}/{{ instanceTemplate $host }}_instance"
   access_key        = var.aws_access_key
   secret_key        = var.aws_secret_key
   amis              = var.amis
