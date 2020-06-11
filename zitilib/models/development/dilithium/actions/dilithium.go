@@ -39,6 +39,9 @@ func (self *stopDilithiumTunnel) Execute(m *model.Model) error {
 		if err := fablib.RemoteKill(ssh, "dilithium tunnel"); err != nil {
 			return errors.Wrap(err, "kill dilithium tunnel")
 		}
+		if err := fablib.RemoteKill(ssh, "iperf3"); err != nil {
+			return errors.Wrap(err, "kill iperf3")
+		}
 	}
 	return nil
 }
@@ -59,9 +62,15 @@ func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
 	}
 
 	ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
+
 	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel server 0.0.0.0:6262 127.0.0.1:2222 > logs/dilithium-server.log 2>&1 &")
 	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
 		return errors.Wrap(err, "dilithium tunnel server error")
+	}
+
+	cmd = fmt.Sprintf("nohup iperf3 -s -p 2222 > logs/iperf3-server.log 2>&1 &")
+	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
+		return errors.Wrap(err, "iperf3 server error")
 	}
 
 	return nil

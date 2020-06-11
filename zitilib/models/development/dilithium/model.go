@@ -77,5 +77,6 @@ var transwarp = &model.Model{
 		newKittingFactory(),
 		newDistributionFactory(),
 		newActivationFactory(),
+		newOperationFactory(),
 	},
 }
