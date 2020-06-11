@@ -17,6 +17,7 @@
 package dilithium
 
 import (
+	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
 	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
 	"github.com/openziti/fablab/kernel/model"
 )
@@ -27,6 +28,7 @@ func newDistributionFactory() model.Factory {
 
 func (_ *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
+		func(_ *model.Model) model.DistributionStage { return distribution.Locations("*", "@host", "logs")},
 		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 	return nil

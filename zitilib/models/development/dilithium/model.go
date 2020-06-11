@@ -26,7 +26,11 @@ var transwarp = &model.Model{
 	Regions: model.Regions{
 		"right": {
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {
+					Scope: model.Scope{
+						Tags: model.Tags{"host"},
+					},
+				},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
