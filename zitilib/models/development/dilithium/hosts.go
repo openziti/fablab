@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_examples
+package dilithium
 
 import "github.com/openziti/fablab/kernel/model"
 
@@ -24,43 +24,15 @@ func newHostsFactory() model.Factory {
 
 func (_ *hostsFactory) Build(m *model.Model) error {
 	for _, host := range m.GetAllHosts() {
-		if host.InstanceType == "" {
-			host.InstanceType = "t2.micro"
-		}
+		host.InstanceType = "t2.micro"
 	}
 
 	v, found := m.GetVariable("instance_type")
 	if found {
-		instanceType := v.(string)
 		for _, host := range m.GetAllHosts() {
-			host.InstanceType = instanceType
+			host.InstanceType = v.(string)
 		}
 	}
-
-	v, found = m.GetVariable("instance_resource_type")
-	if found {
-		instanceResourceType := v.(string)
-		for _, host := range m.GetAllHosts() {
-			host.InstanceResourceType = instanceResourceType
-		}
-	}
-
-	v, found = m.GetVariable("spot_price")
-	if found {
-		spotPrice := v.(string)
-		for _, host := range m.GetAllHosts() {
-			host.SpotPrice = spotPrice
-		}
-	}
-
-	v, found = m.GetVariable("spot_type")
-	if found {
-		spotType := v.(string)
-		for _, host := range m.GetAllHosts() {
-			host.SpotType = spotType
-		}
-	}
-
 	return nil
 }
 

@@ -9,6 +9,8 @@ variable "region" {}
 variable "security_group_id" {}
 variable "ssh_user" { default = "fedora" }
 variable "subnet_id" {}
+variable "spot_price" {}
+variable "spot_type" {}
 
 output "public_ip" { value = aws_instance.fablab.public_ip }
 output "private_ip" { value = aws_instance.fablab.private_ip }

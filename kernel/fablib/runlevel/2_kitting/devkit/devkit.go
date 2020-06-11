@@ -30,12 +30,26 @@ func DevKit(root string, binaries []string) model.KittingStage {
 }
 
 func (devKit *devKit) Kit(m *model.Model) error {
-	if err := fablib.CopyTree(model.ConfigBuild(), filepath.Join(model.KitBuild(), "cfg")); err != nil {
-		return fmt.Errorf("error copying configuration tree (%s)", err)
+	cfgRoot := filepath.Join(model.KitBuild(), "cfg")
+	fi, err := os.Stat(cfgRoot)
+	if err == nil && fi.IsDir() {
+		if err := fablib.CopyTree(model.ConfigBuild(), cfgRoot); err != nil {
+			return fmt.Errorf("error copying configuration tree (%s)", err)
+		}
+	} else {
+		logrus.Infof("no [cfg] root, not kitting")
 	}
-	if err := fablib.CopyTree(model.PkiBuild(), filepath.Join(model.KitBuild(), "pki")); err != nil {
-		return fmt.Errorf("error copying pki tree (%s)", err)
+
+	pkiRoot := filepath.Join(model.KitBuild(), "pki")
+	fi, err = os.Stat(pkiRoot)
+	if err == nil && fi.IsDir() {
+		if err := fablib.CopyTree(model.PkiBuild(), filepath.Join(model.KitBuild(), "pki")); err != nil {
+			return fmt.Errorf("error copying pki tree (%s)", err)
+		}
+	} else {
+		logrus.Infof("no [pki] root, not kitting")
 	}
+
 	if err := os.MkdirAll(filepath.Join(model.KitBuild(), "bin"), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating kit bin directory (%s)", err)
 	}

@@ -29,17 +29,6 @@ func (f *hostsFactory) Build(m *model.Model) error {
 		if host.InstanceType == "" {
 			host.InstanceType = "t2.micro"
 		}
-		if host.InstanceResourceType == "" {
-			host.InstanceResourceType = "ondemand"
-		}
-		if host.InstanceResourceType == "spot" {
-			if host.SpotPrice == "" {
-				host.SpotPrice = "0.02"
-			}
-			if host.SpotType == "" {
-				host.SpotType = "one-time"
-			}
-		}
 	}
 
 	l := model.GetLabel()
