@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package transwarp
+package dilithium
 
 import (
 	semaphore0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/semaphore"

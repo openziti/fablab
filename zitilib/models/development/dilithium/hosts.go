@@ -14,26 +14,26 @@
 	limitations under the License.
 */
 
-package transwarp
+package dilithium
 
-import (
-	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
-	"github.com/openziti/fablab/kernel/model"
-	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
-	"path/filepath"
-)
+import "github.com/openziti/fablab/kernel/model"
 
-func newKittingFactory() model.Factory {
-	return &kittingFactory{}
+func newHostsFactory() model.Factory {
+	return &hostsFactory{}
 }
 
-func (_ *kittingFactory) Build(m *model.Model) error {
-	m.Kitting = model.KittingBinders{
-		func(_ *model.Model) model.KittingStage {
-			return devkit.DevKit(filepath.Join(zitilib_bootstrap.ZitiDistRoot(), "bin"), []string{"transwarp"})
-		},
+func (_ *hostsFactory) Build(m *model.Model) error {
+	for _, host := range m.GetAllHosts() {
+		host.InstanceType = "t2.micro";
+	}
+
+	v, found := m.GetVariable("instance_type")
+	if found {
+		for _, host := range m.GetAllHosts() {
+			host.InstanceType = v.(string)
+		}
 	}
 	return nil
 }
 
-type kittingFactory struct{}
+type hostsFactory struct{}

@@ -14,22 +14,26 @@
 	limitations under the License.
 */
 
-package transwarp
+package dilithium
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
+	"path/filepath"
 )
 
-func newDistributionFactory() model.Factory {
-	return &distributionFactory{}
+func newKittingFactory() model.Factory {
+	return &kittingFactory{}
 }
 
-func (_ *distributionFactory) Build(m *model.Model) error {
-	m.Distribution = model.DistributionBinders{
-		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
+func (_ *kittingFactory) Build(m *model.Model) error {
+	m.Kitting = model.KittingBinders{
+		func(_ *model.Model) model.KittingStage {
+			return devkit.DevKit(filepath.Join(zitilib_bootstrap.ZitiDistRoot(), "bin"), []string{"dilithium"})
+		},
 	}
 	return nil
 }
 
-type distributionFactory struct{}
+type kittingFactory struct{}

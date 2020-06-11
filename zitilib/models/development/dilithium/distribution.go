@@ -14,26 +14,22 @@
 	limitations under the License.
 */
 
-package transwarp
+package dilithium
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/model"
+)
 
-func newHostsFactory() model.Factory {
-	return &hostsFactory{}
+func newDistributionFactory() model.Factory {
+	return &distributionFactory{}
 }
 
-func (_ *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro";
-	}
-
-	v, found := m.GetVariable("instance_type")
-	if found {
-		for _, host := range m.GetAllHosts() {
-			host.InstanceType = v.(string)
-		}
+func (_ *distributionFactory) Build(m *model.Model) error {
+	m.Distribution = model.DistributionBinders{
+		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 	return nil
 }
 
-type hostsFactory struct{}
+type distributionFactory struct{}
