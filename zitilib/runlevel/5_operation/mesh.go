@@ -19,12 +19,12 @@ package zitilib_runlevel_5_operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fabric/pb/mgmt_pb"
 	"github.com/openziti/foundation/channel2"
 	"github.com/openziti/foundation/identity/dotziti"
 	"github.com/openziti/foundation/transport"
 	"github.com/openziti/foundation/util/info"
-	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"time"
 )

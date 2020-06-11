@@ -24,7 +24,7 @@ func newHostsFactory() model.Factory {
 
 func (_ *hostsFactory) Build(m *model.Model) error {
 	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro";
+		host.InstanceType = "t2.micro"
 	}
 
 	v, found := m.GetVariable("instance_type")
