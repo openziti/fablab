@@ -39,6 +39,11 @@ var createBindings map[string]string
 
 func create(_ *cobra.Command, args []string) {
 	var instanceId string
+	modelName := args[0]
+
+	if err := model.ValidateModelName(modelName); err != nil {
+		logrus.Fatalf("unable to create instance (%v)", err)
+	}
 	if createName != "" {
 		if err := model.NewNamedInstance(createName); err == nil {
 			instanceId = createName
@@ -54,7 +59,6 @@ func create(_ *cobra.Command, args []string) {
 	}
 	logrus.Infof("allocated new instance [%s]", instanceId)
 
-	modelName := args[0]
 	if err := model.CreateLabel(instanceId, modelName); err != nil {
 		logrus.Fatalf("unable to create instance label [%s] (%v)", instanceId, err)
 	}
