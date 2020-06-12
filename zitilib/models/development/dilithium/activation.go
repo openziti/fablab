@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -17,21 +17,21 @@
 package dilithium
 
 import (
-	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
-	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/4_activation/action"
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func newDistributionFactory() model.Factory {
-	return &distributionFactory{}
+type activationFactory struct{}
+
+func newActivationFactory() model.Factory {
+	return &activationFactory{}
 }
 
-func (_ *distributionFactory) Build(m *model.Model) error {
-	m.Distribution = model.DistributionBinders{
-		func(_ *model.Model) model.DistributionStage { return distribution.Locations("*", "@host", "logs")},
-		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
+func (self *activationFactory) Build(m *model.Model) error {
+	m.Activation = model.ActivationBinders{
+		func(m *model.Model) model.ActivationStage {
+			return action.Activation("stop", "start")
+		},
 	}
 	return nil
 }
-
-type distributionFactory struct{}

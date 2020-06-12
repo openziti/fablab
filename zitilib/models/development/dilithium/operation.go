@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -17,21 +17,21 @@
 package dilithium
 
 import (
-	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
-	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
+	operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func newDistributionFactory() model.Factory {
-	return &distributionFactory{}
+type operationFactory struct{}
+
+func newOperationFactory() model.Factory {
+	return &operationFactory{}
 }
 
-func (_ *distributionFactory) Build(m *model.Model) error {
-	m.Distribution = model.DistributionBinders{
-		func(_ *model.Model) model.DistributionStage { return distribution.Locations("*", "@host", "logs")},
-		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
+func (self *operationFactory) Build(m *model.Model) error {
+	m.Operation = model.OperatingBinders{
+		func(m *model.Model) model.OperatingStage {
+			return operation.IperfClient("right", "host", "127.0.0.1", 1122)
+		},
 	}
 	return nil
 }
-
-type distributionFactory struct{}
