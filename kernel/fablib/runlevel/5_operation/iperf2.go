@@ -21,7 +21,6 @@ import (
 	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type iperfClient struct {
@@ -44,9 +43,7 @@ func (self *iperfClient) Operate(m *model.Model, _ string) error {
 	ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
 
 	cmd := fmt.Sprintf("iperf3 -c %s -p %d", self.address, self.port)
-	if output, err := fablib.RemoteExec(ssh, cmd); err == nil {
-		logrus.Infof(output)
-	} else {
+	if err := fablib.RemoteConsole(ssh, cmd); err != nil {
 		return errors.Wrap(err, "iperf3 client exec")
 	}
 
