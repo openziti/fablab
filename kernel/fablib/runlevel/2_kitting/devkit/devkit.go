@@ -31,7 +31,7 @@ func DevKit(root string, binaries []string) model.KittingStage {
 
 func (devKit *devKit) Kit(m *model.Model) error {
 	cfgRoot := filepath.Join(model.KitBuild(), "cfg")
-	fi, err := os.Stat(cfgRoot)
+	fi, err := os.Stat(model.ConfigBuild())
 	if err == nil && fi.IsDir() {
 		if err := fablib.CopyTree(model.ConfigBuild(), cfgRoot); err != nil {
 			return fmt.Errorf("error copying configuration tree (%s)", err)
@@ -41,9 +41,9 @@ func (devKit *devKit) Kit(m *model.Model) error {
 	}
 
 	pkiRoot := filepath.Join(model.KitBuild(), "pki")
-	fi, err = os.Stat(pkiRoot)
+	fi, err = os.Stat(model.PkiBuild())
 	if err == nil && fi.IsDir() {
-		if err := fablib.CopyTree(model.PkiBuild(), filepath.Join(model.KitBuild(), "pki")); err != nil {
+		if err := fablib.CopyTree(model.PkiBuild(), pkiRoot); err != nil {
 			return fmt.Errorf("error copying pki tree (%s)", err)
 		}
 	} else {
