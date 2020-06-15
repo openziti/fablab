@@ -63,7 +63,7 @@ func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
 
 	ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
 
-	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel server 0.0.0.0:6262 127.0.0.1:2222 > logs/dilithium-server.log 2>&1 &")
+	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel server 0.0.0.0:6262 127.0.0.1:2222 -i trace > logs/dilithium-server.log 2>&1 &")
 	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
 		return errors.Wrap(err, "dilithium tunnel server error")
 	}
@@ -99,7 +99,7 @@ func (self *stasrtDilithiumTunnelClient) Execute(m *model.Model) error {
 	}
 
 	ssh := fablib.NewSshConfigFactoryImpl(m, clientHosts[0].PublicIp)
-	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel client %s:6262 127.0.0.1:1122 > logs/dilithium-client.log 2>&1 &", serverHosts[0].PublicIp)
+	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel client %s:6262 127.0.0.1:1122 -i trace > logs/dilithium-client.log 2>&1 &", serverHosts[0].PublicIp)
 	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
 		return errors.Wrap(err, "dilithium tunnel client error")
 	}
