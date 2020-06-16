@@ -18,6 +18,8 @@ package model
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"reflect"
 	"strings"
 )
 
@@ -31,6 +33,18 @@ func (m *Model) GetVariable(name ...string) (interface{}, bool) {
 
 func (m *Model) MustVariable(name ...string) interface{} {
 	return m.Variables.Must(name...)
+}
+
+func (m *Model) MustStringVariable(name ...string) string {
+	value, found := m.GetVariable(name...)
+	if !found {
+		logrus.Fatalf("missing variable [%s]", name)
+	}
+	result, ok := value.(string)
+	if !ok {
+		logrus.Fatalf("variable [%v] expected to have type string, but was %v", name, reflect.TypeOf(value))
+	}
+	return result
 }
 
 func (m *Model) GetAction(name string) (Action, bool) {

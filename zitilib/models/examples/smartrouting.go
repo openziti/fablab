@@ -17,11 +17,15 @@
 package zitilib_examples
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	"github.com/openziti/fablab/kernel/model"
 )
 
 func init() {
 	model.RegisterModel("zitilib/examples/smartrouting", smartrouting)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 var smartrouting = &model.Model{
