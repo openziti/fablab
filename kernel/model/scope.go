@@ -16,7 +16,10 @@
 
 package model
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+)
 
 type Scope struct {
 	Variables Variables
@@ -41,6 +44,36 @@ type Variable struct {
 }
 
 type Variables map[interface{}]interface{}
+
+func (v Variables) Put(newValue interface{}, name ...string) error {
+	if len(name) < 1 {
+		return errors.New("empty name")
+	}
+
+	inputMap := v
+	for i := 0; i < (len(name) - 1); i++ {
+		key := name[i]
+		if value, found := inputMap[key]; found {
+			lowerMap, ok := value.(Variables)
+			if !ok {
+				return errors.Errorf("invalid path type [%s]", key)
+			}
+			inputMap = lowerMap
+		}
+	}
+
+	value, found := inputMap[name[len(name)-1]]
+	if found {
+		variable, ok := value.(*Variable)
+		if !ok {
+			return errors.Errorf("path not variable leaf")
+		}
+		variable.Value = newValue
+		variable.bound = true
+	}
+
+	return nil
+}
 
 func (v Variables) Get(name ...string) (interface{}, bool) {
 	if len(name) < 1 {
