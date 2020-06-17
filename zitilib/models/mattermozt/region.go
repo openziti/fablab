@@ -30,11 +30,11 @@ func (self *regionFactory) Build(m *model.Model) error {
 	if !found {
 		return fmt.Errorf("missing 'local' region")
 	}
-	region, found := m.GetVariable("mattermozt", "region")
+	region, found := m.Variables.Get("mattermozt", "region")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/region' variable")
 	}
-	az, found := m.GetVariable("mattermozt", "az")
+	az, found := m.Variables.Get("mattermozt", "az")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/az' variable")
 	}

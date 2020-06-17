@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -21,26 +21,21 @@ import (
 	"testing"
 )
 
-func TestGetVariable(t *testing.T) {
-	m := &Model{
-		Scope: Scope{
-			Variables: Variables{
-				"a": Variables{
-					"b": Variables{
-						"c": &Variable{Default: "oh, wow!"},
-					},
-				},
+func TestVariablesPut(t *testing.T) {
+	v := Variables{
+		"a": Variables{
+			"b": &Variable{
+				Default: "hello",
 			},
 		},
 	}
-
-	value, found := m.Variables.Get("a", "b", "c")
+	value, found := v.Get("a", "b")
 	assert.True(t, found)
-	assert.Equal(t, "oh, wow!", value)
+	assert.Equal(t, "hello", value)
 
-	value, found = m.Variables.Get("c")
-	assert.False(t, found)
-
-	value, found = m.Variables.Get("d", "e", "f")
-	assert.False(t, found)
+	err := v.Put("oh, wow", "a", "b")
+	assert.Nil(t, err)
+	value, found = v.Get("a", "b")
+	assert.True(t, found)
+	assert.Equal(t, "oh, wow", value)
 }

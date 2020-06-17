@@ -61,9 +61,11 @@ func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
 		return errors.Errorf("expected [1] diltihium tunnel server host, got [%d]", len(hosts))
 	}
 
-	ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
+	serverHost := hosts[0]
+	instrument := serverHost.Variables.Must("dilithium", "instrument")
+	ssh := fablib.NewSshConfigFactoryImpl(m, serverHost.PublicIp)
 
-	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel server 0.0.0.0:6262 127.0.0.1:2222 > logs/dilithium-server.log 2>&1 &")
+	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel server 0.0.0.0:6262 127.0.0.1:2222 -i %s > logs/dilithium-server.log 2>&1 &", instrument)
 	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
 		return errors.Wrap(err, "dilithium tunnel server error")
 	}
@@ -98,8 +100,10 @@ func (self *stasrtDilithiumTunnelClient) Execute(m *model.Model) error {
 		return errors.Errorf("expected [1] dilithium tunnel server host, got [%d]", len(serverHosts))
 	}
 
-	ssh := fablib.NewSshConfigFactoryImpl(m, clientHosts[0].PublicIp)
-	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel client %s:6262 127.0.0.1:1122 > logs/dilithium-client.log 2>&1 &", serverHosts[0].PublicIp)
+	clientHost := clientHosts[0]
+	instrument := clientHost.Variables.Must("dilithium", "instrument")
+	ssh := fablib.NewSshConfigFactoryImpl(m, clientHost.PublicIp)
+	cmd := fmt.Sprintf("nohup fablab/bin/dilithium tunnel client %s:6262 127.0.0.1:1122 -i %s > logs/dilithium-client.log 2>&1 &", serverHosts[0].PublicIp, instrument)
 	if _, err := fablib.RemoteExec(ssh, cmd); err != nil {
 		return errors.Wrap(err, "dilithium tunnel client error")
 	}

@@ -315,8 +315,8 @@ type SshConfigFactoryImpl struct {
 }
 
 func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
-	user := m.MustVariable("credentials", "ssh", "username").(string)
-	keyPath, _ := m.MustVariable("credentials", "ssh", "key_path").(string)
+	user := m.Variables.Must("credentials", "ssh", "username").(string)
+	keyPath, _ := m.Variables.Must("credentials", "ssh", "key_path").(string)
 	factory := &SshConfigFactoryImpl{
 		user:    user,
 		host:    host,

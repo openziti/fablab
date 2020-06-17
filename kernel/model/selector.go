@@ -26,53 +26,6 @@ func (m *Model) IsBound() bool {
 	return m.bound
 }
 
-func (m *Model) GetVariable(name ...string) (interface{}, bool) {
-	if len(name) < 1 {
-		return nil, false
-	}
-
-	inputMap := m.Variables
-	for i := 0; i < (len(name) - 1); i++ {
-		key := name[i]
-		if value, found := inputMap[key]; found {
-			lowerMap, ok := value.(Variables)
-			if !ok {
-				return nil, false
-			}
-			inputMap = lowerMap
-		}
-	}
-
-	value, found := inputMap[name[len(name)-1]]
-	if found {
-		variable, ok := value.(*Variable)
-		if !ok {
-			return nil, false
-		}
-		if variable.Required {
-			if !variable.bound {
-				logrus.Fatalf("required variable %v missing", name)
-			}
-			return variable.Value, true
-		} else {
-			if variable.bound {
-				return variable.Value, true
-			} else {
-				return variable.Default, true
-			}
-		}
-	}
-	return nil, false
-}
-
-func (m *Model) MustVariable(name ...string) interface{} {
-	value, found := m.GetVariable(name...)
-	if !found {
-		logrus.Fatalf("missing variable [%s]", name)
-	}
-	return value
-}
-
 func (m *Model) GetAction(name string) (Action, bool) {
 	action, found := m.actions[name]
 	return action, found

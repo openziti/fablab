@@ -27,7 +27,7 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 		host.InstanceType = "t2.micro"
 	}
 
-	v, found := m.GetVariable("instance_type")
+	v, found := m.Variables.Get("instance_type")
 	if found {
 		for _, host := range m.GetAllHosts() {
 			host.InstanceType = v.(string)

@@ -18,11 +18,14 @@ package subcmd
 
 import (
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 func init() {
+	execCmd.Flags().StringArrayVarP(&execCmdBindings, "variable", "b", []string{}, "specify variable binding ('<regionSpec>.<hostSpec>.a.b.c=value')")
 	RootCmd.AddCommand(execCmd)
 }
 
@@ -32,6 +35,7 @@ var execCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run:   exec,
 }
+var execCmdBindings []string
 
 func exec(_ *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
@@ -53,6 +57,12 @@ func exec(_ *cobra.Command, args []string) {
 			logrus.Fatalf("model not bound")
 		}
 
+		for _, binding := range execCmdBindings {
+			if err := execCmdBind(m, binding); err != nil {
+				logrus.Fatalf("error binding [%s] (%v)", binding, err)
+			}
+		}
+
 		action := args[0]
 		p, found := m.GetAction(action)
 		if !found {
@@ -63,4 +73,27 @@ func exec(_ *cobra.Command, args []string) {
 			logrus.Fatalf("action failed [%s] (%s)", action, err)
 		}
 	}
+}
+
+func execCmdBind(m *model.Model, binding string) error {
+	halves := strings.Split(binding, "=")
+	if len(halves) != 2 {
+		return errors.New("variable path and value must be separated by '='")
+	}
+	path := strings.Split(halves[0], ".")
+	if len(path) < 3 {
+		return errors.New("path must be of form <region>.<host>.v1...=")
+	}
+	region := m.GetRegion(path[0])
+	if region == nil {
+		return errors.New("missing region")
+	}
+	host := region.GetHost(path[1])
+	if host == nil {
+		return errors.New("missing host")
+	}
+	if err := host.Variables.Put(halves[1], path[2:]...); err != nil {
+		return errors.Wrap(err, "error putting value")
+	}
+	return nil
 }

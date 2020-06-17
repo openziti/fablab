@@ -35,7 +35,7 @@ func NewBootstrapAction() model.ActionBinder {
 }
 
 func (a *bootstrapAction) bind(m *model.Model) model.Action {
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+	sshUsername := m.Variables.Must("credentials", "ssh", "username").(string)
 
 	workflow := actions.Workflow()
 

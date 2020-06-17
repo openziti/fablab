@@ -61,11 +61,11 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
 	}
 
-	minutes := m.MustVariable("characterization", "sample_minutes")
+	minutes := m.Variables.Must("characterization", "sample_minutes")
 	seconds := int((time.Duration(minutes.(int)) * time.Minute).Seconds())
 
-	tcpdump := m.MustVariable("characterization", "tcpdump", "enabled").(bool)
-	snaplen := m.MustVariable("characterization", "tcpdump", "snaplen").(int)
+	tcpdump := m.Variables.Must("characterization", "tcpdump", "enabled").(bool)
+	snaplen := m.Variables.Must("characterization", "tcpdump", "snaplen").(int)
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
