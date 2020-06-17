@@ -26,6 +26,14 @@ func (m *Model) IsBound() bool {
 	return m.bound
 }
 
+func (m *Model) GetVariable(name ...string) (interface{}, bool) {
+	return m.Variables.Get(name...)
+}
+
+func (m *Model) MustVariable(name ...string) interface{} {
+	return m.Variables.Must(name...)
+}
+
 func (m *Model) GetAction(name string) (Action, bool) {
 	action, found := m.actions[name]
 	return action, found
