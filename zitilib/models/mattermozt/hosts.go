@@ -26,25 +26,25 @@ func newHostsFactory() model.Factory {
 }
 
 func (self *hostsFactory) Build(m *model.Model) error {
-	ctrlType, found := m.GetVariable("mattermozt", "sizing", "ctrl")
+	ctrlType, found := m.Variables.Get("mattermozt", "sizing", "ctrl")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/sizing/ctrl' variable")
 	}
 	m.Regions["local"].Hosts["ctrl"].InstanceType = ctrlType.(string)
 
-	terminatorType, found := m.GetVariable("mattermozt", "sizing", "terminator")
+	terminatorType, found := m.Variables.Get("mattermozt", "sizing", "terminator")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/sizing/terminator' variable")
 	}
 	m.Regions["local"].Hosts["terminator"].InstanceType = terminatorType.(string)
 
-	edgeType, found := m.GetVariable("mattermozt", "sizing", "edge")
+	edgeType, found := m.Variables.Get("mattermozt", "sizing", "edge")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/sizing/edge' variable")
 	}
 	m.Regions["local"].Hosts["edge"].InstanceType = edgeType.(string)
 
-	serviceType, found := m.GetVariable("mattermozt", "sizing", "service")
+	serviceType, found := m.Variables.Get("mattermozt", "sizing", "service")
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/sizing/service' variable")
 	}

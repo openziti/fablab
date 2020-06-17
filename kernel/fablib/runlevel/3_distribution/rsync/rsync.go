@@ -72,11 +72,11 @@ func newConfig(m *model.Model, publicIp string) *Config {
 		rsyncBin:         "rsync",
 	}
 
-	if rsyncBin, ok := m.MustVariable("distribution", "rsync_bin").(string); ok {
+	if rsyncBin, ok := m.Variables.Must("distribution", "rsync_bin").(string); ok {
 		config.rsyncBin = rsyncBin
 	}
 
-	if sshBin, ok := m.MustVariable("distribution", "ssh_bin").(string); ok {
+	if sshBin, ok := m.Variables.Must("distribution", "ssh_bin").(string); ok {
 		config.sshBin = sshBin
 	}
 

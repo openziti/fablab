@@ -30,7 +30,7 @@ func TestParentBase(t *testing.T) {
 	var found bool
 	var value interface{}
 
-	value, found = m.GetVariable("a")
+	value, found = m.Variables.Get("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
@@ -83,10 +83,10 @@ func TestParentMerge(t *testing.T) {
 	var found bool
 	var value interface{}
 
-	value, found = m.GetVariable("a")
+	value, found = m.Variables.Get("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
-	value, found = m.GetVariable("b")
+	value, found = m.Variables.Get("b")
 	assert.True(t, found)
 	assert.Equal(t, "hello!", value)
 

@@ -56,7 +56,7 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(serviceAction)
 	}
 
-	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+	sshUsername := m.Variables.Must("credentials", "ssh", "username").(string)
 	for _, h := range m.GetAllHosts() {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))

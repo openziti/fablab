@@ -16,6 +16,8 @@
 
 package model
 
+import "github.com/sirupsen/logrus"
+
 type Scope struct {
 	Variables Variables
 	Data      Data
@@ -39,6 +41,53 @@ type Variable struct {
 }
 
 type Variables map[interface{}]interface{}
+
+func (v Variables) Get(name ...string) (interface{}, bool) {
+	if len(name) < 1 {
+		return nil, false
+	}
+
+	inputMap := v
+	for i := 0; i < (len(name) - 1); i++ {
+		key := name[i]
+		if value, found := inputMap[key]; found {
+			lowerMap, ok := value.(Variables)
+			if !ok {
+				return nil, false
+			}
+			inputMap = lowerMap
+		}
+	}
+
+	value, found := inputMap[name[len(name)-1]]
+	if found {
+		variable, ok := value.(*Variable)
+		if !ok {
+			return nil, false
+		}
+		if variable.Required {
+			if !variable.bound {
+				logrus.Fatalf("required variable %v missing", name)
+			}
+			return variable.Value, true
+		} else {
+			if variable.bound {
+				return variable.Value, true
+			} else {
+				return variable.Default, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func (v Variables) Must(name ...string) interface{} {
+	value, found := v.Get(name...)
+	if !found {
+		logrus.Fatalf("missing variable [%s]", name)
+	}
+	return value
+}
 
 func (m *Model) IterateScopes(f func(i interface{}, path ...string)) {
 	f(m, []string{}...)

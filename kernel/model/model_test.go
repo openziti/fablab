@@ -34,13 +34,13 @@ func TestGetVariable(t *testing.T) {
 		},
 	}
 
-	value, found := m.GetVariable("a", "b", "c")
+	value, found := m.Variables.Get("a", "b", "c")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
-	value, found = m.GetVariable("c")
+	value, found = m.Variables.Get("c")
 	assert.False(t, found)
 
-	value, found = m.GetVariable("d", "e", "f")
+	value, found = m.Variables.Get("d", "e", "f")
 	assert.False(t, found)
 }

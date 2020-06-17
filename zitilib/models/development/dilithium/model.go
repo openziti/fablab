@@ -28,7 +28,12 @@ var transwarp = &model.Model{
 			Hosts: model.Hosts{
 				"host": {
 					Scope: model.Scope{
-						Tags: model.Tags{"host"},
+						Tags: model.Tags{"host", "client"},
+						Variables: model.Variables{
+							"dilithium": model.Variables{
+								"instrument": &model.Variable{Default: "stats"},
+							},
+						},
 					},
 				},
 			},
@@ -39,7 +44,12 @@ var transwarp = &model.Model{
 			Hosts: model.Hosts{
 				"host": {
 					Scope: model.Scope{
-						Tags: model.Tags{"host"},
+						Tags: model.Tags{"host", "server"},
+						Variables: model.Variables{
+							"dilithium": model.Variables{
+								"instrument": &model.Variable{Default: "stats"},
+							},
+						},
 					},
 				},
 			},
