@@ -78,7 +78,7 @@ func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
 	return nil
 }
 
-type stasrtDilithiumTunnelClient struct {
+type startDilithiumTunnelClient struct {
 	regionSpec       string
 	hostSpec         string
 	serverRegionSpec string
@@ -86,10 +86,10 @@ type stasrtDilithiumTunnelClient struct {
 }
 
 func StartDilithiumTunnelClient(regionSpec, hostSpec, serverRegionSpec, serverHostSpec string) model.Action {
-	return &stasrtDilithiumTunnelClient{regionSpec, hostSpec, serverRegionSpec, serverHostSpec}
+	return &startDilithiumTunnelClient{regionSpec, hostSpec, serverRegionSpec, serverHostSpec}
 }
 
-func (self *stasrtDilithiumTunnelClient) Execute(m *model.Model) error {
+func (self *startDilithiumTunnelClient) Execute(m *model.Model) error {
 	clientHosts := m.GetHosts(self.regionSpec, self.hostSpec)
 	if len(clientHosts) != 1 {
 		return errors.Errorf("expected [1] dilithium tunnel client host, got [%d]", len(clientHosts))
