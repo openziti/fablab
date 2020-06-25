@@ -3,6 +3,7 @@ package aws_ssh_key
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -24,11 +25,14 @@ func Express() model.InfrastructureStage {
 type awsKeyManager struct {
 }
 
-func (l awsKeyManager) Bootstrap(m *model.Model) error {
+func (l awsKeyManager) Bootstrap(*model.Model) error {
 	bindings := model.GetBindings()
 
 	if !bindings.Has("credentials", "aws", "ssh_key_name") {
-		bindings.Put(bindings.Must("environment"), "credentials", "aws", "ssh_key_name")
+		environment := bindings.Must("environment")
+		instanceId := model.ActiveInstanceId()
+		keyName := fmt.Sprintf("%v-%v", environment, instanceId)
+		bindings.Put(keyName, "credentials", "aws", "ssh_key_name")
 	}
 
 	if bindings.Has("credentials", "ssh", "key_path") {
@@ -41,7 +45,7 @@ func (l awsKeyManager) Bootstrap(m *model.Model) error {
 	return nil
 }
 
-func (stage awsKeyManager) Express(m *model.Model, l *model.Label) error {
+func (stage awsKeyManager) Express(m *model.Model, _ *model.Label) error {
 	bindings := model.GetBindings()
 	if managedKey, found := bindings.GetBool("credentials", "aws", "managed_key"); !found || !managedKey {
 		return nil
@@ -60,6 +64,19 @@ func (stage awsKeyManager) Express(m *model.Model, l *model.Label) error {
 	var privateKey []byte
 	var publicKey []byte
 
+	keyPath := m.MustStringVariable("credentials", "ssh", "key_path")
+	logrus.Infof("checking for  private key in %v", keyPath)
+	var err error
+	if privateKey, err = ioutil.ReadFile(keyPath); err == nil {
+		logrus.Infof("loaded private key from %v... deriving public key", keyPath)
+		publicKey, err = getPublicKey(privateKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		logrus.Infof("failed to load private key from %v (%v), generating new key", keyPath, err)
+	}
+
 	for _, region := range m.Regions {
 		awsConfig := &aws.Config{
 			Credentials: awsCreds,
@@ -70,6 +87,15 @@ func (stage awsKeyManager) Express(m *model.Model, l *model.Label) error {
 			return err
 		}
 		ec2Client := ec2.New(awsSession)
+
+		_, err = ec2Client.DescribeKeyPairs(&ec2.DescribeKeyPairsInput{
+			KeyNames: []*string{&keyName},
+		})
+
+		if err == nil {
+			logrus.Infof("key pair %v already exists in region %v. skipping create/import", keyName, region.Id)
+			continue
+		}
 
 		if publicKey == nil {
 			logrus.Infof("creating key '%v' in region %v", keyName, region.Id)
