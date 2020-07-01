@@ -75,11 +75,11 @@ func (_ *bootstrapAction) createServiceActions(m *model.Model, terminatorId stri
 	}
 
 	serviceActions := make([]model.Action, 0)
-	for _, host := range terminatorRegion.Hosts {
+	for hostId, host := range terminatorRegion.Hosts {
 		for _, tag := range host.Tags {
 			if tag == "loop-listener" {
-				serviceActions = append(serviceActions, actions2.Fabric("create", "service", "loop"))
-				serviceActions = append(serviceActions, actions2.Fabric("create", "terminator", "loop", terminatorId, "tcp:"+host.PrivateIp+":8171"))
+				serviceActions = append(serviceActions, actions2.Fabric("create", "service", hostId))
+				serviceActions = append(serviceActions, actions2.Fabric("create", "terminator", hostId, terminatorId, "tcp:"+host.PrivateIp+":8171"))
 			}
 		}
 	}
