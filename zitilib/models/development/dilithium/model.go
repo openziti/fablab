@@ -19,10 +19,10 @@ package dilithium
 import "github.com/openziti/fablab/kernel/model"
 
 func init() {
-	model.RegisterModel("zitilib/development/dilithium", transwarp)
+	model.RegisterModel("zitilib/development/dilithium", dilithiumModel)
 }
 
-var transwarp = &model.Model{
+var dilithiumModel = &model.Model{
 	Regions: model.Regions{
 		"local": {
 			Scope: model.Scope{Tags: model.Tags{"virginia"}},
@@ -86,5 +86,8 @@ var transwarp = &model.Model{
 		newInfrastructureFactory(),
 		newKittingFactory(),
 		newDistributionFactory(),
+	},
+	BootstrapExtensions: []model.BootstrapExtension{
+		&bootstrap{},
 	},
 }

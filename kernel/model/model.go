@@ -119,15 +119,16 @@ type Model struct {
 	Scope
 	Regions Regions
 
-	Factories      []Factory
-	Actions        map[string]ActionBinder
-	Infrastructure InfrastructureBinders
-	Configuration  ConfigurationBinders
-	Kitting        KittingBinders
-	Distribution   DistributionBinders
-	Activation     ActivationBinders
-	Operation      OperatingBinders
-	Disposal       DisposalBinders
+	Factories           []Factory
+	BootstrapExtensions []BootstrapExtension
+	Actions             map[string]ActionBinder
+	Infrastructure      InfrastructureBinders
+	Configuration       ConfigurationBinders
+	Kitting             KittingBinders
+	Distribution        DistributionBinders
+	Activation          ActivationBinders
+	Operation           OperatingBinders
+	Disposal            DisposalBinders
 
 	actions              map[string]Action
 	infrastructureStages []InfrastructureStage
