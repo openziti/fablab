@@ -230,6 +230,10 @@ func RemoteFileList(factory SshConfigFactory, path string) ([]os.FileInfo, error
 }
 
 func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...string) error {
+	if len(paths) < 1 {
+		return nil
+	}
+
 	if err := os.MkdirAll(localPath, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating local path")
 	}

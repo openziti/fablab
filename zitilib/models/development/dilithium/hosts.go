@@ -16,24 +16,25 @@
 
 package dilithium
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/pkg/errors"
+)
 
 func newHostsFactory() model.Factory {
 	return &hostsFactory{}
 }
 
 func (_ *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro"
-	}
-
 	v, found := m.Variables.Get("instance_type")
 	if found {
 		for _, host := range m.GetAllHosts() {
 			host.InstanceType = v.(string)
 		}
+		return nil
+	} else {
+		return errors.New("missing 'instance_type' variable")
 	}
-	return nil
 }
 
 type hostsFactory struct{}

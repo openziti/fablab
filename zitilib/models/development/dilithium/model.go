@@ -24,37 +24,37 @@ func init() {
 
 var transwarp = &model.Model{
 	Regions: model.Regions{
-		"right": {
+		"local": {
+			Scope: model.Scope{Tags: model.Tags{"virginia"}},
 			Hosts: model.Hosts{
-				"host": {
-					Scope: model.Scope{
-						Tags: model.Tags{"host", "client"},
-						Variables: model.Variables{
-							"dilithium": model.Variables{
-								"instrument": &model.Variable{Default: "stats"},
-							},
-						},
-					},
-				},
+				"host": {},
 			},
 			Id: "us-east-1",
 			Az: "us-east-1a",
 		},
-		"left": {
+		"short": {
+			Scope: model.Scope{Tags: model.Tags{"california"}},
 			Hosts: model.Hosts{
-				"host": {
-					Scope: model.Scope{
-						Tags: model.Tags{"host", "server"},
-						Variables: model.Variables{
-							"dilithium": model.Variables{
-								"instrument": &model.Variable{Default: "stats"},
-							},
-						},
-					},
-				},
+				"host": {},
 			},
 			Id: "us-west-1",
-			Az: "us-west-1b",
+			Az: "us-west-1c",
+		},
+		"medium": {
+			Scope: model.Scope{Tags: model.Tags{"mumbai"}},
+			Hosts: model.Hosts{
+				"host": {},
+			},
+			Id: "ap-south-1",
+			Az: "ap-south-1a",
+		},
+		"long": {
+			Scope: model.Scope{Tags: model.Tags{"sydney"}},
+			Hosts: model.Hosts{
+				"host": {},
+			},
+			Id: "ap-southeast-2",
+			Az: "ap-southeast-2c",
 		},
 	},
 
@@ -76,7 +76,7 @@ var transwarp = &model.Model{
 				"rsync_bin": &model.Variable{Default: "rsync"},
 				"ssh_bin":   &model.Variable{Default: "ssh"},
 			},
-			"instance_type": &model.Variable{Default: "t2.micro"},
+			"instance_type": &model.Variable{Default: "t2.medium"},
 		},
 	},
 
@@ -86,7 +86,5 @@ var transwarp = &model.Model{
 		newInfrastructureFactory(),
 		newKittingFactory(),
 		newDistributionFactory(),
-		newActivationFactory(),
-		newOperationFactory(),
 	},
 }

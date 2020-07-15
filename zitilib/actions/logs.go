@@ -62,6 +62,7 @@ func (self *logs) forHost(snapshot, rn, hn string, ssh fablib.SshConfigFactory) 
 	for _, fi := range fis {
 		if fi.Name() == "logs" && fi.IsDir() {
 			hasLogs = true
+			break
 		}
 	}
 
