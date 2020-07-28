@@ -32,29 +32,13 @@ var dilithiumModel = &model.Model{
 			Id: "us-east-1",
 			Az: "us-east-1a",
 		},
-		"short": {
+		"remote": {
 			Scope: model.Scope{Tags: model.Tags{"california"}},
 			Hosts: model.Hosts{
 				"host": {},
 			},
 			Id: "us-west-1",
 			Az: "us-west-1c",
-		},
-		"medium": {
-			Scope: model.Scope{Tags: model.Tags{"mumbai"}},
-			Hosts: model.Hosts{
-				"host": {},
-			},
-			Id: "ap-south-1",
-			Az: "ap-south-1a",
-		},
-		"long": {
-			Scope: model.Scope{Tags: model.Tags{"sydney"}},
-			Hosts: model.Hosts{
-				"host": {},
-			},
-			Id: "ap-southeast-2",
-			Az: "ap-southeast-2c",
 		},
 	},
 

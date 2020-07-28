@@ -18,7 +18,6 @@ package dilithium
 
 import (
 	"github.com/openziti/fablab/kernel/model"
-	"github.com/pkg/errors"
 )
 
 func newHostsFactory() model.Factory {
@@ -26,15 +25,25 @@ func newHostsFactory() model.Factory {
 }
 
 func (_ *hostsFactory) Build(m *model.Model) error {
-	v, found := m.Variables.Get("instance_type")
-	if found {
+	l := model.GetLabel()
+
+	if l.Has("instance_type") {
+		instanceType := l.Must("instance_type")
 		for _, host := range m.GetAllHosts() {
-			host.InstanceType = v.(string)
+			host.InstanceType = instanceType.(string)
 		}
-		return nil
-	} else {
-		return errors.New("missing 'instance_type' variable")
 	}
+
+	if l.Has("remote_region_id") {
+		regionId := l.Must("remote_region_id")
+		m.GetRegion("remote").Id = regionId.(string)
+	}
+	if l.Has("remote_region_az") {
+		regionAz := l.Must("remote_region_az")
+		m.GetRegion("remote").Az = regionAz.(string)
+	}
+
+	return nil
 }
 
 type hostsFactory struct{}
