@@ -26,6 +26,7 @@ import (
 	_ "github.com/openziti/fablab/zitilib/models/development/dilithium"
 	_ "github.com/openziti/fablab/zitilib/models/examples"
 	_ "github.com/openziti/fablab/zitilib/models/mattermozt"
+	_ "github.com/openziti/fablab/zitilib/models/transwarp"
 	"github.com/openziti/foundation/transport"
 	"github.com/openziti/foundation/transport/quic"
 	"github.com/openziti/foundation/transport/tcp"
