@@ -31,16 +31,12 @@ func newActionsFactory() model.Factory {
 
 func (self *actionsFactory) Build(m *model.Model) error {
 	m.Actions = model.ActionBinders{
-		"start": func(m *model.Model) model.Action {
-			return actions.Workflow([]model.Action{
-				dilithium_actions.StartDilithiumTunnelServer("left", "host"),
-				dilithium_actions.StartDilithiumTunnelClient("right", "host", "left", "host"),
-			}...)
+		"logs": func(m *model.Model) model.Action {
+			return actions.Workflow(
+				zitilib_actions.Logs(),
+				dilithium_actions.Clean(),
+			)
 		},
-		"stop": func(m *model.Model) model.Action {
-			return dilithium_actions.StopDilithiumTunnel("*", "host")
-		},
-		"logs": func(m *model.Model) model.Action { return zitilib_actions.Logs() },
 	}
 	return nil
 }

@@ -50,6 +50,12 @@ func Bootstrap() error {
 		if m, err = bootstrapModel(); err != nil {
 			return fmt.Errorf("unable to bootstrap binding (%w)", err)
 		}
+		for _, ext := range m.BootstrapExtensions {
+			if err := ext.Bootstrap(m); err != nil {
+				return fmt.Errorf("unable to bootstrap model-specific extension (%w)", err)
+			}
+		}
+
 	} else {
 		logrus.Warnf("no active instance")
 	}

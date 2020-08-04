@@ -16,23 +16,33 @@
 
 package dilithium
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/model"
+)
 
 func newHostsFactory() model.Factory {
 	return &hostsFactory{}
 }
 
 func (_ *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.GetAllHosts() {
-		host.InstanceType = "t2.micro"
-	}
+	l := model.GetLabel()
 
-	v, found := m.Variables.Get("instance_type")
-	if found {
+	if l.Has("instance_type") {
+		instanceType := l.Must("instance_type")
 		for _, host := range m.GetAllHosts() {
-			host.InstanceType = v.(string)
+			host.InstanceType = instanceType.(string)
 		}
 	}
+
+	if l.Has("remote_region_id") {
+		regionId := l.Must("remote_region_id")
+		m.GetRegion("remote").Id = regionId.(string)
+	}
+	if l.Has("remote_region_az") {
+		regionAz := l.Must("remote_region_az")
+		m.GetRegion("remote").Az = regionAz.(string)
+	}
+
 	return nil
 }
 
