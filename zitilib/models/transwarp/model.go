@@ -26,20 +26,59 @@ var transwarpModel = &model.Model{
 	Regions: model.Regions{
 		"local": {
 			Hosts: model.Hosts{
-				"ctrl":    {},
-				"router":  {},
-				"service": {},
+				"ctrl": {
+					Components: model.Components{
+						"ctrl": {
+							BinaryName:     "ziti-controller",
+							ConfigSrc:      "ctrl.yml",
+							ConfigName:     "ctrl.yml",
+							PublicIdentity: "ctrl",
+							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
+						},
+					},
+					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
+				},
+				"router": {
+					Components: model.Components{
+						"local": {
+							BinaryName:     "ziti-router",
+							ConfigSrc:      "egress_router.yml",
+							ConfigName:     "router.yml",
+							PublicIdentity: "local",
+							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
+						},
+					},
+					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
+				},
+				"service": {
+					Scope: model.Scope{Tags: model.Tags{"service", "iperf_server"}},
+				},
 			},
-			Id: "us-east-1",
-			Az: "us-east-1c",
+			Id:    "us-east-1",
+			Az:    "us-east-1c",
+			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
 		},
 		"remote": {
 			Hosts: model.Hosts{
-				"router": {},
-				"client": {},
+				"router": {
+					Components: model.Components{
+						"remote": {
+							BinaryName:     "ziti-router",
+							ConfigSrc:      "ingress_router.yml",
+							ConfigName:     "remote.yml",
+							PublicIdentity: "remote",
+							Scope:          model.Scope{Tags: model.Tags{"router", "initiator"}},
+						},
+					},
+					Scope: model.Scope{Tags: model.Tags{"router", "initiator"}},
+				},
+				"client": {
+					Scope: model.Scope{Tags: model.Tags{"client", "iperf_client"}},
+				},
 			},
-			Id: "us-west-1",
-			Az: "us-west-1a",
+			Id:    "us-west-1",
+			Az:    "us-west-1a",
+			Scope: model.Scope{Tags: model.Tags{"client", "router", "initiator", "iperf_client"}},
 		},
 	},
 

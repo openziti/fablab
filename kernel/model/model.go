@@ -21,98 +21,6 @@ import (
 	"github.com/openziti/foundation/util/info"
 )
 
-func (m *Model) Express(l *Label) error {
-	for _, stage := range m.infrastructureStages {
-		if err := stage.Express(m, l); err != nil {
-			return fmt.Errorf("error expressing infrastructure (%w)", err)
-		}
-	}
-	l.State = Expressed
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Build(l *Label) error {
-	for _, stage := range m.configurationStages {
-		if err := stage.Configure(m); err != nil {
-			return fmt.Errorf("error building configuration (%w)", err)
-		}
-	}
-	l.State = Configured
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Kit(l *Label) error {
-	for _, stage := range m.kittingStages {
-		if err := stage.Kit(m); err != nil {
-			return fmt.Errorf("error kitting (%w)", err)
-		}
-	}
-	l.State = Kitted
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Sync(l *Label) error {
-	for _, stage := range m.distributionStages {
-		if err := stage.Distribute(m); err != nil {
-			return fmt.Errorf("error distributing (%w)", err)
-		}
-	}
-	l.State = Distributed
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Activate(l *Label) error {
-	for _, stage := range m.activationStages {
-		if err := stage.Activate(m); err != nil {
-			return fmt.Errorf("error activating (%w)", err)
-		}
-	}
-	l.State = Activated
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Operate(l *Label) error {
-	run := fmt.Sprintf("%d", info.NowInMilliseconds())
-	for _, stage := range m.operationStages {
-		if err := stage.Operate(m, run); err != nil {
-			return fmt.Errorf("error operating (%w)", err)
-		}
-	}
-	l.State = Operating
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Dispose(l *Label) error {
-	for _, stage := range m.disposalStages {
-		if err := stage.Dispose(m); err != nil {
-			return fmt.Errorf("error disposing (%w)", err)
-		}
-	}
-	l.State = Disposed
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
 type Model struct {
 	Parent *Model
 
@@ -230,3 +138,95 @@ type OperatingBinders []OperatingBinder
 
 type DisposalBinder func(m *Model) DisposalStage
 type DisposalBinders []DisposalBinder
+
+func (m *Model) Express(l *Label) error {
+	for _, stage := range m.infrastructureStages {
+		if err := stage.Express(m, l); err != nil {
+			return fmt.Errorf("error expressing infrastructure (%w)", err)
+		}
+	}
+	l.State = Expressed
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Build(l *Label) error {
+	for _, stage := range m.configurationStages {
+		if err := stage.Configure(m); err != nil {
+			return fmt.Errorf("error building configuration (%w)", err)
+		}
+	}
+	l.State = Configured
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Kit(l *Label) error {
+	for _, stage := range m.kittingStages {
+		if err := stage.Kit(m); err != nil {
+			return fmt.Errorf("error kitting (%w)", err)
+		}
+	}
+	l.State = Kitted
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Sync(l *Label) error {
+	for _, stage := range m.distributionStages {
+		if err := stage.Distribute(m); err != nil {
+			return fmt.Errorf("error distributing (%w)", err)
+		}
+	}
+	l.State = Distributed
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Activate(l *Label) error {
+	for _, stage := range m.activationStages {
+		if err := stage.Activate(m); err != nil {
+			return fmt.Errorf("error activating (%w)", err)
+		}
+	}
+	l.State = Activated
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Operate(l *Label) error {
+	run := fmt.Sprintf("%d", info.NowInMilliseconds())
+	for _, stage := range m.operationStages {
+		if err := stage.Operate(m, run); err != nil {
+			return fmt.Errorf("error operating (%w)", err)
+		}
+	}
+	l.State = Operating
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
+
+func (m *Model) Dispose(l *Label) error {
+	for _, stage := range m.disposalStages {
+		if err := stage.Dispose(m); err != nil {
+			return fmt.Errorf("error disposing (%w)", err)
+		}
+	}
+	l.State = Disposed
+	if err := l.Save(); err != nil {
+		return fmt.Errorf("error updating instance label (%w)", err)
+	}
+	return nil
+}
