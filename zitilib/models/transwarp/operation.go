@@ -36,11 +36,11 @@ func (_ *operationFactory) Build(m *model.Model) error {
 	m.Operation = model.OperatingBinders{
 		func(_ *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
 
-		func(_ *model.Model) model.OperatingStage { return operation.Banner("Transwarp") },
+		func(_ *model.Model) model.OperatingStage { return operation.Banner("transwarp") },
 		func(_ *model.Model) model.OperatingStage { return operation.Iperf("ziti", remoteProxy, "local", "service", "remote", "client", 30) },
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
-		func(_ *model.Model) model.OperatingStage { return operation.Banner("Direct Internet") },
+		func(_ *model.Model) model.OperatingStage { return operation.Banner("internet") },
 		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, "local", "service", "remote", "client", 30)},
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
