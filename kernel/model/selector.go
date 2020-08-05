@@ -17,7 +17,7 @@
 package model
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
@@ -49,7 +49,7 @@ func (m *Model) GetAllHosts() []*Host {
 	return hosts
 }
 
-func (m *Model) GetHosts(regionSpec, hostSpec string) []*Host {
+func (m *Model) SelectHosts(regionSpec, hostSpec string) []*Host {
 	var regions []*Region
 	if strings.HasPrefix(regionSpec, "@") {
 		regions = m.GetRegionsByTag(strings.TrimPrefix(regionSpec, "@"))
@@ -79,50 +79,39 @@ func (m *Model) GetHosts(regionSpec, hostSpec string) []*Host {
 	return hosts
 }
 
-func (m *Model) GetHostByTags(regionTag, hostTag string) *Host {
-	for regionId, region := range m.Regions {
-		for _, tag := range region.Tags {
-			if tag == regionTag {
-				for hostId, host := range region.Hosts {
-					for _, tag := range host.Tags {
-						if tag == hostTag {
-							logrus.Debugf("using [%s/%s] for tags [%s/%s]", regionId, hostId, regionTag, hostTag)
-							return host
-						}
-					}
-				}
-			}
-		}
+func (m *Model) SelectHost(regionSpec, hostSpec string) (*Host, error) {
+	hosts := m.SelectHosts(regionSpec, hostSpec)
+	if len(hosts) == 1 {
+		return hosts[0], nil
+	} else {
+		return nil, errors.Errorf("[%s, %s] matched [%d] hosts, expected 1", regionSpec, hostSpec, len(hosts))
 	}
-	logrus.Warnf("no resolution for tags [%s/%s]", regionTag, hostTag)
-	return nil
 }
 
-func (m *Model) GetHostById(selectId string) (*Host, error) {
-	hosts := make([]*Host, 0)
-	for _, region := range m.Regions {
-		for hostId, host := range region.Hosts {
-			if hostId == selectId {
-				hosts = append(hosts, host)
-			}
-		}
+func (m *Model) MustSelectHost(regionSpec, hostSpec string) *Host {
+	host, err := m.SelectHost(regionSpec, hostSpec)
+	if err != nil {
+		logrus.Fatal(err)
 	}
-	if len(hosts) != 1 {
-		return nil, fmt.Errorf("found [%d] hosts with id [%s]", len(hosts), selectId)
-	}
-	return hosts[0], nil
+	return host
 }
 
-func (m *Model) GetComponentsByTag(componentTag string) []*Component {
+func (m *Model) SelectComponents(regionSpec, hostSpec, componentSpec string) []*Component {
 	var components []*Component
-	for _, region := range m.Regions {
-		for _, host := range region.Hosts {
-			for _, component := range host.Components {
-				for _, tag := range component.Tags {
-					if tag == componentTag {
+	hosts := m.SelectHosts(regionSpec, hostSpec)
+	for _, host := range hosts {
+		for componentId, component := range host.Components {
+			if componentSpec == "*" {
+				components = append(components, component)
+			} else if strings.HasPrefix(componentSpec, "@") {
+				tag := strings.TrimPrefix(componentSpec, "@")
+				for _, componentTag := range component.Tags {
+					if componentTag == tag {
 						components = append(components, component)
 					}
 				}
+			} else if componentSpec == componentId {
+				components = append(components, component)
 			}
 		}
 	}

@@ -37,8 +37,8 @@ func Iperf(scenarioName, endpoint, serverRegion, serverHost, clientRegion, clien
 }
 
 func (i *iperf) Operate(m *model.Model, _ string) error {
-	serverHosts := m.GetHosts(i.serverRegion, i.serverHost)
-	clientHosts := m.GetHosts(i.clientRegion, i.clientHost)
+	serverHosts := m.SelectHosts(i.serverRegion, i.serverHost)
+	clientHosts := m.SelectHosts(i.clientRegion, i.clientHost)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]

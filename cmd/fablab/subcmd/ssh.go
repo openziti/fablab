@@ -54,7 +54,7 @@ func ssh(_ *cobra.Command, args []string) {
 			logrus.Fatalf("model not bound")
 		}
 
-		hosts := m.GetHosts(args[0], args[1])
+		hosts := m.SelectHosts(args[0], args[1])
 		if len(hosts) != 1 {
 			logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 		}

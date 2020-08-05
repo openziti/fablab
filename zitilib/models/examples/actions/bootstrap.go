@@ -38,16 +38,16 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
 
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(host.Exec(m.GetHostByTags("ctrl", "ctrl"), "rm -f ~/ctrl.db"))
+	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl", "@ctrl"), "rm -f ~/ctrl.db"))
 	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.GetComponentsByTag("router") {
+	for _, router := range m.SelectComponents("*", "*", "@router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	components := m.GetComponentsByTag("terminator")
+	components := m.SelectComponents("*", "*", "@terminator")
 	serviceActions, err := self.createServiceActions(m, components[0].PublicIdentity)
 	if err != nil {
 		logrus.Fatalf("error creating service actions (%v)", err)

@@ -55,7 +55,7 @@ func ip(_ *cobra.Command, args []string) {
 		logrus.Fatalf("model not bound")
 	}
 
-	hosts := m.GetHosts(args[0], args[1])
+	hosts := m.SelectHosts(args[0], args[1])
 	for _, host := range hosts {
 		if !privateIp {
 			fmt.Println(host.PublicIp)

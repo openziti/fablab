@@ -36,7 +36,7 @@ func Tcpdump(scenarioName, region, host string, snaplen int, joiner chan struct{
 }
 
 func (t *tcpdump) Operate(m *model.Model, _ string) error {
-	hosts := m.GetHosts(t.region, t.host)
+	hosts := m.SelectHosts(t.region, t.host)
 	if len(hosts) == 1 {
 		ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
 

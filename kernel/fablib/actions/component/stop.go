@@ -31,7 +31,7 @@ func Stop(regionSpec, hostSpec, componentSpec string) model.Action {
 }
 
 func (stop *stop) Execute(m *model.Model) error {
-	hosts := m.GetHosts(stop.regionSpec, stop.hostSpec)
+	hosts := m.SelectHosts(stop.regionSpec, stop.hostSpec)
 	for _, h := range hosts {
 		components := h.GetComponents(stop.componentSpec)
 		for _, c := range components {

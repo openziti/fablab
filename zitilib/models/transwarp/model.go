@@ -16,7 +16,10 @@
 
 package transwarp
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_transwarp_actions "github.com/openziti/fablab/zitilib/models/transwarp/actions"
+)
 
 func init() {
 	model.RegisterModel("zitilib/transwarp", transwarpModel)
@@ -118,5 +121,10 @@ var transwarpModel = &model.Model{
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newInfrastructureFactory(),
+		newConfigurationFactory(),
+		newKittingFactory(),
+		newDistributionFactory(),
+
+		zitilib_transwarp_actions.NewActionsFactory(),
 	},
 }

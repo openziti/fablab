@@ -32,7 +32,7 @@ func GroupExec(regionSpec, hostSpec, cmd string) model.Action {
 }
 
 func (groupExec *groupExec) Execute(m *model.Model) error {
-	hosts := m.GetHosts(groupExec.regionSpec, groupExec.hostSpec)
+	hosts := m.SelectHosts(groupExec.regionSpec, groupExec.hostSpec)
 	for _, h := range hosts {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 

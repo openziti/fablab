@@ -32,7 +32,7 @@ func Locations(regionSpec, hostSpec string, paths ...string) model.DistributionS
 }
 
 func (self *locations) Distribute(m *model.Model) error {
-	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 		for _, path := range self.paths {

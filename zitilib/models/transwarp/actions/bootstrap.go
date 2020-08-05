@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_characterization_actions
+package zitilib_transwarp_actions
 
 import (
 	"fmt"
@@ -29,47 +29,49 @@ import (
 	"time"
 )
 
-func NewBootstrapAction() model.ActionBinder {
+type bootstrapAction struct{}
+
+func newBootstrapAction() model.ActionBinder {
 	action := &bootstrapAction{}
 	return action.bind
 }
 
-func (a *bootstrapAction) bind(m *model.Model) model.Action {
-	sshUsername := m.Variables.Must("credentials", "ssh", "username").(string)
-
+func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
 
+	/*
+	 * Restart controller with new database.
+	 */
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
 	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl", "@ctrl"), "rm -f ~/ctrl.db"))
 	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
+	/*
+	 * Create routers.
+	 */
 	for _, router := range m.SelectComponents("*", "*", "@router") {
-		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
-		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
+		certPath := filepath.Join(model.PkiBuild(), fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity))
+		workflow.AddAction(actions2.Fabric("create", "router", certPath))
 	}
 
+	/*
+	 * Create services and terminators.
+	 */
 	iperfServer := m.MustSelectHost("@iperf_server", "@iperf_server")
-	if iperfServer != nil {
-		terminatingRouters := m.SelectComponents("*", "*", "@terminator")
-		if len(terminatingRouters) < 1 {
-			logrus.Fatal("need at least 1 terminating router!")
-		}
-		workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
-		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
-		workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp"))
-		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
+	terminatingRouters := m.SelectComponents("*", "*", "@terminator")
+	if len(terminatingRouters) != 1 {
+		logrus.Fatal("expect 1 terminating router")
 	}
+	workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
+	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
+	workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp"))
+	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
 
-	for _, h := range m.GetAllHosts() {
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
-	}
-
+	/*
+	 * Stop controller.
+	 */
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
 
 	return workflow
 }
-
-type bootstrapAction struct{}

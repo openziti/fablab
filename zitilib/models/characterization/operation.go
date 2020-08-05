@@ -29,7 +29,7 @@ func newOperationFactory() model.Factory {
 }
 
 func (f *operationFactory) Build(m *model.Model) error {
-	values := m.GetHosts("local", "service")
+	values := m.SelectHosts("local", "service")
 	var directEndpoint string
 	if len(values) == 1 {
 		directEndpoint = values[0].PublicIp
@@ -37,7 +37,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need single host for local:@service, found [%d]", len(values))
 	}
 
-	values = m.GetHosts("short", "short")
+	values = m.SelectHosts("short", "short")
 	var shortProxy string
 	if len(values) == 1 {
 		shortProxy = values[0].PrivateIp
@@ -45,7 +45,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need single host for short:short, found [%d]", len(values))
 	}
 
-	values = m.GetHosts("medium", "medium")
+	values = m.SelectHosts("medium", "medium")
 	var mediumProxy string
 	if len(values) == 1 {
 		mediumProxy = values[0].PrivateIp
@@ -53,7 +53,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 		return fmt.Errorf("need a single host for medium:medium, found [%d]", len(values))
 	}
 
-	values = m.GetHosts("long", "long")
+	values = m.SelectHosts("long", "long")
 	var longProxy string
 	if len(values) == 1 {
 		longProxy = values[0].PrivateIp
