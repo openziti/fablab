@@ -20,6 +20,10 @@ ctrl:
 
 listeners:
   - binding:            proxy
+    address:            tcp:0.0.0.0:1122
+    service:            ssh
+
+  - binding:            proxy
     address:            tcp:0.0.0.0:7001
     service:            iperf
 
@@ -42,7 +46,6 @@ link:
     - binding:          transport
 
 transport:
-  # Mumbai_2
   westworld2:
     tx_portal_start_sz:           131072
     tx_portal_min_sz:             16384
@@ -60,3 +63,6 @@ transport:
     max_segment_sz:               1450
     rx_buffer_sz:                 4194304
     tx_buffer_sz:                 4194304
+    instrument:
+      name:                       metrics
+      prefix:                     metrics

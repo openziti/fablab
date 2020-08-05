@@ -22,15 +22,10 @@ dialers:
   - binding:            transport
 
 link:
-  listeners:
-    - binding:          transport
-      bind:             transwarp:0.0.0.0:6000
-      advertise:        transwarp:{{$router_ip}}:6000
   dialers:
     - binding:          transport
 
 transport:
-  # Mumbai_2
   westworld2:
     tx_portal_start_sz:           131072
     tx_portal_min_sz:             16384
@@ -48,3 +43,6 @@ transport:
     max_segment_sz:               1450
     rx_buffer_sz:                 4194304
     tx_buffer_sz:                 4194304
+    instrument:
+      name:                       metrics
+      prefix:                     metrics
