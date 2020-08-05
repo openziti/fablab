@@ -152,35 +152,35 @@ func (h *Host) HasTag(tag string) bool {
 	return false
 }
 
-func (h *Host) GetComponents(componentSpec string) []*Component {
+func (h *Host) SelectComponents(componentSpec string) []*Component {
 	var components []*Component
-	if strings.HasPrefix(componentSpec, "@") {
-		components = h.GetComponentsByTag(strings.TrimPrefix(componentSpec, "@"))
-	} else {
-		component := h.GetComponent(componentSpec)
-		if component != nil {
+	for id, component := range h.Components {
+		if componentSpec == "*" || componentSpec == id {
 			components = append(components, component)
-		}
-	}
-	return components
-}
-
-func (h *Host) GetComponent(componentId string) *Component {
-	component, found := h.Components[componentId]
-	if found {
-		return component
-	}
-	return nil
-}
-
-func (h *Host) GetComponentsByTag(componentTag string) []*Component {
-	var components []*Component
-	for _, component := range h.Components {
-		for _, tag := range component.Tags {
-			if tag == componentTag {
-				components = append(components, component)
+		} else if strings.HasPrefix(componentSpec, "@") {
+			for _, tag := range component.Tags {
+				if tag == componentSpec[1:] {
+					components = append(components, component)
+				}
 			}
 		}
 	}
 	return components
+}
+
+func (h *Host) SelectComponent(componentSpec string) (*Component, error) {
+	components := h.SelectComponents(componentSpec)
+	if len(components) == 1 {
+		return components[0], nil
+	} else {
+		return nil, errors.Errorf("[%s] returned [%d] components, expected 1", componentSpec, len(components))
+	}
+}
+
+func (h *Host) MustSelectComponent(componentSpec string) *Component {
+	component, err := h.SelectComponent(componentSpec)
+	if err != nil {
+		panic(err)
+	}
+	return component
 }

@@ -30,7 +30,7 @@ func newOperationFactory() model.Factory {
 
 func (_ *operationFactory) Build(m *model.Model) error {
 	directEndpoint := m.MustSelectHost("local", "service").PublicIp
-	remoteProxy := m.MustSelectHost("remote", "router").PrivateIp
+	remoteProxy := m.MustSelectHost("remote", "remote").PrivateIp
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{

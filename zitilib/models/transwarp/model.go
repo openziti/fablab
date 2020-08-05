@@ -42,12 +42,12 @@ var transwarpModel = &model.Model{
 					InstanceType: "t2.medium",
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
 				},
-				"router": {
+				"local": {
 					Components: model.Components{
 						"local": {
 							BinaryName:     "ziti-router",
-							ConfigSrc:      "egress_router.yml",
-							ConfigName:     "router.yml",
+							ConfigSrc:      "transwarp_egress_router.yml",
+							ConfigName:     "local.yml",
 							PublicIdentity: "local",
 							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 						},
@@ -66,12 +66,12 @@ var transwarpModel = &model.Model{
 		},
 		"remote": {
 			Hosts: model.Hosts{
-				"router": {
+				"remote": {
 					InstanceType: "t2.medium",
 					Components: model.Components{
 						"remote": {
 							BinaryName:     "ziti-router",
-							ConfigSrc:      "ingress_router.yml",
+							ConfigSrc:      "transwarp_ingress_router.yml",
 							ConfigName:     "remote.yml",
 							PublicIdentity: "remote",
 							Scope:          model.Scope{Tags: model.Tags{"router", "initiator"}},
