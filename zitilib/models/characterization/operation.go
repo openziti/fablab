@@ -202,7 +202,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 func (f *operationFactory) sarStages(scenario string, m *model.Model, intervalSeconds int) ([]model.OperatingBinder, []chan struct{}) {
 	binders := make([]model.OperatingBinder, 0)
 	joiners := make([]chan struct{}, 0)
-	for _, host := range m.GetAllHosts() {
+	for _, host := range m.SelectHosts("*", "*") {
 		h := host // because stage is func (closure)
 		joiner := make(chan struct{})
 		stage := func(m *model.Model) model.OperatingStage {
@@ -216,7 +216,7 @@ func (f *operationFactory) sarStages(scenario string, m *model.Model, intervalSe
 
 func (f *operationFactory) sarCloserStages(m *model.Model) []model.OperatingBinder {
 	binders := make(model.OperatingBinders, 0)
-	for _, host := range m.GetAllHosts() {
+	for _, host := range m.SelectHosts("*", "*") {
 		h := host // because stage is func (closer)
 		stage := func(m *model.Model) model.OperatingStage {
 			return operation.SarCloser(h)

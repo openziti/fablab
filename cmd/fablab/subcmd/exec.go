@@ -84,13 +84,9 @@ func execCmdBind(m *model.Model, binding string) error {
 	if len(path) < 3 {
 		return errors.New("path must be of form <region>.<host>.v1...=")
 	}
-	region := m.GetRegion(path[0])
-	if region == nil {
-		return errors.New("missing region")
-	}
-	host := region.GetHost(path[1])
-	if host == nil {
-		return errors.New("missing host")
+	host, err := m.SelectHost(path[0], path[1])
+	if err != nil {
+		return errors.Wrap(err, "missing host")
 	}
 	if err := host.Variables.Put(halves[1], path[2:]...); err != nil {
 		return errors.Wrap(err, "error putting value")

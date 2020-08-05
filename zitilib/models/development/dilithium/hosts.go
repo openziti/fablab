@@ -29,18 +29,18 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 
 	if l.Has("instance_type") {
 		instanceType := l.Must("instance_type")
-		for _, host := range m.GetAllHosts() {
+		for _, host := range m.SelectHosts("*", "*") {
 			host.InstanceType = instanceType.(string)
 		}
 	}
 
 	if l.Has("remote_region_id") {
 		regionId := l.Must("remote_region_id")
-		m.GetRegion("remote").Id = regionId.(string)
+		m.MustSelectRegion("remote").Id = regionId.(string)
 	}
 	if l.Has("remote_region_az") {
 		regionAz := l.Must("remote_region_az")
-		m.GetRegion("remote").Az = regionAz.(string)
+		m.MustSelectRegion("remote").Az = regionAz.(string)
 	}
 
 	return nil

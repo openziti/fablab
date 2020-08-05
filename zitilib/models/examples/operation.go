@@ -95,7 +95,7 @@ func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBin
 
 	var hosts []*model.Host
 	var ids []string
-	for id, host := range m.GetRegionByTag("initiator").Hosts {
+	for id, host := range m.MustSelectRegion("@initiator").Hosts {
 		if host.HasTag("loop-dialer") {
 			hosts = append(hosts, host)
 			ids = append(ids, id)

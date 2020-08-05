@@ -24,6 +24,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
 	"github.com/openziti/fablab/kernel/model"
 	actions2 "github.com/openziti/fablab/zitilib/actions"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -57,7 +58,7 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	}
 
 	sshUsername := m.Variables.Must("credentials", "ssh", "username").(string)
-	for _, h := range m.GetAllHosts() {
+	for _, h := range m.SelectHosts("*", "*") {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
@@ -69,9 +70,9 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 }
 
 func (_ *bootstrapAction) createServiceActions(m *model.Model, terminatorId string) ([]model.Action, error) {
-	terminatorRegion := m.GetRegionByTag("terminator")
-	if terminatorRegion == nil {
-		return nil, fmt.Errorf("unable to find 'terminator' region")
+	terminatorRegion, err := m.SelectRegion("@terminator")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to find 'terminator' region")
 	}
 
 	serviceActions := make([]model.Action, 0)

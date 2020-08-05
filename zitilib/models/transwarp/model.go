@@ -39,6 +39,7 @@ var transwarpModel = &model.Model{
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 						},
 					},
+					InstanceType: "t2.medium",
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
 				},
 				"router": {
@@ -51,9 +52,11 @@ var transwarpModel = &model.Model{
 							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 						},
 					},
+					InstanceType: "t2.medium",
 					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
 				},
 				"service": {
+					InstanceType: "t2.medium",
 					Scope: model.Scope{Tags: model.Tags{"service", "iperf_server"}},
 				},
 			},
@@ -64,6 +67,7 @@ var transwarpModel = &model.Model{
 		"remote": {
 			Hosts: model.Hosts{
 				"router": {
+					InstanceType: "t2.medium",
 					Components: model.Components{
 						"remote": {
 							BinaryName:     "ziti-router",
@@ -76,11 +80,12 @@ var transwarpModel = &model.Model{
 					Scope: model.Scope{Tags: model.Tags{"router", "initiator"}},
 				},
 				"client": {
+					InstanceType: "t2.medium",
 					Scope: model.Scope{Tags: model.Tags{"client", "iperf_client"}},
 				},
 			},
 			Id:    "us-west-1",
-			Az:    "us-west-1a",
+			Az:    "us-west-1b",
 			Scope: model.Scope{Tags: model.Tags{"client", "router", "initiator", "iperf_client"}},
 		},
 	},

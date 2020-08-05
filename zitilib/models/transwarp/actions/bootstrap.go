@@ -42,9 +42,9 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Restart controller with new database.
 	 */
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl", "@ctrl"), "rm -f ~/ctrl.db"))
-	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("*", "*", "@ctrl"))
+	workflow.AddAction(host.Exec(m.MustSelectHost("*", "ctrl"), "rm -f ~/ctrl.db"))
+	workflow.AddAction(component.Start("*", "*", "@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
 	/*
@@ -58,10 +58,10 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Create services and terminators.
 	 */
-	iperfServer := m.MustSelectHost("@iperf_server", "@iperf_server")
-	terminatingRouters := m.SelectComponents("*", "*", "@terminator")
+	iperfServer := m.MustSelectHost("*", "@iperf_server")
+	terminatingRouters := m.SelectComponents("remote", "router", "remote")
 	if len(terminatingRouters) != 1 {
-		logrus.Fatal("expect 1 terminating router")
+		logrus.Fatalf("expect 1 terminating router, got [%d]", len(terminatingRouters))
 	}
 	workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
 	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
@@ -69,7 +69,7 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Stop controller.
 	 */
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("*", "*", "@ctrl"))
 
 	return workflow
 }

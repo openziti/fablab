@@ -61,7 +61,7 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
 	}
 
-	for _, h := range m.GetAllHosts() {
+	for _, h := range m.SelectHosts("*", "*") {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
