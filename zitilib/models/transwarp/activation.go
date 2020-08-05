@@ -14,25 +14,24 @@
 	limitations under the License.
 */
 
-package zitilib_transwarp_actions
+package transwarp
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/runlevel/4_activation/action"
 	"github.com/openziti/fablab/kernel/model"
-	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
 )
 
-type actionsFactory struct{}
+type activationFactory struct{}
 
-func NewActionsFactory() model.Factory {
-	return &actionsFactory{}
+func newActivationFactory() model.Factory {
+	return &activationFactory{}
 }
 
-func (_ *actionsFactory) Build(m *model.Model) error {
-	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"logs":      func(_ *model.Model) model.Action { return zitilib_actions.Logs() },
+func (_ *activationFactory) Build(m *model.Model) error {
+	m.Activation = model.ActivationBinders{
+		func(_ *model.Model) model.ActivationStage {
+			return action.Activation("bootstrap", "start")
+		},
 	}
 	return nil
 }

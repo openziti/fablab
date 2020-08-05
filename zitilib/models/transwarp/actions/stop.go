@@ -17,22 +17,21 @@
 package zitilib_transwarp_actions
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
 	"github.com/openziti/fablab/kernel/model"
-	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
 )
 
-type actionsFactory struct{}
+type stopAction struct{}
 
-func NewActionsFactory() model.Factory {
-	return &actionsFactory{}
+func newStopAction() model.ActionBinder {
+	action := &stopAction{}
+	return action.bind
 }
 
-func (_ *actionsFactory) Build(m *model.Model) error {
-	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"logs":      func(_ *model.Model) model.Action { return zitilib_actions.Logs() },
-	}
-	return nil
+func (_ *stopAction) bind(_ *model.Model) model.Action {
+	return actions.Workflow(
+		component.Stop("*", "*", "@router"),
+		component.Stop("*", "*", "@ctrl"),
+	)
 }

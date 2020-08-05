@@ -124,6 +124,8 @@ var transwarpModel = &model.Model{
 		newConfigurationFactory(),
 		newKittingFactory(),
 		newDistributionFactory(),
+		newActivationFactory(),
+		newOperationFactory(),
 
 		zitilib_transwarp_actions.NewActionsFactory(),
 	},

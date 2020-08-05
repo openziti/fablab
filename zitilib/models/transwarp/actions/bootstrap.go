@@ -65,8 +65,6 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	}
 	workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
 	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
-	workflow.AddAction(actions2.Fabric("create", "service", "iperf_udp"))
-	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
 
 	/*
 	 * Stop controller.

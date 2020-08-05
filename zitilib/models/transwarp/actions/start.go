@@ -17,22 +17,24 @@
 package zitilib_transwarp_actions
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
+	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
 	"github.com/openziti/fablab/kernel/model"
-	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
+	"time"
 )
 
-type actionsFactory struct{}
+type startAction struct{}
 
-func NewActionsFactory() model.Factory {
-	return &actionsFactory{}
+func newStartAction() model.ActionBinder {
+	action := &startAction{}
+	return action.bind
 }
-
-func (_ *actionsFactory) Build(m *model.Model) error {
-	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"logs":      func(_ *model.Model) model.Action { return zitilib_actions.Logs() },
-	}
-	return nil
+func (_ *startAction) bind(_ *model.Model) model.Action {
+	return actions.Workflow(
+		component.Start("*", "*", "@ctrl"),
+		semaphore.Sleep(1 * time.Second),
+		component.Start("*", "*", "@router"),
+		semaphore.Sleep(1 * time.Second),
+	)
 }
