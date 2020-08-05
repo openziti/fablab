@@ -59,12 +59,12 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	 * Create services and terminators.
 	 */
 	iperfServer := m.MustSelectHost("*", "@iperf_server")
-	terminatingRouters := m.SelectComponents("remote", "remote", "remote")
+	terminatingRouters := m.SelectComponents("local", "local", "local")
 	if len(terminatingRouters) != 1 {
 		logrus.Fatalf("expect 1 terminating router, got [%d]", len(terminatingRouters))
 	}
 	workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
-	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PublicIp+":7001"))
+	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PrivateIp+":7001"))
 
 	/*
 	 * Stop controller.
