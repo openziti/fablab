@@ -115,9 +115,8 @@ func (m *Model) SelectComponents(regionSpec, hostSpec, componentSpec string) []*
 			if componentSpec == "*" || componentSpec == componentId {
 				components = append(components, component)
 			} else if strings.HasPrefix(componentSpec, "@") {
-				tag := strings.TrimPrefix(componentSpec, "@")
-				for _, componentTag := range component.Tags {
-					if componentTag == tag {
+				for _, tag := range component.Tags {
+					if tag == componentSpec[1:] {
 						components = append(components, component)
 					}
 				}
