@@ -29,7 +29,7 @@ var transwarpModel = &model.Model{
 	Regions: model.Regions{
 		"local": {
 			Hosts: model.Hosts{
-				"ctrl": {
+				"local": {
 					Components: model.Components{
 						"ctrl": {
 							BinaryName:     "ziti-controller",
@@ -38,12 +38,6 @@ var transwarpModel = &model.Model{
 							PublicIdentity: "ctrl",
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 						},
-					},
-					InstanceType: "t2.medium",
-					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
-				},
-				"local": {
-					Components: model.Components{
 						"local": {
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "transwarp_egress_router.yml",
@@ -53,11 +47,7 @@ var transwarpModel = &model.Model{
 						},
 					},
 					InstanceType: "t2.medium",
-					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
-				},
-				"service": {
-					InstanceType: "t2.medium",
-					Scope: model.Scope{Tags: model.Tags{"service", "iperf_server"}},
+					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
 				},
 			},
 			Id:    "us-east-1",
@@ -77,15 +67,11 @@ var transwarpModel = &model.Model{
 							Scope:          model.Scope{Tags: model.Tags{"router", "initiator"}},
 						},
 					},
-					Scope: model.Scope{Tags: model.Tags{"router", "initiator"}},
-				},
-				"client": {
-					InstanceType: "t2.medium",
-					Scope: model.Scope{Tags: model.Tags{"client", "iperf_client"}},
+					Scope: model.Scope{Tags: model.Tags{"router", "initiator", "client", "iperf_client"}},
 				},
 			},
-			Id:    "ap-south-1",
-			Az:    "ap-south-1a",
+			Id:    "ap-southeast-2",
+			Az:    "ap-southeast-2b",
 			Scope: model.Scope{Tags: model.Tags{"client", "router", "initiator", "iperf_client"}},
 		},
 	},
