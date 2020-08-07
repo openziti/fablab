@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 	limitations under the License.
 */
 
-package dilithium
+package transwarp
 
-import (
-	"github.com/openziti/fablab/kernel/model"
-)
+import "github.com/openziti/fablab/kernel/model"
+
+type hostsFactory struct{}
 
 func newHostsFactory() model.Factory {
 	return &hostsFactory{}
@@ -34,6 +34,15 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 		}
 	}
 
+	if l.Has("local_region_id") {
+		regionId := l.Must("local_region_id")
+		m.MustSelectRegion("local").Id = regionId.(string)
+	}
+	if l.Has("local_region_az") {
+		regionAz := l.Must("local_region_az")
+		m.MustSelectRegion("local").Az = regionAz.(string)
+	}
+
 	if l.Has("remote_region_id") {
 		regionId := l.Must("remote_region_id")
 		m.MustSelectRegion("remote").Id = regionId.(string)
@@ -45,5 +54,3 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 
 	return nil
 }
-
-type hostsFactory struct{}

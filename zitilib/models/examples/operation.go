@@ -72,7 +72,7 @@ func (self *operationFactory) Build(m *model.Model) error {
 }
 
 func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
-	hosts := m.GetHosts("@terminator", "@loop-listener")
+	hosts := m.SelectHosts("@terminator", "@loop-listener")
 	if len(hosts) < 1 {
 		return nil, fmt.Errorf("no '@terminator/@loop-listener' hosts in model")
 	}
@@ -88,14 +88,14 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 }
 
 func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
-	initiators := m.GetHosts("@initiator", "@initiator")
+	initiators := m.SelectHosts("@initiator", "@initiator")
 	if len(initiators) != 1 {
 		return nil, nil, fmt.Errorf("expected 1 '@initiator/@initiator' host in model")
 	}
 
 	var hosts []*model.Host
 	var ids []string
-	for id, host := range m.GetRegionByTag("initiator").Hosts {
+	for id, host := range m.MustSelectRegion("@initiator").Hosts {
 		if host.HasTag("loop-dialer") {
 			hosts = append(hosts, host)
 			ids = append(ids, id)

@@ -35,7 +35,7 @@ func IperfClient(regionSpec, hostSpec, address string, port int) model.Operating
 }
 
 func (self *iperfClient) Operate(m *model.Model, _ string) error {
-	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
 	if len(hosts) != 1 {
 		return errors.Errorf("expected [1] iperf client host, found [%d]", len(hosts))
 	}

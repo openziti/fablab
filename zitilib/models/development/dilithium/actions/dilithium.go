@@ -33,7 +33,7 @@ func StopDilithiumTunnel(regionSpec, hostSpec string) model.Action {
 }
 
 func (self *stopDilithiumTunnel) Execute(m *model.Model) error {
-	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 		if err := fablib.RemoteKill(ssh, "dilithium tunnel"); err != nil {
@@ -56,7 +56,7 @@ func StartDilithiumTunnelServer(regionSpec, hostSpec string) model.Action {
 }
 
 func (self *startDilithiumTunnelServer) Execute(m *model.Model) error {
-	hosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
 	if len(hosts) != 1 {
 		return errors.Errorf("expected [1] diltihium tunnel server host, got [%d]", len(hosts))
 	}
@@ -90,12 +90,12 @@ func StartDilithiumTunnelClient(regionSpec, hostSpec, serverRegionSpec, serverHo
 }
 
 func (self *startDilithiumTunnelClient) Execute(m *model.Model) error {
-	clientHosts := m.GetHosts(self.regionSpec, self.hostSpec)
+	clientHosts := m.SelectHosts(self.regionSpec, self.hostSpec)
 	if len(clientHosts) != 1 {
 		return errors.Errorf("expected [1] dilithium tunnel client host, got [%d]", len(clientHosts))
 	}
 
-	serverHosts := m.GetHosts(self.serverRegionSpec, self.serverHostSpec)
+	serverHosts := m.SelectHosts(self.serverRegionSpec, self.serverHostSpec)
 	if len(serverHosts) != 1 {
 		return errors.Errorf("expected [1] dilithium tunnel server host, got [%d]", len(serverHosts))
 	}

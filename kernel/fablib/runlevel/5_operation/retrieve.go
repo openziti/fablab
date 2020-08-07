@@ -34,7 +34,7 @@ func Retrieve(region, host, path, extension string) model.OperatingStage {
 }
 
 func (self *retrieve) Operate(m *model.Model, run string) error {
-	hosts := m.GetHosts(self.region, self.host)
+	hosts := m.SelectHosts(self.region, self.host)
 	if len(hosts) == 1 {
 		ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
 

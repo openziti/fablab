@@ -31,9 +31,9 @@ func Start(regionSpec, hostSpec, componentSpec string) model.Action {
 }
 
 func (start *start) Execute(m *model.Model) error {
-	hosts := m.GetHosts(start.regionSpec, start.hostSpec)
+	hosts := m.SelectHosts(start.regionSpec, start.hostSpec)
 	for _, h := range hosts {
-		components := h.GetComponents(start.componentSpec)
+		components := h.SelectComponents(start.componentSpec)
 		for _, c := range components {
 			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 

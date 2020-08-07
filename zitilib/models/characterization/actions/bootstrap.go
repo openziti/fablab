@@ -40,18 +40,18 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
 
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(host.Exec(m.GetHostByTags("ctrl", "ctrl"), "rm -f ~/ctrl.db"))
+	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl", "@ctrl"), "rm -f ~/ctrl.db"))
 	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.GetComponentsByTag("router") {
+	for _, router := range m.SelectComponents("*", "*", "@router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	iperfServer := m.GetHostByTags("iperf_server", "iperf_server")
+	iperfServer := m.MustSelectHost("@iperf_server", "@iperf_server")
 	if iperfServer != nil {
-		terminatingRouters := m.GetComponentsByTag("terminator")
+		terminatingRouters := m.SelectComponents("*", "*", "@terminator")
 		if len(terminatingRouters) < 1 {
 			logrus.Fatal("need at least 1 terminating router!")
 		}
@@ -61,7 +61,7 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(actions2.Fabric("create", "terminator", "iperf_udp", terminatingRouters[0].PublicIdentity, "udp:"+iperfServer.PublicIp+":7001", "--binding", "transport_udp"))
 	}
 
-	for _, h := range m.GetAllHosts() {
+	for _, h := range m.SelectHosts("*", "*") {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))

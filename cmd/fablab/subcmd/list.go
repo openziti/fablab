@@ -30,8 +30,9 @@ func init() {
 }
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "list objects",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "list objects",
 }
 
 var listInstancesCmd = &cobra.Command{
@@ -78,10 +79,6 @@ var listModelsCmd = &cobra.Command{
 }
 
 func listModels(_ *cobra.Command, _ []string) {
-	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%v)", err)
-	}
-
 	models := model.ListModels()
 	fmt.Printf("\nfound [%d] models:\n\n", len(models))
 	for _, modelName := range models {
