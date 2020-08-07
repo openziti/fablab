@@ -100,7 +100,7 @@ var transwarpModel = &model.Model{
 		Variables: model.Variables{
 			"zitilib": model.Variables{
 				"fabric": model.Variables{
-					"data_plane_protocol": &model.Variable{Default: "transwarp"},
+					"data_plane_protocol": &model.Variable{Default: "tcp"},
 				},
 			},
 			"characterization": model.Variables{

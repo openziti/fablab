@@ -66,6 +66,11 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow.AddAction(actions2.Fabric("create", "service", "iperf"))
 	workflow.AddAction(actions2.Fabric("create", "terminator", "iperf", terminatingRouters[0].PublicIdentity, "tcp:"+iperfServer.PrivateIp+":7001"))
 
+	workflow.AddAction(actions2.Fabric("create", "service", "ssh"))
+	workflow.AddAction(actions2.Fabric("create", "terminator", "ssh", terminatingRouters[0].PublicIdentity, "tcp:127.0.0.1:22"))
+	workflow.AddAction(actions2.Fabric("create", "service", "nc4506"))
+	workflow.AddAction(actions2.Fabric("create", "terminator", "nc4506", terminatingRouters[0].PublicIdentity, "tcp:127.0.0.1:4506"))
+
 	/*
 	 * Stop controller.
 	 */
