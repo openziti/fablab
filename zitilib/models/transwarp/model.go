@@ -47,12 +47,32 @@ var transwarpModel = &model.Model{
 						},
 					},
 					InstanceType: "t2.medium",
-					Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
+					Scope:        model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
 				},
 			},
 			Id:    "us-east-1",
 			Az:    "us-east-1c",
 			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
+		},
+		"transit": {
+			Hosts: model.Hosts{
+				"transit": {
+					InstanceType: "t2.medium",
+					Components: model.Components{
+						"transit": {
+							BinaryName:     "ziti-router",
+							ConfigSrc:      "transwarp_transit_router.yml",
+							ConfigName:     "transit.yml",
+							PublicIdentity: "transit",
+							Scope:          model.Scope{Tags: model.Tags{"router"}},
+						},
+					},
+					Scope: model.Scope{Tags: model.Tags{"router"}},
+				},
+			},
+			Id:    "ap-south-1",
+			Az:    "ap-south-1a",
+			Scope: model.Scope{Tags: model.Tags{"router"}},
 		},
 		"remote": {
 			Hosts: model.Hosts{

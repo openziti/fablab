@@ -3,7 +3,7 @@
 {{$protocol := .Model.MustVariable "zitilib" "fabric" "data_plane_protocol"}}
 {{$ctrl_ip := publicIp "@ctrl" "@ctrl"}}
 {{$router_ip := .Host.PublicIp}}
-  
+
 v: 3
 
 forwarder:
@@ -15,37 +15,14 @@ identity:
   key:                  /home/{{$ssh_username}}/fablab/pki/intermediate/keys/{{$identity}}.key
   ca:                   /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.chain.pem
 
-ctrl:
+ctrl:   
   endpoint:             tls:{{$ctrl_ip}}:6262
 
-listeners:
-  - binding:            proxy
-    address:            tcp:0.0.0.0:1122
-    service:            ssh
-
-  - binding:            proxy
-    address:            tcp:0.0.0.0:4506
-    service:            nc4506
-
-  - binding:            proxy
-    address:            tcp:0.0.0.0:7001
-    service:            iperf
-
-  - binding:            proxy_udp
-    address:            udp:0.0.0.0:7001
-    service:            iperf_udp
-
-  - binding:            transport
-    address:            tls:0.0.0.0:7002
-
-dialers:
-  - binding:            transport
-
 link:
-#  listeners:
-#    - binding:          transport
-#      bind:             {{$protocol}}:0.0.0.0:6000
-#      advertise:        {{$protocol}}:{{$router_ip}}:6000
+  listeners:
+    - binding:          transport
+      bind:             {{$protocol}}:0.0.0.0:6000
+      advertise:        {{$protocol}}:{{$router_ip}}:6000
   dialers:
     - binding:          transport
 
