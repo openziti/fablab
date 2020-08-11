@@ -67,6 +67,3 @@ transport:
     max_segment_sz:               1450
     rx_buffer_sz:                 4194304
     tx_buffer_sz:                 4194304
-    instrument:
-      name:                       metrics
-      prefix:                     metrics

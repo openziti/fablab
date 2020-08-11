@@ -120,4 +120,8 @@ var transwarpModel = &model.Model{
 
 		zitilib_transwarp_actions.NewActionsFactory(),
 	},
+
+	BootstrapExtensions: []model.BootstrapExtension{
+		&bootstrap{},
+	},
 }
