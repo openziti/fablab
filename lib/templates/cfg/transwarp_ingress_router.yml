@@ -42,10 +42,10 @@ dialers:
   - binding:            transport
 
 link:
-#  listeners:
-#    - binding:          transport
-#      bind:             {{$protocol}}:0.0.0.0:6000
-#      advertise:        {{$protocol}}:{{$router_ip}}:6000
+  listeners:
+    - binding:          transport
+      bind:             {{$protocol}}:0.0.0.0:6000
+      advertise:        {{$protocol}}:{{$router_ip}}:6000
   dialers:
     - binding:          transport
 

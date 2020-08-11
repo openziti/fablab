@@ -54,26 +54,6 @@ var transwarpModel = &model.Model{
 			Az:    "us-east-1c",
 			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "terminator", "iperf_server"}},
 		},
-		"transit": {
-			Hosts: model.Hosts{
-				"transit": {
-					InstanceType: "t2.medium",
-					Components: model.Components{
-						"transit": {
-							BinaryName:     "ziti-router",
-							ConfigSrc:      "transwarp_transit_router.yml",
-							ConfigName:     "transit.yml",
-							PublicIdentity: "transit",
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
-						},
-					},
-					Scope: model.Scope{Tags: model.Tags{"router"}},
-				},
-			},
-			Id:    "ap-south-1",
-			Az:    "ap-south-1a",
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-		},
 		"remote": {
 			Hosts: model.Hosts{
 				"remote": {
@@ -91,7 +71,7 @@ var transwarpModel = &model.Model{
 				},
 			},
 			Id:    "ap-southeast-2",
-			Az:    "ap-southeast-2b",
+			Az:    "ap-southeast-2c",
 			Scope: model.Scope{Tags: model.Tags{"client", "router", "initiator", "iperf_client"}},
 		},
 	},
@@ -100,7 +80,7 @@ var transwarpModel = &model.Model{
 		Variables: model.Variables{
 			"zitilib": model.Variables{
 				"fabric": model.Variables{
-					"data_plane_protocol": &model.Variable{Default: "tls"},
+					"data_plane_protocol": &model.Variable{Default: "transwarp"},
 				},
 			},
 			"characterization": model.Variables{
