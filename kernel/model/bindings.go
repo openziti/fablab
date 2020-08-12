@@ -38,7 +38,7 @@ func (m *Model) BindBindings(bindings Bindings) error {
 		} else if c, ok := i.(*Component); ok {
 			v = c.Variables
 		}
-		err := bindings.bindMap(i, v, path, make([]string, 0))
+		err := bindings.bindMap(i, v, path, nil)
 		if err != nil {
 			errors = append(errors, err)
 		}
@@ -57,6 +57,23 @@ func (m *Model) BindBindings(bindings Bindings) error {
 func (bindings Bindings) Has(name ...string) bool {
 	_, found := bindings.Get(name...)
 	return found
+}
+
+func (bindings Bindings) Put(value interface{}, rootKey string, rest ...string) {
+	if len(rest) == 0 {
+		bindings[rootKey] = value
+		return
+	}
+
+	var lowerMap Bindings
+	if value, found := bindings[rootKey]; found {
+		lowerMap, _ = value.(Bindings)
+	}
+	if lowerMap == nil {
+		lowerMap = Bindings{}
+		bindings[rootKey] = lowerMap
+	}
+	lowerMap.Put(value, rest[0], rest[1:]...)
 }
 
 func (bindings Bindings) Must(name ...string) interface{} {
@@ -90,6 +107,24 @@ func (bindings Bindings) Get(name ...string) (interface{}, bool) {
 		return value, true
 	}
 	return nil, false
+}
+
+func (bindings Bindings) GetString(name ...string) (string, bool) {
+	val, found := bindings.Get(name...)
+	if found {
+		result, ok := val.(string)
+		return result, ok
+	}
+	return "", found
+}
+
+func (bindings Bindings) GetBool(name ...string) (bool, bool) {
+	val, found := bindings.Get(name...)
+	if found {
+		result, ok := val.(bool)
+		return result, ok
+	}
+	return false, found
 }
 
 func (bindings Bindings) bindMap(i interface{}, variables Variables, scopePath []string, parent []string) error {
