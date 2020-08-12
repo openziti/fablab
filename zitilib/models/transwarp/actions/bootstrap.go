@@ -59,7 +59,7 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	 * Create services and terminators.
 	 */
 	iperfServer := m.MustSelectHost("*", "@iperf_server")
-	terminatingRouters := m.SelectComponents("local", "local", "local")
+	terminatingRouters := m.SelectComponents("remote", "remote", "remote")
 	if len(terminatingRouters) != 1 {
 		logrus.Fatalf("expect 1 terminating router, got [%d]", len(terminatingRouters))
 	}
