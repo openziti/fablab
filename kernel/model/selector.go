@@ -85,6 +85,17 @@ func (m *Model) MustSelectRegion(regionSpec string) *Region {
 	return region
 }
 
+func (m *Model) GetRegion(host *Host) *Region {
+	for _, region := range m.Regions {
+		for _, rh := range region.Hosts {
+			if host == rh {
+				return region
+			}
+		}
+	}
+	panic(errors.Errorf("region for host %+v not found", host))
+}
+
 func (m *Model) SelectHosts(regionSpec, hostSpec string) []*Host {
 	var hosts []*Host
 	regions := m.SelectRegions(regionSpec)

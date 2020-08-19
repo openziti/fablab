@@ -39,7 +39,7 @@ var mattermozt = &model.Model{
 					"service":    &model.Variable{Default: "t2.medium"},
 				},
 			},
-			"characterization": model.Variables{ //configs in /lib link to this....
+			"zitilib": model.Variables{ //configs in /lib link to this....
 				"fabric": model.Variables{
 					"data_plane_protocol": &model.Variable{Default: "tls"},
 				},

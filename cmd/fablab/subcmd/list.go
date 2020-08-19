@@ -21,11 +21,13 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 func init() {
 	listCmd.AddCommand(listInstancesCmd)
 	listCmd.AddCommand(listModelsCmd)
+	listCmd.AddCommand(listHostsCmd)
 	RootCmd.AddCommand(listCmd)
 }
 
@@ -85,4 +87,53 @@ func listModels(_ *cobra.Command, _ []string) {
 		fmt.Printf("\t" + modelName + "\n")
 	}
 	fmt.Println()
+}
+
+var listHostsCmd = &cobra.Command{
+	Use:   "hosts <regionSpec?> <hostSpec?>",
+	Short: "list hosts",
+	Args:  cobra.MaximumNArgs(2),
+	Run:   listHosts,
+}
+
+func listHosts(_ *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	label := model.GetLabel()
+	if label == nil {
+		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	} else {
+		m, found := model.GetModel(label.Model)
+		if !found {
+			logrus.Fatalf("no such model [%s]", label.Model)
+		}
+
+		if !m.IsBound() {
+			logrus.Fatalf("model not bound")
+		}
+
+		regionSpec := "*"
+		hostSpec := "*"
+
+		if len(args) > 0 {
+			regionSpec = args[0]
+		}
+		if len(args) > 1 {
+			hostSpec = args[1]
+		}
+
+		hosts := m.SelectHosts(regionSpec, hostSpec)
+		for _, host := range hosts {
+			var components []string
+			for component := range host.Components {
+				components = append(components, component)
+			}
+			fmt.Printf("Public IP: %15v   Private IP: %15v   Components: %15v   Region: %12v   Tags: %v\n",
+				host.PublicIp, host.PrivateIp, strings.Join(components, ","), m.GetRegion(host).Id,
+				strings.Join(host.Tags, ","))
+		}
+	}
+
 }

@@ -66,7 +66,8 @@ func (enroll *edgeRouterEnroll) Execute(m *model.Model) error {
 					return err
 				}
 
-				return host.Exec(h, fmt.Sprintf("/home/fedora/fablab/bin/%s enroll /home/fedora/fablab/cfg/%s -j %s > /home/fedora/logs/%s.router.enroll.log 2>&1", c.BinaryName, c.ConfigName, remoteJwt, c.ConfigName)).Execute(m)
+				tmpl := "set -o pipefail; /home/fedora/fablab/bin/%s enroll /home/fedora/fablab/cfg/%s -j %s 2>&1 | tee /home/fedora/logs/%s.router.enroll.log "
+				return host.Exec(h, fmt.Sprintf(tmpl, c.BinaryName, c.ConfigName, remoteJwt, c.ConfigName)).Execute(m)
 			}
 		}
 	}

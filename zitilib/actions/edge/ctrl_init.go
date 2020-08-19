@@ -35,10 +35,10 @@ func (init *edgeInit) Execute(m *model.Model) error {
 		for _, c := range components {
 			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 
-			if err := host.Exec(h, fmt.Sprintf("/home/%s/fablab/bin/%s --log-formatter pfxlog edge init /home/%s/fablab/cfg/%s -u %s -p %s > logs/%s.edge.init.log 2>&1", sshConfigFactory.User(), c.BinaryName, sshConfigFactory.User(), c.ConfigName, username, password, c.BinaryName)).Execute(m); err != nil {
+			tmpl := "rm -f /home/%v/fablab/ctrl.db && set -o pipefail; /home/%s/fablab/bin/%s --log-formatter pfxlog edge init /home/%s/fablab/cfg/%s -u %s -p %s 2>&1 | tee logs/%s.edge.init.log"
+			if err := host.Exec(h, fmt.Sprintf(tmpl, sshConfigFactory.User(), sshConfigFactory.User(), c.BinaryName, sshConfigFactory.User(), c.ConfigName, username, password, c.BinaryName)).Execute(m); err != nil {
 				return err
 			}
-
 		}
 	}
 
