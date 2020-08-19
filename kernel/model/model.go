@@ -19,6 +19,7 @@ package model
 import (
 	"fmt"
 	"github.com/openziti/foundation/util/info"
+	"strings"
 )
 
 type Model struct {
@@ -55,6 +56,22 @@ type Region struct {
 	Id    string
 	Az    string
 	Hosts Hosts
+}
+
+func (region *Region) SelectHosts(hostSpec string) []*Host {
+	var hosts []*Host
+	for id, host := range region.Hosts {
+		if hostSpec == "*" || hostSpec == id {
+			hosts = append(hosts, host)
+		} else if strings.HasPrefix(hostSpec, "@") {
+			for _, tag := range host.Tags {
+				if tag == hostSpec[1:] {
+					hosts = append(hosts, host)
+				}
+			}
+		}
+	}
+	return hosts
 }
 
 type Host struct {

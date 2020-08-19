@@ -124,15 +124,17 @@ func listHosts(_ *cobra.Command, args []string) {
 			hostSpec = args[1]
 		}
 
-		hosts := m.SelectHosts(regionSpec, hostSpec)
-		for _, host := range hosts {
-			var components []string
-			for component := range host.Components {
-				components = append(components, component)
+		for _, region := range m.SelectRegions(regionSpec) {
+			hosts := m.SelectHosts(regionSpec, hostSpec)
+			for _, host := range hosts {
+				var components []string
+				for component := range host.Components {
+					components = append(components, component)
+				}
+				fmt.Printf("Public IP: %15v   Private IP: %15v   Components: %15v   Region: %12v   Tags: %v\n",
+					host.PublicIp, host.PrivateIp, strings.Join(components, ","), region.Id,
+					strings.Join(host.Tags, ","))
 			}
-			fmt.Printf("Public IP: %15v   Private IP: %15v   Components: %15v   Region: %12v   Tags: %v\n",
-				host.PublicIp, host.PrivateIp, strings.Join(components, ","), m.GetRegion(host).Id,
-				strings.Join(host.Tags, ","))
 		}
 	}
 

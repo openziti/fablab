@@ -100,17 +100,7 @@ func (m *Model) SelectHosts(regionSpec, hostSpec string) []*Host {
 	var hosts []*Host
 	regions := m.SelectRegions(regionSpec)
 	for _, region := range regions {
-		for id, host := range region.Hosts {
-			if hostSpec == "*" || hostSpec == id {
-				hosts = append(hosts, host)
-			} else if strings.HasPrefix(hostSpec, "@") {
-				for _, tag := range host.Tags {
-					if tag == hostSpec[1:] {
-						hosts = append(hosts, host)
-					}
-				}
-			}
-		}
+		hosts = append(hosts, region.SelectHosts(hostSpec)...)
 	}
 	return hosts
 }
