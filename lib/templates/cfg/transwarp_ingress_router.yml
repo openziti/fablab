@@ -24,6 +24,10 @@ listeners:
     service:            ssh
 
   - binding:            proxy
+    address:            tcp:0.0.0.0:4506
+    service:            nc4506
+
+  - binding:            proxy
     address:            tcp:0.0.0.0:7001
     service:            iperf
 
@@ -40,8 +44,8 @@ dialers:
 link:
   listeners:
     - binding:          transport
-      bind:             transwarp:0.0.0.0:6000
-      advertise:        transwarp:{{$router_ip}}:6000
+      bind:             {{$protocol}}:0.0.0.0:6000
+      advertise:        {{$protocol}}:{{$router_ip}}:6000
   dialers:
     - binding:          transport
 
@@ -63,6 +67,3 @@ transport:
     max_segment_sz:               1450
     rx_buffer_sz:                 4194304
     tx_buffer_sz:                 4194304
-    instrument:
-      name:                       metrics
-      prefix:                     metrics

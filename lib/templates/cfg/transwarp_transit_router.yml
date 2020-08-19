@@ -15,13 +15,14 @@ identity:
   key:                  /home/{{$ssh_username}}/fablab/pki/intermediate/keys/{{$identity}}.key
   ca:                   /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.chain.pem
 
-ctrl:
+ctrl:   
   endpoint:             tls:{{$ctrl_ip}}:6262
 
-dialers:
-  - binding:            transport
-
 link:
+  listeners:
+    - binding:          transport
+      bind:             {{$protocol}}:0.0.0.0:6000
+      advertise:        {{$protocol}}:{{$router_ip}}:6000
   dialers:
     - binding:          transport
 
