@@ -108,12 +108,12 @@ func dumpRegion(r *Region) *RegionDump {
 func dumpHosts(hs map[string]*Host) map[string]*HostDump {
 	dumps := make(map[string]*HostDump)
 	for k, v := range hs {
-		dumps[k] = dumpHost(v)
+		dumps[k] = DumpHost(v)
 	}
 	return dumps
 }
 
-func dumpHost(h *Host) *HostDump {
+func DumpHost(h *Host) *HostDump {
 	return &HostDump{
 		Scope:                dumpScope(h.Scope),
 		PublicIp:             h.PublicIp,

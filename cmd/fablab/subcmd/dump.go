@@ -25,6 +25,7 @@ import (
 )
 
 func init() {
+	dumpCmd.AddCommand(dumpHostsCmd)
 	RootCmd.AddCommand(dumpCmd)
 }
 
@@ -60,5 +61,50 @@ func dump(_ *cobra.Command, _ []string) {
 
 	} else {
 		logrus.Fatalf("no label for run")
+	}
+}
+
+var dumpHostsCmd = &cobra.Command{
+	Use:   "hosts <region-spec>? <host-spec>?",
+	Short: "dump the resolved hosts structure",
+	Args:  cobra.MaximumNArgs(2),
+	Run:   dumpHosts,
+}
+
+func dumpHosts(_ *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	l := model.GetLabel()
+	if l == nil {
+		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	} else {
+		m, found := model.GetModel(l.Model)
+		if !found {
+			logrus.Fatalf("no such model [%s]", l.Model)
+		}
+
+		regionSpec := "*"
+		hostSpec := "*"
+
+		if len(args) > 0 {
+			regionSpec = args[0]
+		}
+		if len(args) > 1 {
+			hostSpec = args[1]
+		}
+
+		hosts := m.SelectHosts(regionSpec, hostSpec)
+		var hostDumps []*model.HostDump
+		for _, host := range hosts {
+			hostDumps = append(hostDumps, model.DumpHost(host))
+		}
+		if data, err := json.MarshalIndent(hostDumps, "", "  "); err == nil {
+			fmt.Println()
+			fmt.Println(string(data))
+		} else {
+			logrus.Fatalf("error marshaling hosts dump (%v)", err)
+		}
 	}
 }
