@@ -1,11 +1,11 @@
 package subcmd
 
 import (
+	"fmt"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 	"strings"
 )
 
@@ -64,7 +64,6 @@ func listHosts(cmd *cobra.Command, args []string) {
 
 		t := table.NewWriter()
 		t.SetStyle(table.StyleLight)
-		t.SetOutputMirror(os.Stdout)
 		t.AppendHeader(table.Row{"#", "Public IP", "Private IP", "Components", "Region", "Tags"})
 
 		count := 0
@@ -82,6 +81,8 @@ func listHosts(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		t.Render()
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
+			panic(err)
+		}
 	}
 }

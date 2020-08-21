@@ -58,8 +58,8 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 	ctrl := m.MustSelectHost("@ctrl", "@ctrl")
 	workflow.AddAction(edge.Login(ctrl))
 
-	workflow.AddAction(edge.CtrlAddRouters("*", "*", "@edge-router"))
-	workflow.AddAction(edge.EdgeRouterEnroll("*", "*", "@edge-router"))
+	workflow.AddAction(component.Stop("*", "*", "@edge-router"))
+	workflow.AddAction(edge.InitEdgeRouters("*", "*", "@edge-router"))
 	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
 
 	return workflow

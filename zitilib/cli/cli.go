@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_actions
+package cli
 
 import (
 	"bytes"
@@ -27,23 +27,12 @@ import (
 	"strings"
 )
 
-func Edge(args ...string) model.ActionWithOutput {
-	return &edge{
-		args: args,
-	}
-}
-
-func (a *edge) Execute(m *model.Model) error {
-	_, err := a.ExecuteWithOutput(m)
-	return err
-}
-
-func (a *edge) ExecuteWithOutput(m *model.Model) (string, error) {
+func Exec(m *model.Model, args ...string) (string, error) {
 	if !m.IsBound() {
 		return "", errors.New("model not bound")
 	}
 
-	allArgs := append(a.args)
+	allArgs := append(args)
 	cli := exec.Command(zitilib_bootstrap.ZitiCli(), allArgs...)
 	logrus.Infof("executing: %s", zitilib_bootstrap.ZitiCli())
 	var cliOut bytes.Buffer
@@ -58,8 +47,4 @@ func (a *edge) ExecuteWithOutput(m *model.Model) (string, error) {
 		return "", err
 	}
 	return cliOut.String(), nil
-}
-
-type edge struct {
-	args []string
 }

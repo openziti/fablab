@@ -3,7 +3,7 @@ package edge
 import (
 	"errors"
 	"github.com/openziti/fablab/kernel/model"
-	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/cli"
 	"path/filepath"
 )
 
@@ -14,7 +14,6 @@ func Login(ctrl *model.Host) model.Action {
 }
 
 func (l *login) Execute(m *model.Model) error {
-
 	username := m.MustVariable("credentials", "edge", "username").(string)
 	password := m.MustVariable("credentials", "edge", "password").(string)
 	edgeApiBaseUrl := l.ctrl.PublicIp + ":1280"
@@ -29,7 +28,8 @@ func (l *login) Execute(m *model.Model) error {
 		return errors.New("variable credentials/edge/password must be a string")
 	}
 
-	return zitilib_actions.Edge("edge", "controller", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password).Execute(m)
+	_, err := cli.Exec(m, "edge", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password)
+	return err
 }
 
 type login struct {
