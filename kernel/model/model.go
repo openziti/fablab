@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"strings"
 )
@@ -47,26 +48,70 @@ type Model struct {
 	activationStages     []ActivationStage
 	operationStages      []OperatingStage
 	disposalStages       []DisposalStage
+
+	initialized concurrenz.AtomicBoolean
+}
+
+func (m *Model) init() {
+	if m.initialized.CompareAndSwap(false, true) {
+		for id, region := range m.Regions {
+			region.init(id, m)
+		}
+	}
+}
+
+type Entity interface {
+	GetId() string
+	GetScope() *Scope
+	GetParentEntity() Entity
 }
 
 type Regions map[string]*Region
 
 type Region struct {
 	Scope
-	Id    string
-	Az    string
-	Hosts Hosts
+	model  *Model
+	id     string
+	Region string
+	Site   string
+	Hosts  Hosts
 }
 
-func (region *Region) SelectHosts(hostSpec string) []*Host {
-	var hosts []*Host
+func (region *Region) init(id string, model *Model) {
+	region.id = id
+	region.model = model
+	region.Scope.setParent(&model.Scope)
+
+	for hostId, host := range region.Hosts {
+		host.init(hostId, region)
+	}
+}
+
+func (region *Region) GetId() string {
+	return region.id
+}
+
+func (region *Region) GetScope() *Scope {
+	return &region.Scope
+}
+
+func (region *Region) GetModel() *Model {
+	return region.model
+}
+
+func (region *Region) GetParentEntity() Entity {
+	return nil
+}
+
+func (region *Region) SelectHosts(hostSpec string) map[string]*Host {
+	hosts := map[string]*Host{}
 	for id, host := range region.Hosts {
 		if hostSpec == "*" || hostSpec == id {
-			hosts = append(hosts, host)
+			hosts[id] = host
 		} else if strings.HasPrefix(hostSpec, "@") {
 			for _, tag := range host.Tags {
 				if tag == hostSpec[1:] {
-					hosts = append(hosts, host)
+					hosts[id] = host
 				}
 			}
 		}
@@ -76,6 +121,8 @@ func (region *Region) SelectHosts(hostSpec string) []*Host {
 
 type Host struct {
 	Scope
+	id                   string
+	region               *Region
 	PublicIp             string
 	PrivateIp            string
 	InstanceType         string
@@ -85,10 +132,38 @@ type Host struct {
 	Components           Components
 }
 
+func (host *Host) init(id string, region *Region) {
+	host.id = id
+	host.region = region
+	host.Scope.setParent(&region.Scope)
+
+	for componentId, component := range host.Components {
+		component.init(componentId, host)
+	}
+}
+
+func (host *Host) GetId() string {
+	return host.id
+}
+
+func (host *Host) GetScope() *Scope {
+	return &host.Scope
+}
+
+func (host *Host) GetRegion() *Region {
+	return host.region
+}
+
+func (host *Host) GetParentEntity() Entity {
+	return host.region
+}
+
 type Hosts map[string]*Host
 
 type Component struct {
 	Scope
+	id              string
+	host            *Host
 	ScriptSrc       string
 	ScriptName      string
 	ConfigSrc       string
@@ -96,6 +171,36 @@ type Component struct {
 	BinaryName      string
 	PublicIdentity  string
 	PrivateIdentity string
+}
+
+func (component *Component) init(id string, host *Host) {
+	component.id = id
+	component.Scope.setParent(&host.Scope)
+	component.host = host
+}
+
+func (component *Component) GetId() string {
+	return component.id
+}
+
+func (component *Component) GetScope() *Scope {
+	return &component.Scope
+}
+
+func (component *Component) GetHost() *Host {
+	return component.host
+}
+
+func (component *Component) GetRegion() *Region {
+	return component.host.region
+}
+
+func (component *Component) GetModel() *Model {
+	return component.host.region.model
+}
+
+func (component *Component) GetParentEntity() Entity {
+	return component.host
 }
 
 type Components map[string]*Component

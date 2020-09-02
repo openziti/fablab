@@ -24,6 +24,7 @@ import (
 	_ "github.com/openziti/fablab/zitilib"
 	_ "github.com/openziti/fablab/zitilib/models/characterization"
 	_ "github.com/openziti/fablab/zitilib/models/development/dilithium"
+	_ "github.com/openziti/fablab/zitilib/models/edge"
 	_ "github.com/openziti/fablab/zitilib/models/examples"
 	_ "github.com/openziti/fablab/zitilib/models/mattermozt"
 	_ "github.com/openziti/fablab/zitilib/models/transwarp"

@@ -1,5 +1,5 @@
 default:
-  endpoint:   tls:{{ publicIp "@ctrl" "@ctrl" }}:10000
+  endpoint:   tls:{{ publicIp "ctrl" }}:10000
   cert:       {{ .RunPath }}/pki/intermediate/certs/dotziti-client.cert
   key:        {{ .RunPath }}/pki/intermediate/keys/dotziti.key
   caCert:     {{ .RunPath }}/pki/intermediate/certs/dotziti-server.chain.pem

@@ -23,7 +23,7 @@ func newHostsFactory() model.Factory {
 }
 
 func (_ *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.SelectHosts("*", "*") {
+	for _, host := range m.SelectHosts("*") {
 		if host.InstanceType == "" {
 			host.InstanceType = "t2.micro"
 		}
@@ -32,7 +32,7 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 	v, found := m.Variables.Get("instance_type")
 	if found {
 		instanceType := v.(string)
-		for _, host := range m.SelectHosts("*", "*") {
+		for _, host := range m.SelectHosts("*") {
 			host.InstanceType = instanceType
 		}
 	}
@@ -40,7 +40,7 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 	v, found = m.Variables.Get("instance_resource_type")
 	if found {
 		instanceResourceType := v.(string)
-		for _, host := range m.SelectHosts("*", "*") {
+		for _, host := range m.SelectHosts("*") {
 			host.InstanceResourceType = instanceResourceType
 		}
 	}
@@ -48,7 +48,7 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 	v, found = m.Variables.Get("spot_price")
 	if found {
 		spotPrice := v.(string)
-		for _, host := range m.SelectHosts("*", "*") {
+		for _, host := range m.SelectHosts("*") {
 			host.SpotPrice = spotPrice
 		}
 	}
@@ -56,7 +56,7 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 	v, found = m.Variables.Get("spot_type")
 	if found {
 		spotType := v.(string)
-		for _, host := range m.SelectHosts("*", "*") {
+		for _, host := range m.SelectHosts("*") {
 			host.SpotType = spotType
 		}
 	}

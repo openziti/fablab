@@ -31,7 +31,7 @@ func newStopAction() model.ActionBinder {
 
 func (_ *stopAction) bind(_ *model.Model) model.Action {
 	return actions.Workflow(
-		component.Stop("*", "*", "@router"),
-		component.Stop("*", "*", "@ctrl"),
+		component.Stop("@router"),
+		component.Stop("@ctrl"),
 	)
 }

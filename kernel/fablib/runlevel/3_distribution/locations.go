@@ -23,16 +23,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Locations(regionSpec, hostSpec string, paths ...string) model.DistributionStage {
+func Locations(hostSpec string, paths ...string) model.DistributionStage {
 	return &locations{
-		regionSpec: regionSpec,
-		hostSpec:   hostSpec,
-		paths:      paths,
+		hostSpec: hostSpec,
+		paths:    paths,
 	}
 }
 
 func (self *locations) Distribute(m *model.Model) error {
-	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.hostSpec)
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 		for _, path := range self.paths {

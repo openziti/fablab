@@ -31,7 +31,7 @@ func TcpdumpCloser(region, host string) model.OperatingStage {
 }
 
 func (t *tcpdumpCloser) Operate(m *model.Model, _ string) error {
-	hosts := m.SelectHosts(t.region, t.host)
+	hosts := m.SelectHosts(fmt.Sprintf("%v > %v", t.region, t.host))
 	var ssh fablib.SshConfigFactory
 	if len(hosts) == 1 {
 		ssh = fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)

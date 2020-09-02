@@ -25,7 +25,7 @@ import (
 )
 
 func init() {
-	execCmd.Flags().StringArrayVarP(&execCmdBindings, "variable", "b", []string{}, "specify variable binding ('<regionSpec>.<hostSpec>.a.b.c=value')")
+	execCmd.Flags().StringArrayVarP(&execCmdBindings, "variable", "b", []string{}, "specify variable binding ('<hostSpec>.a.b.c=value')")
 	RootCmd.AddCommand(execCmd)
 }
 
@@ -81,10 +81,10 @@ func execCmdBind(m *model.Model, binding string) error {
 		return errors.New("variable path and value must be separated by '='")
 	}
 	path := strings.Split(halves[0], ".")
-	if len(path) < 3 {
-		return errors.New("path must be of form <region>.<host>.v1...=")
+	if len(path) < 2 {
+		return errors.New("path must be of form <hostSpec>.v1...=")
 	}
-	host, err := m.SelectHost(path[0], path[1])
+	host, err := m.SelectHost(path[0])
 	if err != nil {
 		return errors.Wrap(err, "missing host")
 	}

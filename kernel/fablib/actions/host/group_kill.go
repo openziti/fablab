@@ -22,16 +22,15 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func GroupKill(regionSpec, hostSpec, match string) model.Action {
+func GroupKill(hostSpec, match string) model.Action {
 	return &groupKill{
-		regionSpec: regionSpec,
-		hostSpec:   hostSpec,
-		match:      match,
+		hostSpec: hostSpec,
+		match:    match,
 	}
 }
 
 func (groupKill *groupKill) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(groupKill.regionSpec, groupKill.hostSpec)
+	hosts := m.SelectHosts(groupKill.hostSpec)
 	for _, h := range hosts {
 
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
@@ -43,7 +42,6 @@ func (groupKill *groupKill) Execute(m *model.Model) error {
 }
 
 type groupKill struct {
-	regionSpec string
-	hostSpec   string
-	match      string
+	hostSpec string
+	match    string
 }

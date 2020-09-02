@@ -38,8 +38,8 @@ func (self *regionFactory) Build(m *model.Model) error {
 	if !found {
 		return fmt.Errorf("missing 'mattermozt/az' variable")
 	}
-	r.Id = region.(string)
-	r.Az = az.(string)
+	r.Region = region.(string)
+	r.Site = az.(string)
 	return nil
 }
 

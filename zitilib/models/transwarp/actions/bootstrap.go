@@ -42,15 +42,15 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Restart controller with new database.
 	 */
-	workflow.AddAction(component.Stop("*", "*", "ctrl"))
-	workflow.AddAction(host.Exec(m.MustSelectHost("*", "@ctrl"), "rm -f ~/ctrl.db"))
-	workflow.AddAction(component.Start("*", "*", "ctrl"))
+	workflow.AddAction(component.Stop("ctrl"))
+	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl"), "rm -f ~/ctrl.db"))
+	workflow.AddAction(component.Start("ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
 	/*
 	 * Create routers.
 	 */
-	for _, router := range m.SelectComponents("*", "*", "@router") {
+	for _, router := range m.SelectComponents("@router") {
 		certPath := filepath.Join(model.PkiBuild(), fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity))
 		workflow.AddAction(actions2.Fabric("create", "router", certPath))
 	}
@@ -58,8 +58,9 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Create services and terminators.
 	 */
-	iperfServer := m.MustSelectHost("*", "@iperf_server")
-	terminatingRouters := m.SelectComponents("remote", "remote", "remote")
+	iperfServer := m.MustSelectHost(".iperf_server")
+	terminatingRouters := m.SelectComponents(".remote")
+
 	if len(terminatingRouters) != 1 {
 		logrus.Fatalf("expect 1 terminating router, got [%d]", len(terminatingRouters))
 	}
@@ -74,7 +75,7 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Stop controller.
 	 */
-	workflow.AddAction(component.Stop("*", "*", "@ctrl"))
+	workflow.AddAction(component.Stop("@ctrl"))
 
 	return workflow
 }

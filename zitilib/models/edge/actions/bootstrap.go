@@ -1,0 +1,77 @@
+/*
+	Copyright 2020 NetFoundry, Inc.
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	https://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+package actions
+
+import (
+	"fmt"
+	"github.com/openziti/fablab/kernel/fablib/actions"
+	"github.com/openziti/fablab/kernel/fablib/actions/component"
+	"github.com/openziti/fablab/kernel/fablib/actions/host"
+	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
+	"github.com/openziti/fablab/kernel/model"
+	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/actions/edge"
+	"path/filepath"
+	"time"
+)
+
+func NewBootstrapAction() model.ActionBinder {
+	action := &bootstrapAction{}
+	return action.bind
+}
+
+func (a *bootstrapAction) bind(m *model.Model) model.Action {
+	sshUsername := m.MustVariable("credentials", "ssh", "username").(string)
+
+	workflow := actions.Workflow()
+
+	workflow.AddAction(component.Stop("@ctrl"))
+	workflow.AddAction(edge.InitController("@ctrl"))
+	workflow.AddAction(component.Start("@ctrl"))
+	workflow.AddAction(semaphore.Sleep(2 * time.Second))
+
+	for _, router := range m.SelectComponents("@router") {
+		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
+		workflow.AddAction(zitilib_actions.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
+	}
+
+	for _, h := range m.SelectHosts("*") {
+		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
+		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
+		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
+	}
+
+	ctrl := m.MustSelectHost("@ctrl")
+	workflow.AddAction(edge.Login(ctrl))
+
+	workflow.AddAction(component.Stop("@edge-router"))
+	workflow.AddAction(edge.InitEdgeRouters("@edge-router"))
+	workflow.AddAction(edge.InitIdentities("@sdk-app"))
+
+	workflow.AddAction(zitilib_actions.Edge("create", "service", "perf-test"))
+	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-bind", "Bind", "--service-roles", "@perf-test", "--identity-roles", "#perf-test-servers"))
+	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-dia", "Dial", "--service-roles", "@perf-test", "--identity-roles", "#perf-test-clients"))
+	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "client-routers", "--edge-router-roles", "#initiator", "--identity-roles", "#perf-test-client"))
+	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "server-routers", "--edge-router-roles", "#terminator", "--identity-roles", "#perf-test-server"))
+	workflow.AddAction(zitilib_actions.Edge("create", "service-edge-router-policy", "blanket", "--edge-router-roles", "#all", "--service-roles", "#all"))
+
+	workflow.AddAction(component.Stop("@ctrl"))
+
+	return workflow
+}
+
+type bootstrapAction struct{}

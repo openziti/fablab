@@ -22,24 +22,18 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func Stop(regionSpec, hostSpec, componentSpec string) model.Action {
+func Stop(componentSpec string) model.Action {
 	return &stop{
-		regionSpec:    regionSpec,
-		hostSpec:      hostSpec,
 		componentSpec: componentSpec,
 	}
 }
 
 func (stop *stop) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(stop.regionSpec, stop.hostSpec)
-	for _, h := range hosts {
-		components := h.SelectComponents(stop.componentSpec)
-		for _, c := range components {
-			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
+	for _, c := range m.SelectComponents(stop.componentSpec) {
+		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
-			if err := fablib.KillService(sshConfigFactory, c.BinaryName); err != nil {
-				return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
-			}
+		if err := fablib.KillService(sshConfigFactory, c.BinaryName); err != nil {
+			return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
 	}
 
@@ -47,7 +41,5 @@ func (stop *stop) Execute(m *model.Model) error {
 }
 
 type stop struct {
-	regionSpec    string
-	hostSpec      string
 	componentSpec string
 }

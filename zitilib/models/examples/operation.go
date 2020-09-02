@@ -72,7 +72,7 @@ func (self *operationFactory) Build(m *model.Model) error {
 }
 
 func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
-	hosts := m.SelectHosts("@terminator", "@loop-listener")
+	hosts := m.SelectHosts("@terminator > @loop-listener")
 	if len(hosts) < 1 {
 		return nil, fmt.Errorf("no '@terminator/@loop-listener' hosts in model")
 	}
@@ -88,7 +88,7 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 }
 
 func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
-	initiators := m.SelectHosts("@initiator", "@initiator")
+	initiators := m.SelectHosts("@initiator > @initiator")
 	if len(initiators) != 1 {
 		return nil, nil, fmt.Errorf("expected 1 '@initiator/@initiator' host in model")
 	}

@@ -99,8 +99,8 @@ func dumpRegions(rs map[string]*Region) map[string]*RegionDump {
 func dumpRegion(r *Region) *RegionDump {
 	return &RegionDump{
 		Scope: dumpScope(r.Scope),
-		Id:    r.Id,
-		Az:    r.Az,
+		Id:    r.Region,
+		Az:    r.Site,
 		Hosts: dumpHosts(r.Hosts),
 	}
 }

@@ -29,16 +29,16 @@ var dilithiumModel = &model.Model{
 			Hosts: model.Hosts{
 				"host": {},
 			},
-			Id: "us-east-1",
-			Az: "us-east-1a",
+			Region: "us-east-1",
+			Site:   "us-east-1a",
 		},
 		"remote": {
 			Scope: model.Scope{Tags: model.Tags{"california"}},
 			Hosts: model.Hosts{
 				"host": {},
 			},
-			Id: "us-west-1",
-			Az: "us-west-1c",
+			Region: "us-west-1",
+			Site:   "us-west-1c",
 		},
 	},
 

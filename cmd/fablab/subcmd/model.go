@@ -28,7 +28,7 @@ var modelListCmd = &cobra.Command{
 }
 
 var listHostsCmd = &cobra.Command{
-	Use:   "hosts <regionSpec?> <hostSpec?>",
+	Use:   "hosts <spec?>",
 	Short: "list hosts",
 	Args:  cobra.MaximumNArgs(2),
 	Run:   listHosts,
@@ -52,33 +52,26 @@ func listHosts(cmd *cobra.Command, args []string) {
 			logrus.Fatalf("model not bound")
 		}
 
-		regionSpec := "*"
 		hostSpec := "*"
 
 		if len(args) > 0 {
-			regionSpec = args[0]
-		}
-		if len(args) > 1 {
-			hostSpec = args[1]
+			hostSpec = args[0]
 		}
 
 		t := table.NewWriter()
 		t.SetStyle(table.StyleLight)
-		t.AppendHeader(table.Row{"#", "Public IP", "Private IP", "Components", "Region", "Tags"})
+		t.AppendHeader(table.Row{"#", "ID", "Public IP", "Private IP", "Components", "Region", "Tags"})
 
 		count := 0
-		for _, region := range m.SelectRegions(regionSpec) {
-			hosts := m.SelectHosts(regionSpec, hostSpec)
-			for _, host := range hosts {
-				var components []string
-				for component := range host.Components {
-					components = append(components, component)
-				}
-				t.AppendRow(table.Row{count + 1, host.PublicIp, host.PrivateIp,
-					strings.Join(components, ","), region.Id,
-					strings.Join(host.Tags, ",")})
-				count++
+		for _, host := range m.SelectHosts(hostSpec) {
+			var components []string
+			for component := range host.Components {
+				components = append(components, component)
 			}
+			t.AppendRow(table.Row{count + 1, host.GetId(), host.PublicIp, host.PrivateIp,
+				strings.Join(components, ","), host.GetRegion().Region,
+				strings.Join(host.Tags, ",")})
+			count++
 		}
 
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {

@@ -47,8 +47,8 @@ var smartrouting = &model.Model{
 			Scope: model.Scope{
 				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "iperf_server"},
 			},
-			Id: "us-east-1",
-			Az: "us-east-1a",
+			Region: "us-east-1",
+			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
@@ -91,9 +91,9 @@ var smartrouting = &model.Model{
 			},
 		},
 		"transitA": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "us-west-1",
-			Az:    "us-west-1b",
+			Scope:  model.Scope{Tags: model.Tags{"router"}},
+			Region: "us-west-1",
+			Site:   "us-west-1b",
 			Hosts: model.Hosts{
 				"002": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -110,9 +110,9 @@ var smartrouting = &model.Model{
 			},
 		},
 		"transitB": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "us-east-2",
-			Az:    "us-east-2c",
+			Scope:  model.Scope{Tags: model.Tags{"router"}},
+			Region: "us-east-2",
+			Site:   "us-east-2c",
 			Hosts: model.Hosts{
 				"004": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -129,9 +129,9 @@ var smartrouting = &model.Model{
 			},
 		},
 		"terminator": {
-			Scope: model.Scope{Tags: model.Tags{"router", "loop", "terminator"}},
-			Id:    "us-west-2",
-			Az:    "us-west-2b",
+			Scope:  model.Scope{Tags: model.Tags{"router", "loop", "terminator"}},
+			Region: "us-west-2",
+			Site:   "us-west-2b",
 			Hosts: model.Hosts{
 				"003": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},

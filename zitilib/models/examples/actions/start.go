@@ -31,9 +31,9 @@ func NewStartAction() model.ActionBinder {
 
 func (self *startAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
-	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Start("@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
-	workflow.AddAction(component.Start("@router", "@router", "@router"))
+	workflow.AddAction(component.Start("@router"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 	return workflow
 }

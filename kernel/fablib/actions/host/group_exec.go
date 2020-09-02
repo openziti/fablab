@@ -23,16 +23,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func GroupExec(regionSpec, hostSpec, cmd string) model.Action {
+func GroupExec(hostSpec, cmd string) model.Action {
 	return &groupExec{
-		regionSpec: regionSpec,
-		hostSpec:   hostSpec,
-		cmd:        cmd,
+		hostSpec: hostSpec,
+		cmd:      cmd,
 	}
 }
 
 func (groupExec *groupExec) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(groupExec.regionSpec, groupExec.hostSpec)
+	hosts := m.SelectHosts(groupExec.hostSpec)
 	for _, h := range hosts {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 

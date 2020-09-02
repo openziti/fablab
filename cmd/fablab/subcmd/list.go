@@ -26,7 +26,6 @@ import (
 func init() {
 	listCmd.AddCommand(listInstancesCmd)
 	listCmd.AddCommand(listModelsCmd)
-	listCmd.AddCommand(listHostsCmd)
 	RootCmd.AddCommand(listCmd)
 }
 

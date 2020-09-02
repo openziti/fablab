@@ -29,9 +29,9 @@ func init() {
 }
 
 var ipCmd = &cobra.Command{
-	Use:   "ip <regionSpec> <hostSpec>",
+	Use:   "ip <hostSpec>",
 	Short: "retrieve an ip address from the model",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(1),
 	Run:   ip,
 }
 var privateIp bool
@@ -55,7 +55,7 @@ func ip(_ *cobra.Command, args []string) {
 		logrus.Fatalf("model not bound")
 	}
 
-	hosts := m.SelectHosts(args[0], args[1])
+	hosts := m.SelectHosts(args[0])
 	for _, host := range hosts {
 		if !privateIp {
 			fmt.Println(host.PublicIp)

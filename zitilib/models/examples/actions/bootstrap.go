@@ -38,17 +38,17 @@ func NewBootstrapAction() model.ActionBinder {
 func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	workflow := actions.Workflow()
 
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl", "@ctrl"), "rm -f ~/ctrl.db"))
-	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("@ctrl"))
+	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl"), "rm -f ~/ctrl.db"))
+	workflow.AddAction(component.Start("@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.SelectComponents("*", "*", "@router") {
+	for _, router := range m.SelectComponents("@router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	components := m.SelectComponents("*", "*", "@terminator")
+	components := m.SelectComponents("@terminator")
 	serviceActions, err := self.createServiceActions(m, components[0].PublicIdentity)
 	if err != nil {
 		logrus.Fatalf("error creating service actions (%v)", err)
@@ -58,13 +58,13 @@ func (self *bootstrapAction) bind(m *model.Model) model.Action {
 	}
 
 	sshUsername := m.Variables.Must("credentials", "ssh", "username").(string)
-	for _, h := range m.SelectHosts("*", "*") {
+	for _, h := range m.SelectHosts("*") {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
 	}
 
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("@ctrl"))
 
 	return workflow
 }

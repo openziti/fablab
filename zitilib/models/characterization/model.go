@@ -71,9 +71,9 @@ var Ziti = &model.Model{
 
 	Regions: model.Regions{
 		"local": {
-			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "iperf_server"}},
-			Id:    "us-east-1",
-			Az:    "us-east-1a",
+			Scope:  model.Scope{Tags: model.Tags{"ctrl", "router", "iperf_server"}},
+			Region: "us-east-1",
+			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
 					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
@@ -105,9 +105,9 @@ var Ziti = &model.Model{
 			},
 		},
 		"short": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "us-west-1",
-			Az:    "us-west-1c",
+			Scope:  model.Scope{Tags: model.Tags{"router"}},
+			Region: "us-west-1",
+			Site:   "us-west-1c",
 			Hosts: model.Hosts{
 				"short": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -127,9 +127,9 @@ var Ziti = &model.Model{
 			},
 		},
 		"medium": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "ap-south-1",
-			Az:    "ap-south-1a",
+			Scope:  model.Scope{Tags: model.Tags{"router"}},
+			Region: "ap-south-1",
+			Site:   "ap-south-1a",
 			Hosts: model.Hosts{
 				"medium": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},
@@ -149,9 +149,9 @@ var Ziti = &model.Model{
 			},
 		},
 		"long": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "ap-southeast-2",
-			Az:    "ap-southeast-2c",
+			Scope:  model.Scope{Tags: model.Tags{"router"}},
+			Region: "ap-southeast-2",
+			Site:   "ap-southeast-2c",
 			Hosts: model.Hosts{
 				"long": {
 					Scope: model.Scope{Tags: model.Tags{"router"}},

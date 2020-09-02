@@ -30,10 +30,10 @@ func NewStopAction() model.ActionBinder {
 
 func (_ *stopAction) bind(m *model.Model) model.Action {
 	return actions.Workflow(
-		host.GroupKill("@loop", "@loop-dialer", "ziti-fabric-test"),
-		host.GroupKill("@loop", "@loop-listener", "ziti-fabric-test"),
-		component.Stop("@router", "@router", "@router"),
-		component.Stop("@ctrl", "@ctrl", "@ctrl"),
+		host.GroupKill("@loop > @loop-dialer", "ziti-fabric-test"),
+		host.GroupKill("@loop > @loop-listener", "ziti-fabric-test"),
+		component.Stop("@router"),
+		component.Stop("@ctrl"),
 	)
 }
 

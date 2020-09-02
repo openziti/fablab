@@ -29,8 +29,8 @@ func newOperationFactory() model.Factory {
 }
 
 func (_ *operationFactory) Build(m *model.Model) error {
-	directEndpoint := m.MustSelectHost("local", "local").PublicIp
-	remoteProxy := m.MustSelectHost("remote", "remote").PrivateIp
+	directEndpoint := m.MustSelectHost("local > local").PublicIp
+	remoteProxy := m.MustSelectHost("remote > remote").PrivateIp
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
@@ -41,7 +41,7 @@ func (_ *operationFactory) Build(m *model.Model) error {
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
 		func(_ *model.Model) model.OperatingStage { return operation.Banner("internet") },
-		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, "local", "local", "remote", "remote", 30)},
+		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, "local", "local", "remote", "remote", 30) },
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
 		func(_ *model.Model) model.OperatingStage { return operation.Closer(c) },

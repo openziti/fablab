@@ -44,8 +44,8 @@ var tinyspot = &model.Model{
 			Scope: model.Scope{
 				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "terminator", "iperf_server"},
 			},
-			Id: "us-east-1",
-			Az: "us-east-1c",
+			Region: "us-east-1",
+			Site:   "us-east-1c",
 			Hosts: model.Hosts{
 				"001": {
 					InstanceResourceType: "spot",

@@ -65,7 +65,7 @@ func dump(_ *cobra.Command, _ []string) {
 }
 
 var dumpHostsCmd = &cobra.Command{
-	Use:   "hosts <region-spec>? <host-spec>?",
+	Use:   "hosts <host-spec>?",
 	Short: "dump the resolved hosts structure",
 	Args:  cobra.MaximumNArgs(2),
 	Run:   dumpHosts,
@@ -85,17 +85,13 @@ func dumpHosts(_ *cobra.Command, args []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		regionSpec := "*"
 		hostSpec := "*"
 
 		if len(args) > 0 {
-			regionSpec = args[0]
-		}
-		if len(args) > 1 {
-			hostSpec = args[1]
+			hostSpec = args[0]
 		}
 
-		hosts := m.SelectHosts(regionSpec, hostSpec)
+		hosts := m.SelectHosts(hostSpec)
 		var hostDumps []*model.HostDump
 		for _, host := range hosts {
 			hostDumps = append(hostDumps, model.DumpHost(host))

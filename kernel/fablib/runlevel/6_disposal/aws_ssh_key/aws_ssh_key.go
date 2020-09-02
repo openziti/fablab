@@ -35,10 +35,10 @@ func (stage awsKeyManager) Dispose(m *model.Model) error {
 	awsCreds := credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")
 
 	for _, region := range m.Regions {
-		logrus.Infof("removing key '%v' from region %v", keyName, region.Id)
+		logrus.Infof("removing key '%v' from region %v", keyName, region.Region)
 		awsConfig := &aws.Config{
 			Credentials: awsCreds,
-			Region:      &region.Id,
+			Region:      &region.Region,
 		}
 		awsSession, err := session.NewSession(awsConfig)
 		if err != nil {

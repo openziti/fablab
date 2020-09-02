@@ -32,9 +32,9 @@ func newStartAction() model.ActionBinder {
 }
 func (_ *startAction) bind(_ *model.Model) model.Action {
 	return actions.Workflow(
-		component.Start("*", "*", "@ctrl"),
-		semaphore.Sleep(1 * time.Second),
-		component.Start("*", "*", "@router"),
-		semaphore.Sleep(1 * time.Second),
+		component.Start("@ctrl"),
+		semaphore.Sleep(1*time.Second),
+		component.Start("@router"),
+		semaphore.Sleep(1*time.Second),
 	)
 }

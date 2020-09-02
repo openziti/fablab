@@ -39,28 +39,28 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 
 	workflow := actions.Workflow()
 
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(edge.EdgeInit("@ctrl", "@ctrl", "@ctrl"))
-	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("@ctrl"))
+	workflow.AddAction(edge.InitController("@ctrl"))
+	workflow.AddAction(component.Start("@ctrl"))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.SelectComponents("*", "*", "@router") {
+	for _, router := range m.SelectComponents("@router") {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(zitilib_actions.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	for _, h := range m.SelectHosts("*", "*") {
+	for _, h := range m.SelectHosts("*") {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
 	}
 
-	ctrl := m.MustSelectHost("@ctrl", "@ctrl")
+	ctrl := m.MustSelectHost("@ctrl")
 	workflow.AddAction(edge.Login(ctrl))
 
-	workflow.AddAction(component.Stop("*", "*", "@edge-router"))
-	workflow.AddAction(edge.InitEdgeRouters("*", "*", "@edge-router"))
-	workflow.AddAction(component.Stop("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Stop("@edge-router"))
+	workflow.AddAction(edge.InitEdgeRouters("@edge-router"))
+	workflow.AddAction(component.Stop("@ctrl"))
 
 	return workflow
 }

@@ -80,7 +80,7 @@ func (stage awsKeyManager) Express(m *model.Model, _ *model.Label) error {
 	for _, region := range m.Regions {
 		awsConfig := &aws.Config{
 			Credentials: awsCreds,
-			Region:      &region.Id,
+			Region:      &region.Region,
 		}
 		awsSession, err := session.NewSession(awsConfig)
 		if err != nil {
@@ -93,12 +93,12 @@ func (stage awsKeyManager) Express(m *model.Model, _ *model.Label) error {
 		})
 
 		if err == nil {
-			logrus.Infof("key pair %v already exists in region %v. skipping create/import", keyName, region.Id)
+			logrus.Infof("key pair %v already exists in region %v. skipping create/import", keyName, region.Region)
 			continue
 		}
 
 		if publicKey == nil {
-			logrus.Infof("creating key '%v' in region %v", keyName, region.Id)
+			logrus.Infof("creating key '%v' in region %v", keyName, region.Region)
 			keyPairInput := &ec2.CreateKeyPairInput{KeyName: &keyName}
 			output, err := ec2Client.CreateKeyPair(keyPairInput)
 			if err != nil {
@@ -115,7 +115,7 @@ func (stage awsKeyManager) Express(m *model.Model, _ *model.Label) error {
 				return err
 			}
 		} else {
-			logrus.Infof("importing key '%v' in region %v", keyName, region.Id)
+			logrus.Infof("importing key '%v' in region %v", keyName, region.Region)
 			keyPairInput := &ec2.ImportKeyPairInput{
 				KeyName:           &keyName,
 				PublicKeyMaterial: publicKey,
