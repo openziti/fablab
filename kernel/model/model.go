@@ -23,7 +23,14 @@ import (
 	"strings"
 )
 
+type Entity interface {
+	GetId() string
+	GetScope() *Scope
+	GetParentEntity() Entity
+}
+
 type Model struct {
+	name   string
 	Parent *Model
 
 	Scope
@@ -52,18 +59,25 @@ type Model struct {
 	initialized concurrenz.AtomicBoolean
 }
 
-func (m *Model) init() {
+func (m *Model) GetId() string {
+	return m.name
+}
+
+func (m *Model) GetScope() *Scope {
+	return &m.Scope
+}
+
+func (m *Model) GetParentEntity() Entity {
+	return m.Parent
+}
+
+func (m *Model) init(name string) {
+	m.name = name
 	if m.initialized.CompareAndSwap(false, true) {
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
 	}
-}
-
-type Entity interface {
-	GetId() string
-	GetScope() *Scope
-	GetParentEntity() Entity
 }
 
 type Regions map[string]*Region
@@ -100,7 +114,7 @@ func (region *Region) GetModel() *Model {
 }
 
 func (region *Region) GetParentEntity() Entity {
-	return nil
+	return region.model
 }
 
 func (region *Region) SelectHosts(hostSpec string) map[string]*Host {
