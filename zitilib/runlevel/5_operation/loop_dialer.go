@@ -23,10 +23,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func LoopDialer(host *model.Host, id, scenario, endpoint string, joiner chan struct{}) model.OperatingStage {
+func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{}) model.OperatingStage {
 	return &loopDialer{
 		host:     host,
-		id:       id,
 		scenario: scenario,
 		endpoint: endpoint,
 		joiner:   joiner,
@@ -53,7 +52,8 @@ func (self *loopDialer) run(m *model.Model, run string) {
 
 	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
 	logFile := fmt.Sprintf("/home/%s/logs/loop2-dialer-%s.log", ssh.User(), run)
-	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s >> %s 2>&1", ssh.User(), ssh.User(), self.scenario, self.endpoint, self.id, logFile)
+	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s >> %s 2>&1",
+		ssh.User(), ssh.User(), self.scenario, self.endpoint, self.host.GetId(), logFile)
 	if output, err := fablib.RemoteExec(ssh, dialerCmd); err != nil {
 		logrus.Errorf("error starting loop dialer [%s] (%v)", output, err)
 	}
@@ -61,7 +61,6 @@ func (self *loopDialer) run(m *model.Model, run string) {
 
 type loopDialer struct {
 	host     *model.Host
-	id       string
 	endpoint string
 	scenario string
 	joiner   chan struct{}

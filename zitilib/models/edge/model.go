@@ -81,6 +81,7 @@ var edge = &model.Model{
 
 	Regions: model.Regions{
 		"initiator": {
+			Scope:  model.Scope{Tags: model.Tags{"initiator"}},
 			Region: "us-east-1",
 			Site:   "us-east-1a",
 			Hosts: model.Hosts{
@@ -97,10 +98,10 @@ var edge = &model.Model{
 					},
 				},
 				"initiator": {
-					Scope: model.Scope{Tags: model.Tags{"initiator", "edge-router"}},
+					Scope: model.Scope{Tags: model.Tags{"edge-router"}},
 					Components: model.Components{
 						"initiator": {
-							Scope:          model.Scope{Tags: model.Tags{"edge-router", "initiator"}},
+							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "edge_router.yml",
 							ConfigName:     "edge_router_initiator.yml",
@@ -125,10 +126,10 @@ var edge = &model.Model{
 			Scope:  model.Scope{Tags: model.Tags{"terminator"}},
 			Hosts: model.Hosts{
 				"terminator": {
-					Scope: model.Scope{Tags: model.Tags{"terminator", "edge-router"}},
+					Scope: model.Scope{Tags: model.Tags{"edge-router"}},
 					Components: model.Components{
 						"terminator": {
-							Scope:          model.Scope{Tags: model.Tags{"edge-router", "terminator"}},
+							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "edge_router.yml",
 							ConfigName:     "edge_router_terminator.yml",

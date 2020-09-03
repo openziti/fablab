@@ -16,7 +16,10 @@
 
 package transwarp
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
+)
 
 type hostsFactory struct{}
 
@@ -36,20 +39,20 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 
 	if l.Has("local_region_id") {
 		regionId := l.Must("local_region_id")
-		m.MustSelectRegion("local").Region = regionId.(string)
+		m.MustSelectRegion(models.LocalId).Region = regionId.(string)
 	}
 	if l.Has("local_region_az") {
 		regionAz := l.Must("local_region_az")
-		m.MustSelectRegion("local").Site = regionAz.(string)
+		m.MustSelectRegion(models.LocalId).Site = regionAz.(string)
 	}
 
 	if l.Has("remote_region_id") {
 		regionId := l.Must("remote_region_id")
-		m.MustSelectRegion("remote").Region = regionId.(string)
+		m.MustSelectRegion(models.RemoteId).Region = regionId.(string)
 	}
 	if l.Has("remote_region_az") {
 		regionAz := l.Must("remote_region_az")
-		m.MustSelectRegion("remote").Site = regionAz.(string)
+		m.MustSelectRegion(models.RemoteId).Site = regionAz.(string)
 	}
 
 	return nil

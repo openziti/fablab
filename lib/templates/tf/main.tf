@@ -35,10 +35,10 @@ module "{{ $regionId }}_region" {
   source          = "{{ $.TerraformLib }}/vpc"
   access_key      = var.aws_access_key
   secret_key      = var.aws_secret_key
-  region          = "{{ $region.Id }}"
+  region          = "{{ $region.Region }}"
   vpc_cidr        = var.vpc_cidr
   public_cidr     = var.public_cidr
-  az              = "{{ $region.Az }}"
+  az              = "{{ $region.Site }}"
   environment_tag = var.environment_tag
 }
 {{ range $hostId, $host := $region.Hosts }}
@@ -51,7 +51,7 @@ module "{{ $regionId }}_host_{{ $hostId }}" {
   instance_type     = "{{ $host.InstanceType }}"
   key_name          = var.aws_key_name
   key_path          = var.aws_key_path
-  region            = "{{ $region.Id }}"
+  region            = "{{ $region.Region }}"
   security_group_id = module.{{ $regionId }}_region.security_group_id
   subnet_id         = module.{{ $regionId }}_region.subnet_id
   spot_price        = "{{ $host.SpotPrice }}"

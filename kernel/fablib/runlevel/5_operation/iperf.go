@@ -24,21 +24,19 @@ import (
 	"time"
 )
 
-func Iperf(scenarioName, endpoint, serverRegion, serverHost, clientRegion, clientHost string, seconds int) model.OperatingStage {
+func Iperf(scenarioName, endpoint, serverHosts, clientHosts string, seconds int) model.OperatingStage {
 	return &iperf{
 		scenarioName: scenarioName,
 		endpoint:     endpoint,
-		serverRegion: serverRegion,
-		serverHost:   serverHost,
-		clientRegion: clientRegion,
-		clientHost:   clientHost,
+		serverHosts:  serverHosts,
+		clientHosts:  clientHosts,
 		seconds:      seconds,
 	}
 }
 
 func (i *iperf) Operate(m *model.Model, _ string) error {
-	serverHosts := m.SelectHosts(fmt.Sprintf("%v > %v", i.serverRegion, i.serverHost))
-	clientHosts := m.SelectHosts(fmt.Sprintf("%v > %v", i.clientRegion, i.clientHost))
+	serverHosts := m.SelectHosts(i.serverHosts)
+	clientHosts := m.SelectHosts(i.clientHosts)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
@@ -94,9 +92,7 @@ func (i *iperf) runServer(factory fablib.SshConfigFactory) {
 type iperf struct {
 	scenarioName string
 	endpoint     string
-	serverRegion string
-	serverHost   string
-	clientRegion string
-	clientHost   string
+	serverHosts  string
+	clientHosts  string
 	seconds      int
 }

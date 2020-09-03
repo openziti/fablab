@@ -10,7 +10,7 @@ func createTestModel() *Model {
 		Scope: Scope{Tags: Tags{"global"}},
 		Regions: Regions{
 			"initiator": {
-				Scope:  Scope{Tags: Tags{"region-shared", "region-first"}},
+				Scope:  Scope{Tags: Tags{"region-shared", "region-first", "^region-not-inherited"}},
 				Region: "us-east-1",
 				Site:   "us-east-1a",
 				Hosts: Hosts{
@@ -88,7 +88,13 @@ func TestModel_SelectRegions(t *testing.T) {
 	model.init("test")
 
 	// test lookup by id
-	regions := model.SelectRegions("initiator")
+	regions := model.SelectRegions("#initiator")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+	req.Equal("us-east-1", regions[0].Region)
+
+	// ensure we strip inherit exclusion marker
+	regions = model.SelectRegions(".region-not-inherited")
 	req.Equal(1, len(regions))
 	req.Equal("initiator", regions[0].GetId())
 	req.Equal("us-east-1", regions[0].Region)
@@ -98,16 +104,20 @@ func TestModel_SelectRegions(t *testing.T) {
 	req.NotEqual(regions[0].GetId(), regions[1].GetId())
 
 	// ensure tags are inherited
-	regions = model.SelectRegions("@global")
+	regions = model.SelectRegions(".global")
 	req.Equal(2, len(regions))
 	req.NotEqual(regions[0].GetId(), regions[1].GetId())
 
-	regions = model.SelectRegions("@region-shared")
+	regions = model.SelectRegions(".region-shared")
 	req.Equal(2, len(regions))
 	req.NotEqual(regions[0].GetId(), regions[1].GetId())
 
-	regions = model.SelectRegions("@region-first")
+	regions = model.SelectRegions(".region-first")
 	req.Equal(1, len(regions))
+
+	regions = model.SelectRegions(".region-first, .region-last")
+	req.Equal(2, len(regions))
+	req.NotEqual(regions[0].GetId(), regions[1].GetId())
 }
 
 func TestModel_SelectHosts(t *testing.T) {
@@ -116,45 +126,51 @@ func TestModel_SelectHosts(t *testing.T) {
 	model.init("test")
 
 	// test lookup by id
-	hosts := model.SelectHosts("ctrl")
+	hosts := model.SelectHosts("#ctrl")
 	req.Equal(1, len(hosts))
 	req.Equal("ctrl", hosts[0].GetId())
 
-	// ensure tags are inherited
 	hosts = model.SelectHosts("*")
 	req.Equal(5, len(hosts))
 
 	// ensure tags are inherited
-	hosts = model.SelectHosts("@global")
+	hosts = model.SelectHosts(".global")
 	req.Equal(5, len(hosts))
 
-	hosts = model.SelectHosts("@region-shared")
+	hosts = model.SelectHosts(".region-shared")
 	req.Equal(5, len(hosts))
 
-	hosts = model.SelectHosts("@region-first")
+	hosts = model.SelectHosts(".region-first")
 	req.Equal(3, len(hosts))
 
-	hosts = model.SelectHosts("@global > *")
+	hosts = model.SelectHosts(".global > *")
 	req.Equal(5, len(hosts))
 
-	hosts = model.SelectHosts("initiator > *")
+	hosts = model.SelectHosts("#initiator > *")
 	req.Equal(3, len(hosts))
 
-	hosts = model.SelectHosts("@region-first > *")
+	hosts = model.SelectHosts(".region-first > *")
 	req.Equal(3, len(hosts))
 
-	hosts = model.SelectHosts("@edge-router")
+	hosts = model.SelectHosts(".edge-router")
 	req.Equal(2, len(hosts))
 
-	hosts = model.SelectHosts("initiator > @edge-router")
+	hosts = model.SelectHosts("#initiator > .edge-router")
 	req.Equal(1, len(hosts))
 	req.Equal("initiator", hosts[0].GetId())
 
-	hosts = model.SelectHosts("initiator > ctrl")
+	hosts = model.SelectHosts("#initiator > #ctrl")
 	req.Equal(1, len(hosts))
 	req.Equal("ctrl", hosts[0].GetId())
 
-	hosts = model.SelectHosts("initiator > terminator")
+	hosts = model.SelectHosts("#initiator > #terminator")
+	req.Equal(0, len(hosts))
+
+	// ensure marked tags are not inherited
+	hosts = model.SelectHosts(".region-not-inherited > *")
+	req.Equal(3, len(hosts))
+
+	hosts = model.SelectHosts(".region-not-inherited")
 	req.Equal(0, len(hosts))
 }
 
@@ -164,7 +180,7 @@ func TestModel_SelectComponents(t *testing.T) {
 	model.init("test")
 
 	// test lookup by id
-	components := model.SelectComponents("terminator")
+	components := model.SelectComponents("#terminator")
 	req.Equal(1, len(components))
 	req.Equal("terminator", components[0].GetId())
 
@@ -172,42 +188,49 @@ func TestModel_SelectComponents(t *testing.T) {
 	req.Equal(5, len(components))
 
 	// ensure tags are inherited
-	components = model.SelectComponents("@global")
+	components = model.SelectComponents(".global")
 	req.Equal(5, len(components))
 
-	components = model.SelectComponents("@global > *")
+	components = model.SelectComponents(".global > *")
 	req.Equal(5, len(components))
 
-	components = model.SelectComponents("@global > * > *")
+	components = model.SelectComponents(".global > * > *")
 	req.Equal(5, len(components))
 
-	components = model.SelectComponents("@region-shared > * > *")
+	components = model.SelectComponents(".region-shared > * > *")
 	req.Equal(5, len(components))
 
-	components = model.SelectComponents("@region-first > * > *")
+	components = model.SelectComponents(".region-first > * > *")
 	req.Equal(3, len(components))
 
-	components = model.SelectComponents("@region-first")
+	components = model.SelectComponents(".region-first")
 	req.Equal(3, len(components))
 
-	components = model.SelectComponents("* > @region-first > *")
+	components = model.SelectComponents("* > .region-first > *")
 	req.Equal(3, len(components))
 
-	components = model.SelectComponents("@region-first > *")
+	components = model.SelectComponents(".region-first > *")
 	req.Equal(3, len(components))
 
-	components = model.SelectComponents("@region-first")
+	components = model.SelectComponents(".region-first")
 	req.Equal(3, len(components))
 
-	components = model.SelectComponents("@region-first > @sdk-app")
+	components = model.SelectComponents(".region-first > .sdk-app")
 	req.Equal(1, len(components))
 	req.Equal("client1", components[0].GetId())
 
-	components = model.SelectComponents("initiator > client > @sdk-app")
+	components = model.SelectComponents("#initiator > #client > .sdk-app")
 	req.Equal(1, len(components))
 	req.Equal("client1", components[0].GetId())
 
-	components = model.SelectComponents("initiator > client > client1")
+	components = model.SelectComponents("#initiator > #client > #client1")
 	req.Equal(1, len(components))
 	req.Equal("client1", components[0].GetId())
+
+	components = model.SelectComponents(".global.region-first > * > .client.sdk-app")
+	req.Equal(1, len(components))
+	req.Equal("client1", components[0].GetId())
+
+	components = model.SelectComponents(".global.region-first, .global.region-last > .global.region-first, .global.region-last > .global.region-first, .global.region-last")
+	req.Equal(5, len(components))
 }

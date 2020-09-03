@@ -20,6 +20,7 @@ import (
 	"fmt"
 	fablib_5_operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 	zitilib_5_operation "github.com/openziti/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
@@ -72,7 +73,7 @@ func (self *operationFactory) Build(m *model.Model) error {
 }
 
 func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
-	hosts := m.SelectHosts("@server")
+	hosts := m.SelectHosts(models.ServiceTag)
 	if len(hosts) < 1 {
 		return nil, fmt.Errorf("no '@server' hosts in model")
 	}
@@ -88,32 +89,24 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 }
 
 func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
-	initiators := m.SelectHosts("@client")
+	initiators := m.SelectHosts(models.ClientTag)
 	if len(initiators) != 1 {
 		return nil, nil, fmt.Errorf("expected 1 '@client' host in model")
-	}
-
-	var hosts []*model.Host
-	var ids []string
-	for id, host := range m.MustSelectRegion("initiator").Hosts {
-		if host.HasTag("server") {
-			hosts = append(hosts, host)
-			ids = append(ids, id)
-		}
-	}
-	if len(hosts) < 1 {
-		return nil, nil, fmt.Errorf("no '@initiator/@loop-dialer' hosts in model")
 	}
 
 	endpoint := fmt.Sprintf("tls:%s:7002", initiators[0].PublicIp)
 
 	binders = make([]model.OperatingBinder, 0)
-	for i := 0; i < len(hosts); i++ {
+
+	hosts, err := m.MustSelectHosts(models.ClientTag, 1)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, host := range hosts {
 		joiner := make(chan struct{}, 1)
-		binderHost := hosts[i]
-		binderId := ids[i]
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopDialer(binderHost, binderId, "10-ambient.loop2.yml", endpoint, joiner)
+			return zitilib_5_operation.LoopDialer(host, "10-ambient.loop2.yml", endpoint, joiner)
 		})
 		joiners = append(joiners, joiner)
 	}

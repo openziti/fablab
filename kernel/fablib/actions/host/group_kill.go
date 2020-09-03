@@ -30,8 +30,7 @@ func GroupKill(hostSpec, match string) model.Action {
 }
 
 func (groupKill *groupKill) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(groupKill.hostSpec)
-	for _, h := range hosts {
+	for _, h := range m.SelectHosts(groupKill.hostSpec) {
 
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 		if err := fablib.RemoteKill(sshConfigFactory, groupKill.match); err != nil {

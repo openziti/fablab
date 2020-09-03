@@ -25,6 +25,7 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 	zitilib_actions "github.com/openziti/fablab/zitilib/actions"
 	"github.com/openziti/fablab/zitilib/actions/edge"
+	"github.com/openziti/fablab/zitilib/models"
 	"path/filepath"
 	"time"
 )
@@ -39,12 +40,12 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 
 	workflow := actions.Workflow()
 
-	workflow.AddAction(component.Stop("@ctrl"))
-	workflow.AddAction(edge.InitController("@ctrl"))
-	workflow.AddAction(component.Start("@ctrl"))
+	workflow.AddAction(component.Stop(models.ControllerTag))
+	workflow.AddAction(edge.InitController(models.ControllerTag))
+	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.SelectComponents("@router") {
+	for _, router := range m.SelectComponents(models.RouterTag) {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(zitilib_actions.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
@@ -55,12 +56,12 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
 	}
 
-	ctrl := m.MustSelectHost("@ctrl")
+	ctrl := m.MustSelectHost(models.ControllerTag)
 	workflow.AddAction(edge.Login(ctrl))
 
-	workflow.AddAction(component.Stop("@edge-router"))
-	workflow.AddAction(edge.InitEdgeRouters("@edge-router"))
-	workflow.AddAction(component.Stop("@ctrl"))
+	workflow.AddAction(component.Stop(models.EdgeRouterTag))
+	workflow.AddAction(edge.InitEdgeRouters(models.EdgeRouterTag))
+	workflow.AddAction(component.Stop(models.ControllerTag))
 
 	return workflow
 }

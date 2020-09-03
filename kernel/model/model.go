@@ -20,13 +20,17 @@ import (
 	"fmt"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
+	"github.com/sirupsen/logrus"
 	"strings"
 )
+
+type EntityVisitor func(Entity)
 
 type Entity interface {
 	GetId() string
 	GetScope() *Scope
 	GetParentEntity() Entity
+	Accept(EntityVisitor)
 }
 
 type Model struct {
@@ -72,11 +76,28 @@ func (m *Model) GetParentEntity() Entity {
 }
 
 func (m *Model) init(name string) {
-	m.name = name
 	if m.initialized.CompareAndSwap(false, true) {
+		m.name = name
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
+
+		// trim tag prefixes
+		m.Accept(func(e Entity) {
+			var tags Tags
+			for _, tag := range e.GetScope().Tags {
+				tag = strings.TrimPrefix(tag, DontInheritTagPrefix)
+				tags = append(tags, tag)
+			}
+			e.GetScope().Tags = tags
+		})
+	}
+}
+
+func (m *Model) Accept(visitor EntityVisitor) {
+	visitor(m)
+	for _, region := range m.Regions {
+		region.Accept(visitor)
 	}
 }
 
@@ -133,6 +154,13 @@ func (region *Region) SelectHosts(hostSpec string) map[string]*Host {
 	return hosts
 }
 
+func (region *Region) Accept(visitor EntityVisitor) {
+	visitor(region)
+	for _, host := range region.Hosts {
+		host.Accept(visitor)
+	}
+}
+
 type Host struct {
 	Scope
 	id                   string
@@ -147,6 +175,7 @@ type Host struct {
 }
 
 func (host *Host) init(id string, region *Region) {
+	logrus.Infof("initialing host: %v.%v", region.GetId(), id)
 	host.id = id
 	host.region = region
 	host.Scope.setParent(&region.Scope)
@@ -170,6 +199,13 @@ func (host *Host) GetRegion() *Region {
 
 func (host *Host) GetParentEntity() Entity {
 	return host.region
+}
+
+func (host *Host) Accept(visitor EntityVisitor) {
+	visitor(host)
+	for _, component := range host.Components {
+		component.Accept(visitor)
+	}
 }
 
 type Hosts map[string]*Host
@@ -215,6 +251,10 @@ func (component *Component) GetModel() *Model {
 
 func (component *Component) GetParentEntity() Entity {
 	return component.host
+}
+
+func (component *Component) Accept(visitor EntityVisitor) {
+	visitor(component)
 }
 
 type Components map[string]*Component

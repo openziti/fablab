@@ -36,7 +36,6 @@ func (stop *stop) Execute(m *model.Model) error {
 			return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
 	}
-
 	return nil
 }
 

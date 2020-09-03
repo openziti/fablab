@@ -31,8 +31,7 @@ func GroupExec(hostSpec, cmd string) model.Action {
 }
 
 func (groupExec *groupExec) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(groupExec.hostSpec)
-	for _, h := range hosts {
+	for _, h := range m.SelectHosts(groupExec.hostSpec) {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 
 		if o, err := fablib.RemoteExec(sshConfigFactory, groupExec.cmd); err != nil {
@@ -44,7 +43,6 @@ func (groupExec *groupExec) Execute(m *model.Model) error {
 }
 
 type groupExec struct {
-	regionSpec string
-	hostSpec   string
-	cmd        string
+	hostSpec string
+	cmd      string
 }

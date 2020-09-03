@@ -24,6 +24,11 @@ import (
 	"strings"
 )
 
+const (
+	SelectorTagPrefix = "."
+	SelectorIdPrefox  = "#"
+)
+
 func (m *Model) IsBound() bool {
 	return m.bound
 }
@@ -94,6 +99,14 @@ func (m *Model) SelectHosts(spec string) []*Host {
 	return hosts
 }
 
+func (m *Model) MustSelectHosts(spec string, minCount int) ([]*Host, error) {
+	hosts := m.SelectHosts(spec)
+	if len(hosts) < minCount {
+		return nil, errors.Errorf("[%s] matched [%d] hosts, expected at least %v", spec, len(hosts), minCount)
+	}
+	return hosts, nil
+}
+
 func (m *Model) SelectHost(spec string) (*Host, error) {
 	hosts := m.SelectHosts(spec)
 	if len(hosts) == 1 {
@@ -126,46 +139,24 @@ func (m *Model) SelectComponents(spec string) []*Component {
 	return components
 }
 
-func (h *Host) HasTag(tag string) bool {
-	for _, hostTag := range h.Tags {
-		if hostTag == tag {
-			return true
-		}
-	}
-	return false
-}
-
-func (h *Host) SelectComponents(componentSpec string) []*Component {
-	var components []*Component
-	for id, component := range h.Components {
-		if componentSpec == "*" || componentSpec == id {
-			components = append(components, component)
-		} else if strings.HasPrefix(componentSpec, "@") {
-			for _, tag := range component.Tags {
-				if tag == componentSpec[1:] {
-					components = append(components, component)
-				}
-			}
-		}
-	}
-	return components
-}
-
 type EntityMatcher func(Entity) bool
 
 func (m EntityMatcher) Or(m2 EntityMatcher) EntityMatcher {
-	if m == nil { // Lets us do nil.Or(something), which is handy for loops
-		return m2
-	}
 	return func(e Entity) bool {
 		return m(e) || m2(e)
+	}
+}
+
+func (m EntityMatcher) And(m2 EntityMatcher) EntityMatcher {
+	return func(e Entity) bool {
+		return m(e) && m2(e)
 	}
 }
 
 func compileEntityMatcher(in string, maxDepth uint8, entityType string) EntityMatcher {
 	parts := strings.Split(in, ">")
 	if len(parts) > int(maxDepth) {
-		panic(errors.Errorf("Invalid %v spec '%v'. Only %v level(s) may be specified", entityType, in, maxDepth))
+		panic(errors.Errorf("invalid %v spec '%v', only %v level(s) may be specified", entityType, in, maxDepth))
 	}
 	matchers := specsToMatchers(parts)
 
@@ -188,30 +179,44 @@ func compileEntityMatcher(in string, maxDepth uint8, entityType string) EntityMa
 
 func compileSpec(in string) EntityMatcher {
 	specs := strings.Split(in, ",")
-	var result EntityMatcher
-	for _, spec := range specs {
-		trimmed := strings.TrimSpace(spec)
-		result = result.Or(specToMatcher(trimmed))
+	result := specToMatcher(specs[0])
+	for _, spec := range specs[1:] {
+		result = result.Or(specToMatcher(spec))
 	}
 	return result
 }
 
 func specToMatcher(spec string) EntityMatcher {
+	spec = strings.TrimSpace(spec)
 	if spec == "*" {
 		return func(Entity) bool {
 			return true
 		}
 	}
 
-	if strings.HasPrefix(spec, "@") {
-		tag := strings.TrimPrefix(spec, "@")
+	if strings.HasPrefix(spec, SelectorTagPrefix) {
+		tags := strings.Split(spec, SelectorTagPrefix)
+		tags = stringz.Remove(tags, "")
+		result := newTagSelector(tags[0])
+		for _, tag := range tags[1:] {
+			result = result.And(newTagSelector(tag))
+		}
+		return result
+	}
+
+	if strings.HasPrefix(spec, SelectorIdPrefox) {
+		id := strings.TrimPrefix(spec, SelectorIdPrefox)
 		return func(e Entity) bool {
-			return stringz.Contains(e.GetScope().Tags, tag)
+			return id == e.GetId()
 		}
 	}
 
+	panic(errors.Errorf("invalid selector '%v', not a .tag #id or ", spec))
+}
+
+func newTagSelector(tag string) EntityMatcher {
 	return func(e Entity) bool {
-		return spec == e.GetId()
+		return stringz.Contains(e.GetScope().Tags, tag)
 	}
 }
 
@@ -221,4 +226,8 @@ func specsToMatchers(parts []string) []EntityMatcher {
 		result = append(result, compileSpec(part))
 	}
 	return result
+}
+
+func Selector(levels ...string) string {
+	return strings.Join(levels, " > ")
 }

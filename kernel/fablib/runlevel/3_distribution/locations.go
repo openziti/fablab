@@ -47,7 +47,6 @@ func (self *locations) Distribute(m *model.Model) error {
 }
 
 type locations struct {
-	regionSpec string
-	hostSpec   string
-	paths      []string
+	hostSpec string
+	paths    []string
 }

@@ -25,10 +25,9 @@ import (
 	"path/filepath"
 )
 
-func Tcpdump(scenarioName, region, host string, snaplen int, joiner chan struct{}) model.OperatingStage {
+func Tcpdump(scenarioName, host string, snaplen int, joiner chan struct{}) model.OperatingStage {
 	return &tcpdump{
 		scenario: scenarioName,
-		region:   region,
 		host:     host,
 		snaplen:  snaplen,
 		joiner:   joiner,
@@ -36,21 +35,20 @@ func Tcpdump(scenarioName, region, host string, snaplen int, joiner chan struct{
 }
 
 func (t *tcpdump) Operate(m *model.Model, _ string) error {
-	hosts := m.SelectHosts(fmt.Sprintf("%v > %v", t.region, t.host))
-	if len(hosts) == 1 {
-		ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
-
-		if err := fablib.RemoteKill(ssh, "tcpdump"); err != nil {
-			return fmt.Errorf("error killing tcpdump instances")
-		}
-
-		go t.runTcpdump(ssh)
-
-		return nil
-
-	} else {
-		return fmt.Errorf("found [%d] hosts", len(hosts))
+	host, err := m.SelectHost(t.host)
+	if err != nil {
+		return err
 	}
+
+	ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
+
+	if err := fablib.RemoteKill(ssh, "tcpdump"); err != nil {
+		return fmt.Errorf("error killing tcpdump instances")
+	}
+
+	go t.runTcpdump(ssh)
+
+	return nil
 }
 
 func (t *tcpdump) runTcpdump(ssh fablib.SshConfigFactory) {

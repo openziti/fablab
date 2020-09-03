@@ -20,6 +20,7 @@ import (
 	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
 	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 )
 
 func newDistributionFactory() model.Factory {
@@ -28,8 +29,8 @@ func newDistributionFactory() model.Factory {
 
 func (self *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
-		func(m *model.Model) model.DistributionStage { return distribution.Locations("@ctrl", "logs") },
-		func(m *model.Model) model.DistributionStage { return distribution.Locations("@router", "logs") },
+		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.ControllerTag, "logs") },
+		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.RouterTag, "logs") },
 
 		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}

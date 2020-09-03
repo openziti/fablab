@@ -50,9 +50,9 @@ var transwarpModel = &model.Model{
 					Scope:        model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
 				},
 			},
-			Id:    "us-east-1",
-			Az:    "us-east-1c",
-			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
+			Region: "us-east-1",
+			Site:   "us-east-1c",
+			Scope:  model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
 		},
 		"remote": {
 			Hosts: model.Hosts{
@@ -70,9 +70,9 @@ var transwarpModel = &model.Model{
 					Scope: model.Scope{Tags: model.Tags{"router", "terminator", "client", "iperf_server"}},
 				},
 			},
-			Id:    "ap-southeast-2",
-			Az:    "ap-southeast-2c",
-			Scope: model.Scope{Tags: model.Tags{"client", "router", "terminator", "iperf_server"}},
+			Region: "ap-southeast-2",
+			Site:   "ap-southeast-2c",
+			Scope:  model.Scope{Tags: model.Tags{"client", "router", "terminator", "iperf_server"}},
 		},
 	},
 

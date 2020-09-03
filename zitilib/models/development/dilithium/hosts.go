@@ -18,6 +18,7 @@ package dilithium
 
 import (
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 )
 
 func newHostsFactory() model.Factory {
@@ -36,11 +37,11 @@ func (_ *hostsFactory) Build(m *model.Model) error {
 
 	if l.Has("remote_region_id") {
 		regionId := l.Must("remote_region_id")
-		m.MustSelectRegion("#remote").Region = regionId.(string)
+		m.MustSelectRegion(models.RemoteId).Region = regionId.(string)
 	}
 	if l.Has("remote_region_az") {
 		regionAz := l.Must("remote_region_az")
-		m.MustSelectRegion("#remote").Site = regionAz.(string)
+		m.MustSelectRegion(models.RemoteId).Site = regionAz.(string)
 	}
 
 	return nil

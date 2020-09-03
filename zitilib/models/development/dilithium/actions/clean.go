@@ -29,12 +29,10 @@ func Clean() model.Action {
 type clean struct{}
 
 func (self *clean) Execute(m *model.Model) error {
-	for rn, r := range m.Regions {
-		for hn, h := range r.Hosts {
-			ssh := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
-			if err := self.forHost(ssh); err != nil {
-				return errors.Wrapf(err, "error cleaning host [%s/%s]", rn, hn)
-			}
+	for _, host := range m.SelectHosts("*") {
+		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
+		if err := self.forHost(ssh); err != nil {
+			return errors.Wrapf(err, "error cleaning host [%s/%s]", host.GetRegion().GetId(), host.GetId())
 		}
 	}
 	return nil

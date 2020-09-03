@@ -83,7 +83,7 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		logrus.Error("error handling metrics receive (%w)", err)
 	}
 
-	host, err := metrics.m.SelectHost(response.SourceId)
+	host, err := metrics.m.SelectHost("#" + response.SourceId)
 	if err == nil {
 		if host.Data == nil {
 			host.Data = make(map[string]interface{})

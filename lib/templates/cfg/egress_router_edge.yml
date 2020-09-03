@@ -10,7 +10,7 @@ identity:
   ca:                   /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/certs/{{ .Component.PublicIdentity }}-server.chain.pem
 
 ctrl:
-  endpoint:             tls:{{ publicIp "ctrl" }}:6262
+  endpoint:             tls:{{ publicIp ".ctrl" }}:6262
 
 listeners:
   - binding:            proxy
@@ -54,7 +54,7 @@ edge:
     # the edge listeners "advertise" value from the "listeners" section.
     sans:
       ip:
-        - {{ .Host.PublicIp}}
+        - {{ .Host.PublicIp }}
 
   # (optional) Configuration specific to the controller's API that is proxied through this process. If not defined
   # the API Proxy will not run.
@@ -62,4 +62,4 @@ edge:
     # (required) The interface and port that the Edge API should be served on.
     listener: 0.0.0.0:1080
     # (required) The hostname and port combination to the ziti-controller hosted Edge API
-    upstream: {{ publicIp "ctrl" }}:1280
+    upstream: {{ publicIp ".ctrl" }}:1280

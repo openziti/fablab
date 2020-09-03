@@ -24,6 +24,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
 	"github.com/openziti/fablab/kernel/model"
 	actions2 "github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/models"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -39,19 +40,19 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 
 	workflow := actions.Workflow()
 
-	workflow.AddAction(component.Stop("@ctrl"))
-	workflow.AddAction(host.Exec(m.MustSelectHost("@ctrl"), "rm -f ~/ctrl.db"))
-	workflow.AddAction(component.Start("@ctrl"))
+	workflow.AddAction(component.Stop(models.ControllerTag))
+	workflow.AddAction(host.Exec(m.MustSelectHost(models.ControllerTag), "rm -f ~/ctrl.db"))
+	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
-	for _, router := range m.SelectComponents("@router") {
+	for _, router := range m.SelectComponents(models.RouterTag) {
 		cert := fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity)
 		workflow.AddAction(actions2.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	iperfServer := m.MustSelectHost("@iperf_server > @iperf_server")
+	iperfServer := m.MustSelectHost(models.ServiceTag)
 	if iperfServer != nil {
-		terminatingRouters := m.SelectComponents("@terminator")
+		terminatingRouters := m.SelectComponents(models.TerminatorTag)
 		if len(terminatingRouters) < 1 {
 			logrus.Fatal("need at least 1 terminating router!")
 		}
@@ -67,7 +68,7 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
 	}
 
-	workflow.AddAction(component.Stop("@ctrl"))
+	workflow.AddAction(component.Stop(models.ControllerTag))
 
 	return workflow
 }

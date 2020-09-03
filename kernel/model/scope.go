@@ -20,6 +20,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sort"
+	"strings"
+)
+
+const (
+	DontInheritTagPrefix = "^"
 )
 
 type Scope struct {
@@ -39,7 +44,9 @@ func (scope *Scope) setParent(parent *Scope) {
 	}
 
 	for _, tag := range parent.Tags {
-		tags[tag] = struct{}{}
+		if !strings.HasPrefix(tag, DontInheritTagPrefix) {
+			tags[tag] = struct{}{}
+		}
 	}
 
 	scope.Tags = nil
@@ -47,6 +54,15 @@ func (scope *Scope) setParent(parent *Scope) {
 		scope.Tags = append(scope.Tags, tag)
 	}
 	sort.Strings(scope.Tags)
+}
+
+func (scope *Scope) HasTag(tag string) bool {
+	for _, hostTag := range scope.Tags {
+		if hostTag == tag {
+			return true
+		}
+	}
+	return false
 }
 
 type Data map[string]interface{}
