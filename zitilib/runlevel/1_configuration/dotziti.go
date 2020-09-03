@@ -138,7 +138,7 @@ func mergeLocalIdentities() error {
 		return fmt.Errorf("no 'default' identity in local identities [%s] (%s)", localIdPath, err)
 	}
 
-	identities["fablab"] = fablabIdentity
+	identities[model.ActiveInstanceId()] = fablabIdentity
 	data, err = yaml.Marshal(identities)
 
 	if err := ioutil.WriteFile(idPath, data, os.ModePerm); err != nil {

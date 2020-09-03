@@ -38,7 +38,7 @@ func (a *fabric) Execute(m *model.Model) error {
 		return errors.New("model not bound")
 	}
 
-	allArgs := append(a.args, "-i", "fablab")
+	allArgs := append(a.args, "-i", model.ActiveInstanceId())
 	cli := exec.Command(zitilib_bootstrap.ZitiFabricCli(), allArgs...)
 	var cliOut bytes.Buffer
 	cli.Stdout = &cliOut

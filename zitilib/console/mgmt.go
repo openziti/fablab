@@ -19,6 +19,7 @@ package console
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fabric/pb/mgmt_pb"
 	"github.com/openziti/foundation/channel2"
 	"github.com/openziti/foundation/identity/dotziti"
@@ -35,7 +36,7 @@ func newMgmt(server *Server) *mgmt {
 }
 
 func (mgmt *mgmt) execute() error {
-	if endpoint, id, err := dotziti.LoadIdentity("fablab"); err == nil {
+	if endpoint, id, err := dotziti.LoadIdentity(model.ActiveInstanceId()); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
 			if ch, err := channel2.NewChannel("mgmt", dialer, nil); err == nil {
