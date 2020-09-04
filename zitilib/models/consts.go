@@ -15,8 +15,8 @@ const (
 	LoopListenerTag = ".loop-listener"
 	LoopDialerTag   = ".loop-dialer"
 
-	InitiatorTag  = ".initiator"
 	TerminatorTag = ".terminator"
 
 	HasControllerComponent = "component.ctrl"
+	HasRouterComponent     = "component.router"
 )

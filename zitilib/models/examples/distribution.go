@@ -29,8 +29,8 @@ func newDistributionFactory() model.Factory {
 
 func (_ *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.ControllerTag, "logs") },
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.RouterTag, "logs") },
+		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.HasControllerComponent, "logs") },
+		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.HasRouterComponent, "logs") },
 		func(m *model.Model) model.DistributionStage {
 			return distribution.Locations(models.LoopListenerTag, "logs")
 		},
