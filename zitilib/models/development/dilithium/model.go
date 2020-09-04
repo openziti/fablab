@@ -16,10 +16,16 @@
 
 package dilithium
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
+	"github.com/openziti/fablab/kernel/model"
+)
 
 func init() {
 	model.RegisterModel("zitilib/development/dilithium", dilithiumModel)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 var dilithiumModel = &model.Model{

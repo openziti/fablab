@@ -17,11 +17,15 @@
 package edge
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	"github.com/openziti/fablab/kernel/model"
 )
 
 func init() {
 	model.RegisterModel("zitilib/edge", edge)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 // Static model skeleton for zitilib/edge

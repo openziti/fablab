@@ -17,12 +17,16 @@
 package transwarp
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	"github.com/openziti/fablab/kernel/model"
 	zitilib_transwarp_actions "github.com/openziti/fablab/zitilib/models/transwarp/actions"
 )
 
 func init() {
 	model.RegisterModel("zitilib/transwarp", transwarpModel)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 var transwarpModel = &model.Model{
@@ -30,6 +34,7 @@ var transwarpModel = &model.Model{
 		"local": {
 			Hosts: model.Hosts{
 				"local": {
+					Scope: model.Scope{Tags: model.Tags{"^ctrl", "^router", "^initiator", "^iperf_client"}},
 					Components: model.Components{
 						"ctrl": {
 							BinaryName:     "ziti-controller",
@@ -47,12 +52,11 @@ var transwarpModel = &model.Model{
 						},
 					},
 					InstanceType: "t2.medium",
-					Scope:        model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
 				},
 			},
 			Region: "us-east-1",
 			Site:   "us-east-1c",
-			Scope:  model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
+			// Scope:  model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
 		},
 		"remote": {
 			Hosts: model.Hosts{
@@ -64,10 +68,8 @@ var transwarpModel = &model.Model{
 							ConfigSrc:      "transwarp_egress_router.yml",
 							ConfigName:     "remote.yml",
 							PublicIdentity: "remote",
-							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 						},
 					},
-					Scope: model.Scope{Tags: model.Tags{"router", "terminator", "client", "iperf_server"}},
 				},
 			},
 			Region: "ap-southeast-2",
