@@ -33,7 +33,7 @@ var dilithiumModel = &model.Model{
 		"local": {
 			Scope: model.Scope{Tags: model.Tags{"virginia"}},
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {InstanceType: "t2.medium"},
 			},
 			Region: "us-east-1",
 			Site:   "us-east-1a",
@@ -41,7 +41,7 @@ var dilithiumModel = &model.Model{
 		"remote": {
 			Scope: model.Scope{Tags: model.Tags{"california"}},
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {InstanceType: "t2.medium"},
 			},
 			Region: "us-west-1",
 			Site:   "us-west-1c",

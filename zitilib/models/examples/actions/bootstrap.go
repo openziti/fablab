@@ -75,7 +75,10 @@ func (_ *bootstrapAction) createServiceActions(m *model.Model) ([]model.Action, 
 		return nil, err
 	}
 
-	router := m.SelectComponents(models.RouterTag)[0]
+	router, err := m.SelectComponent(".router.terminator")
+	if err != nil {
+		return nil, err
+	}
 
 	for _, host := range hosts {
 		serviceActions = append(serviceActions, actions2.Fabric("create", "service", host.GetId()))

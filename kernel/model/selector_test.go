@@ -79,7 +79,6 @@ func createTestModel() *Model {
 			},
 		},
 	}
-
 }
 
 func TestModel_SelectRegions(t *testing.T) {
@@ -118,6 +117,37 @@ func TestModel_SelectRegions(t *testing.T) {
 	regions = model.SelectRegions(".region-first, .region-last")
 	req.Equal(2, len(regions))
 	req.NotEqual(regions[0].GetId(), regions[1].GetId())
+
+	regions = model.SelectRegions("component.ctrl")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+
+	regions = model.SelectRegions("component.ctrl")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+
+	regions = model.SelectRegions("host.service")
+	req.Equal(1, len(regions))
+	req.Equal("terminator", regions[0].GetId())
+
+	regions = model.SelectRegions("host#service")
+	req.Equal(1, len(regions))
+	req.Equal("terminator", regions[0].GetId())
+
+	regions = model.SelectRegions("component.sdk-app")
+	req.Equal(2, len(regions))
+	req.NotEqual(regions[0].GetId(), regions[1].GetId())
+
+	regions = model.SelectRegions("component#ctrl")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+
+	regions = model.SelectRegions("component#ctrl.ctrl")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+
+	regions = model.SelectRegions("component#ctrl.terminator")
+	req.Equal(0, len(regions))
 }
 
 func TestModel_SelectHosts(t *testing.T) {
@@ -171,6 +201,24 @@ func TestModel_SelectHosts(t *testing.T) {
 	req.Equal(3, len(hosts))
 
 	hosts = model.SelectHosts(".region-not-inherited")
+	req.Equal(0, len(hosts))
+
+	hosts = model.SelectHosts("region.region-first")
+	req.Equal(3, len(hosts))
+
+	hosts = model.SelectHosts("region#initiator")
+	req.Equal(3, len(hosts))
+
+	hosts = model.SelectHosts("region#initiator.region-first")
+	req.Equal(3, len(hosts))
+
+	hosts = model.SelectHosts("region.region-first, region.region-last")
+	req.Equal(5, len(hosts))
+
+	hosts = model.SelectHosts("region.region-first .ctrl component#ctrl")
+	req.Equal(1, len(hosts))
+
+	hosts = model.SelectHosts("region.region-first .ctrl component#foo")
 	req.Equal(0, len(hosts))
 }
 
@@ -233,4 +281,13 @@ func TestModel_SelectComponents(t *testing.T) {
 
 	components = model.SelectComponents(".global.region-first, .global.region-last > .global.region-first, .global.region-last > .global.region-first, .global.region-last")
 	req.Equal(5, len(components))
+
+	components = model.SelectComponents("region#initiator host.ctrl")
+	req.Equal(1, len(components))
+
+	components = model.SelectComponents("region#initiator")
+	req.Equal(3, len(components))
+
+	components = model.SelectComponents("region#initiator component.ctrl")
+	req.Equal(1, len(components))
 }
