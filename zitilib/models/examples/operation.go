@@ -89,12 +89,12 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 }
 
 func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
-	initiators := m.SelectHosts(models.InitiatorTag)
-	if len(initiators) != 1 {
-		return nil, nil, fmt.Errorf("expected 1 '%v' host in model", models.InitiatorTag)
+	initiator, err := m.SelectHost("component.initiator.router")
+	if err != nil {
+		return nil, nil, err
 	}
 
-	endpoint := fmt.Sprintf("tls:%s:7002", initiators[0].PublicIp)
+	endpoint := fmt.Sprintf("tls:%s:7002", initiator.PublicIp)
 
 	binders = make([]model.OperatingBinder, 0)
 

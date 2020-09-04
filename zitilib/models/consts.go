@@ -17,4 +17,6 @@ const (
 
 	InitiatorTag  = ".initiator"
 	TerminatorTag = ".terminator"
+
+	HasControllerComponent = "component.ctrl"
 )

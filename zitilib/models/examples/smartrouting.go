@@ -48,12 +48,9 @@ var smartrouting = &model.Model{
 			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
-					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
 					Components: model.Components{
 						"ctrl": {
-							Scope: model.Scope{
-								Tags: model.Tags{"ctrl"},
-							},
+							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl.yml",
 							ConfigName:     "ctrl.yml",
@@ -62,10 +59,10 @@ var smartrouting = &model.Model{
 					},
 				},
 				"001": {
-					Scope: model.Scope{Tags: model.Tags{"router", "initiator", "iperf_server"}},
+					Scope: model.Scope{Tags: model.Tags{"iperf_server"}},
 					Components: model.Components{
 						"001": {
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
+							Scope:          model.Scope{Tags: model.Tags{"initiator", "router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "001.yml",
@@ -105,12 +102,10 @@ var smartrouting = &model.Model{
 			},
 		},
 		"transitB": {
-			Scope:  model.Scope{Tags: model.Tags{"router"}},
 			Region: "us-east-2",
 			Site:   "us-east-2c",
 			Hosts: model.Hosts{
 				"004": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"004": {
 							Scope:          model.Scope{Tags: model.Tags{"router"}},
@@ -124,12 +119,10 @@ var smartrouting = &model.Model{
 			},
 		},
 		"terminator": {
-			Scope:  model.Scope{Tags: model.Tags{"router", "loop", "terminator"}},
 			Region: "us-west-2",
 			Site:   "us-west-2b",
 			Hosts: model.Hosts{
 				"003": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
 					Components: model.Components{
 						"003": {
 							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},

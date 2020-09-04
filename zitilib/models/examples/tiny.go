@@ -48,7 +48,7 @@ var tiny = &model.Model{
 			Site:   "us-east-1c",
 			Hosts: model.Hosts{
 				"001": {
-					Scope: model.Scope{Tags: model.Tags{"^ctrl", "^loop-dialer", "^loop-listener", "^initiator", "^terminator", "^iperf_server"}},
+					Scope: model.Scope{Tags: model.Tags{"^loop-dialer", "^loop-listener", "^iperf_server"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
@@ -58,7 +58,7 @@ var tiny = &model.Model{
 							PublicIdentity: "ctrl",
 						},
 						"001": {
-							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
+							Scope:          model.Scope{Tags: model.Tags{"router", "initiator", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "001.yml",
