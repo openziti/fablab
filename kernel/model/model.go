@@ -442,6 +442,10 @@ type OperatingBinders []OperatingBinder
 type DisposalBinder func(m *Model) DisposalStage
 type DisposalBinders []DisposalBinder
 
+func (m *Model) AddOperatingStage(stage OperatingStage) {
+	m.Operation = append(m.Operation, func(m *Model) OperatingStage { return stage })
+}
+
 func (m *Model) Express(l *Label) error {
 	for _, stage := range m.infrastructureStages {
 		if err := stage.Express(m, l); err != nil {

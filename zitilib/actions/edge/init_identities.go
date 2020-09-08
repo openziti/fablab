@@ -33,7 +33,7 @@ func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) 
 
 	jwtFileName := filepath.Join(model.ConfigBuild(), c.PublicIdentity+".jwt")
 
-	_, err := cli.Exec(c.GetModel(), "edge", "create", "identity", c.PublicIdentity, "-j",
+	_, err := cli.Exec(c.GetModel(), "edge", "create", "identity", "service", c.PublicIdentity,
 		"--jwt-output-file", jwtFileName,
 		"-a", strings.Join(c.Tags, ","))
 
@@ -43,13 +43,13 @@ func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) 
 
 	configFileName := filepath.Join(model.ConfigBuild(), c.PublicIdentity+".json")
 
-	_, err = cli.Exec(c.GetModel(), "enroll", "--jwt", jwtFileName, "--out", configFileName)
+	_, err = cli.Exec(c.GetModel(), "edge", "enroll", "--jwt", jwtFileName, "--out", configFileName)
 
 	if err != nil {
 		return err
 	}
 
-	remoteConfigFile := "/home/fedora/fablab/" + c.PublicIdentity + ".json"
+	remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
 	return fablib.SendFile(ssh, configFileName, remoteConfigFile)
 }
 

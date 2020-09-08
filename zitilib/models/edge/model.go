@@ -117,6 +117,7 @@ var edge = &model.Model{
 					Scope: model.Scope{Tags: model.Tags{"client", "sdk-app"}},
 					Components: model.Components{
 						"client1": {
+							Scope:          model.Scope{Tags: model.Tags{"client", "sdk-app"}},
 							BinaryName:     "ziti-fabric-test",
 							PublicIdentity: "client1",
 						},

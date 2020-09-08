@@ -21,14 +21,16 @@ import (
 	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
-func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{}) model.OperatingStage {
+func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{}, extraArgs ...string) model.OperatingStage {
 	return &loopDialer{
-		host:     host,
-		scenario: scenario,
-		endpoint: endpoint,
-		joiner:   joiner,
+		host:      host,
+		scenario:  scenario,
+		endpoint:  endpoint,
+		joiner:    joiner,
+		extraArgs: extraArgs,
 	}
 }
 
@@ -52,16 +54,17 @@ func (self *loopDialer) run(m *model.Model, run string) {
 
 	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
 	logFile := fmt.Sprintf("/home/%s/logs/loop2-dialer-%s.log", ssh.User(), run)
-	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s >> %s 2>&1",
-		ssh.User(), ssh.User(), self.scenario, self.endpoint, self.host.GetId(), logFile)
+	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s %s >> %s 2>&1",
+		ssh.User(), ssh.User(), self.scenario, self.endpoint, self.host.GetId(), strings.Join(self.extraArgs, " "), logFile)
 	if output, err := fablib.RemoteExec(ssh, dialerCmd); err != nil {
 		logrus.Errorf("error starting loop dialer [%s] (%v)", output, err)
 	}
 }
 
 type loopDialer struct {
-	host     *model.Host
-	endpoint string
-	scenario string
-	joiner   chan struct{}
+	host      *model.Host
+	endpoint  string
+	scenario  string
+	joiner    chan struct{}
+	extraArgs []string
 }

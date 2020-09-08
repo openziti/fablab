@@ -44,7 +44,7 @@ func (action *initEdgeRoutersAction) createAndEnrollRouter(c *model.Component) e
 		return err
 	}
 
-	remoteJwt := "/home/fedora/fablab/" + c.PublicIdentity + ".jwt"
+	remoteJwt := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".jwt"
 	if err := fablib.SendFile(ssh, jwtFileName, remoteJwt); err != nil {
 		return err
 	}

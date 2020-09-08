@@ -56,18 +56,17 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
 	}
 
-	ctrl := m.MustSelectHost(models.ControllerTag)
-	workflow.AddAction(edge.Login(ctrl))
+	workflow.AddAction(edge.Login(models.HasControllerComponent))
 
 	workflow.AddAction(component.Stop(models.EdgeRouterTag))
 	workflow.AddAction(edge.InitEdgeRouters(models.EdgeRouterTag))
 	workflow.AddAction(edge.InitIdentities(models.SdkAppTag))
 
 	workflow.AddAction(zitilib_actions.Edge("create", "service", "perf-test"))
-	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-bind", "Bind", "--service-roles", "@perf-test", "--identity-roles", "#perf-test-servers"))
-	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-dia", "Dial", "--service-roles", "@perf-test", "--identity-roles", "#perf-test-clients"))
-	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "client-routers", "--edge-router-roles", "#initiator", "--identity-roles", "#perf-test-client"))
-	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "server-routers", "--edge-router-roles", "#terminator", "--identity-roles", "#perf-test-server"))
+	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-bind", "Bind", "--service-roles", "@perf-test", "--identity-roles", "#service"))
+	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-dial", "Dial", "--service-roles", "@perf-test", "--identity-roles", "#client"))
+	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "client-routers", "--edge-router-roles", "#initiator", "--identity-roles", "#client"))
+	workflow.AddAction(zitilib_actions.Edge("create", "edge-router-policy", "server-routers", "--edge-router-roles", "#terminator", "--identity-roles", "#service"))
 	workflow.AddAction(zitilib_actions.Edge("create", "service-edge-router-policy", "blanket", "--edge-router-roles", "#all", "--service-roles", "#all"))
 
 	workflow.AddAction(component.Stop(models.ControllerTag))

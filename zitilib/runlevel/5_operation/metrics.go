@@ -31,7 +31,16 @@ import (
 )
 
 func Metrics(closer chan struct{}) model.OperatingStage {
-	return &metrics{closer: closer}
+	return MetricsWithIdMapper(closer, func(id string) string {
+		return "#" + id
+	})
+}
+
+func MetricsWithIdMapper(closer chan struct{}, f func(string) string) model.OperatingStage {
+	return &metrics{
+		closer:             closer,
+		idToSelectorMapper: f,
+	}
 }
 
 func (metrics *metrics) Operate(m *model.Model, _ string) error {
@@ -83,7 +92,8 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		logrus.Error("error handling metrics receive (%w)", err)
 	}
 
-	host, err := metrics.m.SelectHost("#" + response.SourceId)
+	hostSelector := metrics.idToSelectorMapper(response.SourceId)
+	host, err := metrics.m.SelectHost(hostSelector)
 	if err == nil {
 		if host.Data == nil {
 			host.Data = make(map[string]interface{})
@@ -120,9 +130,10 @@ func (metrics *metrics) runMetrics() {
 }
 
 type metrics struct {
-	ch     channel2.Channel
-	m      *model.Model
-	closer chan struct{}
+	ch                 channel2.Channel
+	m                  *model.Model
+	closer             chan struct{}
+	idToSelectorMapper func(string) string
 }
 
 func SummarizeZitiFabricMetrics(metrics *mgmt_pb.StreamMetricsEvent) (model.ZitiFabricRouterMetricsSummary, error) {

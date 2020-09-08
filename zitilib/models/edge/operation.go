@@ -39,79 +39,63 @@ func newOperationFactory() model.Factory {
 //
 func (self *operationFactory) Build(m *model.Model) error {
 	closer := make(chan struct{})
-	var joiners []chan struct{}
 
-	m.Operation = append(m.Operation, model.OperatingBinders{
-		func(m *model.Model) model.OperatingStage { return zitilib_5_operation.Mesh(closer) },
-		func(m *model.Model) model.OperatingStage { return zitilib_5_operation.Metrics(closer) },
-	}...)
+	m.AddOperatingStage(fablib_5_operation.Actions("syncModelEdgeState"))
+	m.AddOperatingStage(zitilib_5_operation.Mesh(closer))
+	m.AddOperatingStage(zitilib_5_operation.MetricsWithIdMapper(closer, func(id string) string {
+		return "component.edgeId:" + id
+	}))
 
-	listeners, err := self.listeners(m)
-	if err != nil {
+	if err := self.listeners(m); err != nil {
 		return fmt.Errorf("error creating listeners (%w)", err)
 	}
-	m.Operation = append(m.Operation, listeners...)
 
-	m.Operation = append(m.Operation, func(m *model.Model) model.OperatingStage {
-		return fablib_5_operation.Timer(5*time.Second, nil)
-	})
+	m.AddOperatingStage(fablib_5_operation.Timer(5*time.Second, nil))
 
-	dialers, dialerJoiners, err := self.dialers(m)
-	if err != nil {
+	if err := self.dialers(m); err != nil {
 		return fmt.Errorf("error creating dialers (%w)", err)
 	}
-	joiners = append(joiners, dialerJoiners...)
-	m.Operation = append(m.Operation, dialers...)
 
-	m.Operation = append(m.Operation, model.OperatingBinders{
-		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Joiner(joiners) },
-		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Closer(closer) },
-		func(m *model.Model) model.OperatingStage { return fablib_5_operation.Persist() },
-	}...)
+	m.AddOperatingStage(fablib_5_operation.Closer(closer))
+	m.AddOperatingStage(fablib_5_operation.Persist())
 
 	return nil
 }
 
-func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
-	hosts := m.SelectHosts(models.ServiceTag)
-	if len(hosts) < 1 {
-		return nil, fmt.Errorf("no '@server' hosts in model")
+func (_ *operationFactory) listeners(m *model.Model) error {
+	components := m.SelectComponents(models.ServiceTag)
+	if len(components) < 1 {
+		return fmt.Errorf("no '%v' components in model", models.ServiceTag)
 	}
 
-	for _, host := range hosts {
-		boundHost := host
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopListener(boundHost, nil)
-		})
+	for _, c := range components {
+		remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
+		stage := zitilib_5_operation.LoopListener(c.GetHost(), nil, "edge:perf-test", "--config-file", remoteConfigFile)
+		m.AddOperatingStage(stage)
 	}
 
-	return binders, nil
+	return nil
 }
 
-func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
-	initiators := m.SelectHosts(models.ClientTag)
-	if len(initiators) != 1 {
-		return nil, nil, fmt.Errorf("expected 1 '@client' host in model")
+func (_ *operationFactory) dialers(m *model.Model) error {
+	components := m.SelectComponents(models.ClientTag)
+	if len(components) < 1 {
+		return fmt.Errorf("no '%v' components in model", models.ClientTag)
 	}
 
-	endpoint := fmt.Sprintf("tls:%s:7002", initiators[0].PublicIp)
+	var joiners []chan struct{}
 
-	binders = make([]model.OperatingBinder, 0)
-
-	hosts, err := m.MustSelectHosts(models.ClientTag, 1)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, host := range hosts {
+	for _, c := range components {
 		joiner := make(chan struct{}, 1)
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopDialer(host, "10-ambient.loop2.yml", endpoint, joiner)
-		})
+		remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
+		stage := zitilib_5_operation.LoopDialer(c.GetHost(), "10-ambient.loop2.yml", "edge:perf-test", joiner, "--config-file", remoteConfigFile)
+		m.AddOperatingStage(stage)
 		joiners = append(joiners, joiner)
 	}
 
-	return binders, joiners, nil
+	m.AddOperatingStage(fablib_5_operation.Joiner(joiners))
+
+	return nil
 }
 
 type operationFactory struct{}

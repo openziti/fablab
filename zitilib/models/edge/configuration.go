@@ -32,6 +32,13 @@ func (self *configurationFactory) Build(m *model.Model) error {
 			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
 		},
 		func(m *model.Model) model.ConfigurationStage { return config.Component() },
+		func(m *model.Model) model.ConfigurationStage {
+			configs := []config.StaticConfig{
+				{Src: "loop/10-ambient.loop2.yml", Name: "10-ambient.loop2.yml"},
+				{Src: "loop/4k-chatter.loop2.yml", Name: "4k-chatter.loop2.yml"},
+			}
+			return config.Static(configs)
+		},
 	}
 	return nil
 }

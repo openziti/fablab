@@ -7,16 +7,20 @@ import (
 	"path/filepath"
 )
 
-func Login(ctrl *model.Host) model.Action {
+func Login(hostSelector string) model.Action {
 	return &login{
-		ctrl: ctrl,
+		hostSelector: hostSelector,
 	}
 }
 
 func (l *login) Execute(m *model.Model) error {
+	ctrl, err := m.SelectHost(l.hostSelector)
+	if err != nil {
+		return err
+	}
 	username := m.MustVariable("credentials", "edge", "username").(string)
 	password := m.MustVariable("credentials", "edge", "password").(string)
-	edgeApiBaseUrl := l.ctrl.PublicIp + ":1280"
+	edgeApiBaseUrl := ctrl.PublicIp + ":1280"
 
 	caChain := filepath.Join(model.PkiBuild(), "intermediate", "certs", "intermediate.cert")
 
@@ -28,10 +32,10 @@ func (l *login) Execute(m *model.Model) error {
 		return errors.New("variable credentials/edge/password must be a string")
 	}
 
-	_, err := cli.Exec(m, "edge", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password)
+	_, err = cli.Exec(m, "edge", "login", edgeApiBaseUrl, "-c", caChain, "-u", username, "-p", password)
 	return err
 }
 
 type login struct {
-	ctrl *model.Host
+	hostSelector string
 }

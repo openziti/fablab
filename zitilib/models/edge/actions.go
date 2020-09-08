@@ -11,8 +11,9 @@ func newActionsFactory() model.Factory {
 
 func (f *actionsFactory) Build(m *model.Model) error {
 	m.Actions = model.ActionBinders{
-		"bootstrap": actions.NewBootstrapAction(),
-		"start":     actions.NewStartAction(),
+		"bootstrap":          actions.NewBootstrapAction(),
+		"start":              actions.NewStartAction(),
+		"syncModelEdgeState": actions.NewSyncModelEdgeStateAction(),
 	}
 	return nil
 }

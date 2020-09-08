@@ -11,6 +11,7 @@ import (
 
 func init() {
 	modelListCmd.AddCommand(listHostsCmd)
+	modelListCmd.AddCommand(listComponentsCmd)
 	modelCmd.AddCommand(modelListCmd)
 	RootCmd.AddCommand(modelCmd)
 }
@@ -30,8 +31,16 @@ var modelListCmd = &cobra.Command{
 var listHostsCmd = &cobra.Command{
 	Use:   "hosts <spec?>",
 	Short: "list hosts",
-	Args:  cobra.MaximumNArgs(2),
+	Args:  cobra.MaximumNArgs(1),
 	Run:   listHosts,
+}
+
+var listComponentsCmd = &cobra.Command{
+	Use:     "components <spec?>",
+	Aliases: []string{"comp"},
+	Short:   "list components",
+	Args:    cobra.MaximumNArgs(1),
+	Run:     listComponents,
 }
 
 func listHosts(cmd *cobra.Command, args []string) {
@@ -77,5 +86,46 @@ func listHosts(cmd *cobra.Command, args []string) {
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
 			panic(err)
 		}
+	}
+}
+
+func listComponents(cmd *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	label := model.GetLabel()
+	if label == nil {
+		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+		return
+	}
+
+	m, found := model.GetModel(label.Model)
+	if !found {
+		logrus.Fatalf("no such model [%s]", label.Model)
+	}
+
+	if !m.IsBound() {
+		logrus.Fatalf("model not bound")
+	}
+
+	componentSpec := "*"
+
+	if len(args) > 0 {
+		componentSpec = args[0]
+	}
+
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{"#", "ID", "Host", "Region", "Tags"})
+
+	count := 0
+	for _, c := range m.SelectComponents(componentSpec) {
+		t.AppendRow(table.Row{count + 1, c.GetId(), c.GetHost().GetId(), c.GetRegion().GetId(), strings.Join(c.Tags, ",")})
+		count++
+	}
+
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
+		panic(err)
 	}
 }
