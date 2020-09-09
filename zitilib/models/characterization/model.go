@@ -81,7 +81,7 @@ var Ziti = &model.Model{
 			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
-					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
+					Scope: model.Scope{Tags: model.Tags{"^ctrl"}},
 					Components: model.Components{
 						"ctrl": {
 							BinaryName:     "ziti-controller",
@@ -92,7 +92,7 @@ var Ziti = &model.Model{
 					},
 				},
 				"local": {
-					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
+					Scope: model.Scope{Tags: model.Tags{"^router", "^terminator"}},
 					Components: model.Components{
 						"local": {
 							BinaryName:     "ziti-router",
@@ -112,7 +112,7 @@ var Ziti = &model.Model{
 			Site:   "us-west-1c",
 			Hosts: model.Hosts{
 				"short": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"short": {
 							BinaryName:     "ziti-router",
@@ -132,7 +132,7 @@ var Ziti = &model.Model{
 			Site:   "ap-south-1a",
 			Hosts: model.Hosts{
 				"medium": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"medium": {
 							BinaryName:     "ziti-router",
@@ -152,7 +152,7 @@ var Ziti = &model.Model{
 			Site:   "ap-southeast-2c",
 			Hosts: model.Hosts{
 				"long": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"long": {
 							BinaryName:     "ziti-router",

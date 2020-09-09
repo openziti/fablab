@@ -128,7 +128,7 @@ func (m *Model) init(name string) {
 		m.Accept(func(e Entity) {
 			var tags Tags
 			for _, tag := range e.GetScope().Tags {
-				tag = strings.TrimPrefix(tag, DontInheritTagPrefix)
+				tag = strings.TrimPrefix(tag, InheritTagPrefix)
 				tags = append(tags, tag)
 			}
 			e.GetScope().Tags = tags

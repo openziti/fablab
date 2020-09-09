@@ -44,7 +44,7 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	 * Restart controller with new database.
 	 */
 	workflow.AddAction(component.Stop(models.ControllerTag))
-	workflow.AddAction(host.Exec(m.MustSelectHost(models.ControllerTag), "rm -f ~/ctrl.db"))
+	workflow.AddAction(host.Exec(m.MustSelectHost(models.HasControllerComponent), "rm -f ~/ctrl.db"))
 	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 

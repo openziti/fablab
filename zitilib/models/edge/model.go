@@ -85,12 +85,10 @@ var edge = &model.Model{
 
 	Regions: model.Regions{
 		"initiator": {
-			Scope:  model.Scope{Tags: model.Tags{"initiator"}},
 			Region: "us-east-1",
 			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
-					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
@@ -102,7 +100,6 @@ var edge = &model.Model{
 					},
 				},
 				"initiator": {
-					Scope: model.Scope{Tags: model.Tags{"edge-router"}},
 					Components: model.Components{
 						"initiator": {
 							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
@@ -114,7 +111,6 @@ var edge = &model.Model{
 					},
 				},
 				"client": {
-					Scope: model.Scope{Tags: model.Tags{"client", "sdk-app"}},
 					Components: model.Components{
 						"client1": {
 							Scope:          model.Scope{Tags: model.Tags{"client", "sdk-app"}},
@@ -128,10 +124,8 @@ var edge = &model.Model{
 		"terminator": {
 			Region: "us-west-1",
 			Site:   "us-west-1b",
-			Scope:  model.Scope{Tags: model.Tags{"terminator"}},
 			Hosts: model.Hosts{
 				"terminator": {
-					Scope: model.Scope{Tags: model.Tags{"edge-router"}},
 					Components: model.Components{
 						"terminator": {
 							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
@@ -143,9 +137,9 @@ var edge = &model.Model{
 					},
 				},
 				"service": {
-					Scope: model.Scope{Tags: model.Tags{"service", "sdk-app"}},
 					Components: model.Components{
 						"server1": {
+							Scope:          model.Scope{Tags: model.Tags{"service", "sdk-app"}},
 							BinaryName:     "ziti-fabric-test",
 							PublicIdentity: "server1",
 						},

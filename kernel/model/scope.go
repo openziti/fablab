@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	DontInheritTagPrefix = "^"
+	InheritTagPrefix = "^"
 )
 
 type Scope struct {
@@ -44,7 +44,7 @@ func (scope *Scope) setParent(parent *Scope) {
 	}
 
 	for _, tag := range parent.Tags {
-		if !strings.HasPrefix(tag, DontInheritTagPrefix) {
+		if strings.HasPrefix(tag, InheritTagPrefix) {
 			tags[tag] = struct{}{}
 		}
 	}
@@ -63,6 +63,11 @@ func (scope *Scope) HasTag(tag string) bool {
 		}
 	}
 	return false
+}
+
+func (scope *Scope) WithTags(tags ...string) *Scope {
+	scope.Tags = tags
+	return scope
 }
 
 type Data map[string]interface{}

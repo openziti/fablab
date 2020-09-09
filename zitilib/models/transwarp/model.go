@@ -34,7 +34,7 @@ var transwarpModel = &model.Model{
 		"local": {
 			Hosts: model.Hosts{
 				"local": {
-					Scope: model.Scope{Tags: model.Tags{"^ctrl", "^router", "^initiator", "^iperf_client"}},
+					Scope: model.Scope{Tags: model.Tags{"iperf_server"}},
 					Components: model.Components{
 						"ctrl": {
 							BinaryName:     "ziti-controller",
@@ -56,7 +56,6 @@ var transwarpModel = &model.Model{
 			},
 			Region: "us-east-1",
 			Site:   "us-east-1c",
-			// Scope:  model.Scope{Tags: model.Tags{"ctrl", "router", "initiator", "iperf_client"}},
 		},
 		"remote": {
 			Hosts: model.Hosts{
@@ -68,13 +67,13 @@ var transwarpModel = &model.Model{
 							ConfigSrc:      "transwarp_egress_router.yml",
 							ConfigName:     "remote.yml",
 							PublicIdentity: "remote",
+							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 						},
 					},
 				},
 			},
 			Region: "ap-southeast-2",
 			Site:   "ap-southeast-2c",
-			Scope:  model.Scope{Tags: model.Tags{"client", "router", "terminator", "iperf_server"}},
 		},
 	},
 

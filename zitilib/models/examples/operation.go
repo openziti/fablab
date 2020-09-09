@@ -104,9 +104,10 @@ func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBin
 	}
 
 	for _, host := range hosts {
+		boundHost := host
 		joiner := make(chan struct{}, 1)
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopDialer(host, "10-ambient.loop2.yml", endpoint, joiner)
+			return zitilib_5_operation.LoopDialer(boundHost, "10-ambient.loop2.yml", endpoint, joiner)
 		})
 		joiners = append(joiners, joiner)
 	}

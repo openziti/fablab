@@ -51,7 +51,7 @@ var tinyspot = &model.Model{
 				"001": {
 					InstanceResourceType: "spot",
 					SpotPrice:            "0.02",
-					Scope:                model.Scope{Tags: model.Tags{"^loop-dialer", "^loop-listener", "^iperf_server"}},
+					Scope:                model.Scope{Tags: model.Tags{"loop-dialer", "loop-listener", "iperf_server"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
