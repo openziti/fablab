@@ -20,6 +20,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions"
 	"github.com/openziti/fablab/kernel/fablib/actions/component"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 )
 
 type stopAction struct{}
@@ -31,7 +32,7 @@ func newStopAction() model.ActionBinder {
 
 func (_ *stopAction) bind(_ *model.Model) model.Action {
 	return actions.Workflow(
-		component.Stop("*", "*", "@router"),
-		component.Stop("*", "*", "@ctrl"),
+		component.Stop(models.RouterTag),
+		component.Stop(models.ControllerTag),
 	)
 }

@@ -22,31 +22,23 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func Start(regionSpec, hostSpec, componentSpec string) model.Action {
+func Start(componentSpec string) model.Action {
 	return &start{
-		regionSpec:    regionSpec,
-		hostSpec:      hostSpec,
 		componentSpec: componentSpec,
 	}
 }
 
 func (start *start) Execute(m *model.Model) error {
-	hosts := m.SelectHosts(start.regionSpec, start.hostSpec)
-	for _, h := range hosts {
-		components := h.SelectComponents(start.componentSpec)
-		for _, c := range components {
-			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
+	for _, c := range m.SelectComponents(start.componentSpec) {
+		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
-			if err := fablib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
-				return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, h.PublicIp, err)
-			}
+		if err := fablib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
+			return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
 	}
 	return nil
 }
 
 type start struct {
-	regionSpec    string
-	hostSpec      string
 	componentSpec string
 }

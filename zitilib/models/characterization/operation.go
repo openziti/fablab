@@ -20,6 +20,7 @@ import (
 	"fmt"
 	operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 	"github.com/openziti/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
@@ -29,36 +30,36 @@ func newOperationFactory() model.Factory {
 }
 
 func (f *operationFactory) Build(m *model.Model) error {
-	values := m.SelectHosts("local", "service")
+	values := m.SelectHosts("#local > #service")
 	var directEndpoint string
 	if len(values) == 1 {
 		directEndpoint = values[0].PublicIp
 	} else {
-		return fmt.Errorf("need single host for local:@service, found [%d]", len(values))
+		return fmt.Errorf("need single host for #local > #service, found [%d]", len(values))
 	}
 
-	values = m.SelectHosts("short", "short")
+	values = m.SelectHosts("#short > #short")
 	var shortProxy string
 	if len(values) == 1 {
 		shortProxy = values[0].PrivateIp
 	} else {
-		return fmt.Errorf("need single host for short:short, found [%d]", len(values))
+		return fmt.Errorf("need single host for #short > #short, found [%d]", len(values))
 	}
 
-	values = m.SelectHosts("medium", "medium")
+	values = m.SelectHosts("#medium > #medium")
 	var mediumProxy string
 	if len(values) == 1 {
 		mediumProxy = values[0].PrivateIp
 	} else {
-		return fmt.Errorf("need a single host for medium:medium, found [%d]", len(values))
+		return fmt.Errorf("need a single host for #medium > #medium, found [%d]", len(values))
 	}
 
-	values = m.SelectHosts("long", "long")
+	values = m.SelectHosts("#long > #long")
 	var longProxy string
 	if len(values) == 1 {
 		longProxy = values[0].PrivateIp
 	} else {
-		return fmt.Errorf("need a single host for long:long, found [%d]", len(values))
+		return fmt.Errorf("need a single host for #long > #long, found [%d]", len(values))
 	}
 
 	minutes := m.Variables.Must("characterization", "sample_minutes")
@@ -73,9 +74,9 @@ func (f *operationFactory) Build(m *model.Model) error {
 		func(m *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
 	}
 
-	m.Operation = append(m.Operation, f.forRegion("short", shortProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
-	m.Operation = append(m.Operation, f.forRegion("medium", mediumProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
-	m.Operation = append(m.Operation, f.forRegion("long", longProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
+	m.Operation = append(m.Operation, f.forRegion("#short", shortProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
+	m.Operation = append(m.Operation, f.forRegion("#medium", mediumProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
+	m.Operation = append(m.Operation, f.forRegion("#long", longProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
 
 	m.Operation = append(m.Operation, []model.OperatingBinder{
 		func(m *model.Model) model.OperatingStage { return operation.Closer(c) },
@@ -88,6 +89,9 @@ func (f *operationFactory) Build(m *model.Model) error {
 func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint string, tcpdump bool, snaplen, seconds int, m *model.Model) []model.OperatingBinder {
 	binders := make(model.OperatingBinders, 0)
 
+	serverHosts := model.Selector(models.LocalId, models.ServiceTag)
+	clientHosts := model.Selector(region, models.ClientTag)
+
 	/*
 	 * Ziti Bandwidth Testing
 	 */
@@ -98,16 +102,16 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	if tcpdump {
 		joiner := make(chan struct{})
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("ziti", region, "client", snaplen, joiner)
+			return operation.Tcpdump("ziti", clientHosts, snaplen, joiner)
 		})
 		joiners0 = append(joiners0, joiner)
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
-		return operation.Iperf("ziti", initiatingRouter, "local", "service", region, "client", seconds)
+		return operation.Iperf("ziti", initiatingRouter, serverHosts, clientHosts, seconds)
 	})
 	if tcpdump {
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.TcpdumpCloser(region, "client")
+			return operation.TcpdumpCloser(clientHosts)
 		})
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
@@ -129,16 +133,16 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	if tcpdump {
 		joiner := make(chan struct{})
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.Tcpdump("internet", region, "client", snaplen, joiner)
+			return operation.Tcpdump("internet", clientHosts, snaplen, joiner)
 		})
 		joiners1 = append(joiners1, joiner)
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
-		return operation.Iperf("internet", directEndpoint, "local", "service", region, "client", seconds)
+		return operation.Iperf("internet", directEndpoint, serverHosts, clientHosts, seconds)
 	})
 	if tcpdump {
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.TcpdumpCloser(region, "client")
+			return operation.TcpdumpCloser(clientHosts)
 		})
 	}
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
@@ -155,7 +159,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	 */
 	if tcpdump {
 		binders = append(binders, func(m *model.Model) model.OperatingStage {
-			return operation.Retrieve(region, "client", ".", ".pcap")
+			return operation.Retrieve(clientHosts, ".", ".pcap")
 		})
 	}
 	/* */
@@ -168,7 +172,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	stages2, joiners2 := f.sarStages(scenario2, m, 1)
 	binders = append(binders, stages2...)
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
-		return operation.IperfUdp("ziti_1m", initiatingRouter, "local", "service", region, "client", "1M", seconds)
+		return operation.IperfUdp("ziti_1m", initiatingRouter, serverHosts, clientHosts, "1M", seconds)
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
@@ -184,7 +188,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	stages3, joiners3 := f.sarStages(scenario3, m, 1)
 	binders = append(binders, stages3...)
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
-		return operation.IperfUdp("internet_1m", directEndpoint, "local", "service", region, "client", "1M", seconds)
+		return operation.IperfUdp("internet_1m", directEndpoint, serverHosts, clientHosts, "1M", seconds)
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
 	binders = append(binders, func(m *model.Model) model.OperatingStage {
@@ -199,10 +203,10 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	return binders
 }
 
-func (f *operationFactory) sarStages(scenario string, m *model.Model, intervalSeconds int) ([]model.OperatingBinder, []chan struct{}) {
+func (f *operationFactory) sarStages(scenario string, m *model.Model, _ int) ([]model.OperatingBinder, []chan struct{}) {
 	binders := make([]model.OperatingBinder, 0)
 	joiners := make([]chan struct{}, 0)
-	for _, host := range m.SelectHosts("*", "*") {
+	for _, host := range m.SelectHosts("*") {
 		h := host // because stage is func (closure)
 		joiner := make(chan struct{})
 		stage := func(m *model.Model) model.OperatingStage {
@@ -216,7 +220,7 @@ func (f *operationFactory) sarStages(scenario string, m *model.Model, intervalSe
 
 func (f *operationFactory) sarCloserStages(m *model.Model) []model.OperatingBinder {
 	binders := make(model.OperatingBinders, 0)
-	for _, host := range m.SelectHosts("*", "*") {
+	for _, host := range m.SelectHosts("*") {
 		h := host // because stage is func (closer)
 		stage := func(m *model.Model) model.OperatingStage {
 			return operation.SarCloser(h)

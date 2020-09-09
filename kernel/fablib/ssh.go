@@ -67,7 +67,9 @@ func RemoteShell(factory SshConfigFactory) error {
 	if err != nil {
 		return err
 	}
-	fd := int(os.Stdin.Fd())
+
+	fd := int(os.Stdout.Fd())
+
 	oldState, err := terminal.MakeRaw(fd)
 	if err != nil {
 		panic(err)
@@ -227,6 +229,43 @@ func RemoteFileList(factory SshConfigFactory, path string) ([]os.FileInfo, error
 	}
 
 	return files, nil
+}
+
+func SendFile(factory SshConfigFactory, localPath string, remotePath string) error {
+	localFile, err := ioutil.ReadFile(localPath)
+
+	if err != nil {
+		return err
+	}
+
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	rmtFile, err := client.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+
+	if err != nil {
+		return err
+	}
+	defer rmtFile.Close()
+
+	_, err = rmtFile.Write(localFile)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...string) error {

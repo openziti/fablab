@@ -16,10 +16,16 @@
 
 package zitilib_characterization
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
+	"github.com/openziti/fablab/kernel/model"
+)
 
 func init() {
 	model.RegisterModel("zitilib/characterization", Ziti)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 // Static model skeleton for zitilib/characterization
@@ -71,15 +77,13 @@ var Ziti = &model.Model{
 
 	Regions: model.Regions{
 		"local": {
-			Scope: model.Scope{Tags: model.Tags{"ctrl", "router", "iperf_server"}},
-			Id:    "us-east-1",
-			Az:    "us-east-1a",
+			Region: "us-east-1",
+			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
-					Scope: model.Scope{Tags: model.Tags{"ctrl"}},
+					Scope: model.Scope{Tags: model.Tags{"^ctrl"}},
 					Components: model.Components{
 						"ctrl": {
-							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl.yml",
 							ConfigName:     "ctrl.yml",
@@ -88,10 +92,9 @@ var Ziti = &model.Model{
 					},
 				},
 				"local": {
-					Scope: model.Scope{Tags: model.Tags{"router", "terminator"}},
+					Scope: model.Scope{Tags: model.Tags{"^router", "^terminator"}},
 					Components: model.Components{
 						"local": {
-							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "egress_router.yml",
 							ConfigName:     "local.yml",
@@ -105,15 +108,13 @@ var Ziti = &model.Model{
 			},
 		},
 		"short": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "us-west-1",
-			Az:    "us-west-1c",
+			Region: "us-west-1",
+			Site:   "us-west-1c",
 			Hosts: model.Hosts{
 				"short": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"short": {
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "short.yml",
@@ -127,15 +128,13 @@ var Ziti = &model.Model{
 			},
 		},
 		"medium": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "ap-south-1",
-			Az:    "ap-south-1a",
+			Region: "ap-south-1",
+			Site:   "ap-south-1a",
 			Hosts: model.Hosts{
 				"medium": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"medium": {
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "medium.yml",
@@ -149,15 +148,13 @@ var Ziti = &model.Model{
 			},
 		},
 		"long": {
-			Scope: model.Scope{Tags: model.Tags{"router"}},
-			Id:    "ap-southeast-2",
-			Az:    "ap-southeast-2c",
+			Region: "ap-southeast-2",
+			Site:   "ap-southeast-2c",
 			Hosts: model.Hosts{
 				"long": {
-					Scope: model.Scope{Tags: model.Tags{"router"}},
+					Scope: model.Scope{Tags: model.Tags{"^router"}},
 					Components: model.Components{
 						"long": {
-							Scope:          model.Scope{Tags: model.Tags{"router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "long.yml",

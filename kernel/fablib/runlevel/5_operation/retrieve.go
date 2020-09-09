@@ -24,9 +24,8 @@ import (
 	"strings"
 )
 
-func Retrieve(region, host, path, extension string) model.OperatingStage {
+func Retrieve(host, path, extension string) model.OperatingStage {
 	return &retrieve{
-		region:    region,
 		host:      host,
 		path:      path,
 		extension: extension,
@@ -34,9 +33,10 @@ func Retrieve(region, host, path, extension string) model.OperatingStage {
 }
 
 func (self *retrieve) Operate(m *model.Model, run string) error {
-	hosts := m.SelectHosts(self.region, self.host)
+	hosts := m.SelectHosts(self.host)
 	if len(hosts) == 1 {
-		ssh := fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
+		host := hosts[0]
+		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 
 		if files, err := fablib.RemoteFileList(ssh, self.path); err == nil {
 			paths := make([]string, 0)
@@ -45,7 +45,7 @@ func (self *retrieve) Operate(m *model.Model, run string) error {
 					paths = append(paths, file.Name())
 				}
 			}
-			forensicsPath := model.AllocateForensicScenario(run, self.region)
+			forensicsPath := model.AllocateForensicScenario(run, host.GetRegion().GetId())
 			if err := os.MkdirAll(forensicsPath, os.ModePerm); err != nil {
 				return fmt.Errorf("error creating forensics root [%s] (%w)", forensicsPath, err)
 			}
@@ -68,7 +68,6 @@ func (self *retrieve) Operate(m *model.Model, run string) error {
 }
 
 type retrieve struct {
-	region    string
 	host      string
 	path      string
 	extension string

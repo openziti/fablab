@@ -14,33 +14,24 @@
 	limitations under the License.
 */
 
-package mattermozt
+package edge
 
 import (
-	"fmt"
+	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func newRegionFactory() model.Factory {
-	return &regionFactory{}
+func newDistributionFactory() model.Factory {
+	return &distributionFactory{}
 }
 
-func (self *regionFactory) Build(m *model.Model) error {
-	r, found := m.Regions["local"]
-	if !found {
-		return fmt.Errorf("missing 'local' region")
+func (self *distributionFactory) Build(m *model.Model) error {
+	m.Distribution = model.DistributionBinders{
+		func(m *model.Model) model.DistributionStage { return distribution.Locations("*", "logs") },
+		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
-	region, found := m.Variables.Get("mattermozt", "region")
-	if !found {
-		return fmt.Errorf("missing 'mattermozt/region' variable")
-	}
-	az, found := m.Variables.Get("mattermozt", "az")
-	if !found {
-		return fmt.Errorf("missing 'mattermozt/az' variable")
-	}
-	r.Id = region.(string)
-	r.Az = az.(string)
 	return nil
 }
 
-type regionFactory struct{}
+type distributionFactory struct{}

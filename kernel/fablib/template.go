@@ -28,12 +28,8 @@ import (
 
 func TemplateFuncMap(m *model.Model) template.FuncMap {
 	return template.FuncMap{
-		"publicIp": func(regionTag, hostTag string) string {
-			host := m.MustSelectHost(regionTag, hostTag)
-			if host != nil {
-				return host.PublicIp
-			}
-			return ""
+		"publicIp": func(hostSpec string) string {
+			return m.MustSelectHost(hostSpec).PublicIp
 		},
 		"instanceTemplate": func(h *model.Host) string {
 			if h.InstanceResourceType == "" {

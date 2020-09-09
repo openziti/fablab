@@ -16,10 +16,16 @@
 
 package dilithium
 
-import "github.com/openziti/fablab/kernel/model"
+import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
+	"github.com/openziti/fablab/kernel/model"
+)
 
 func init() {
 	model.RegisterModel("zitilib/development/dilithium", dilithiumModel)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 var dilithiumModel = &model.Model{
@@ -27,18 +33,18 @@ var dilithiumModel = &model.Model{
 		"local": {
 			Scope: model.Scope{Tags: model.Tags{"virginia"}},
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {InstanceType: "t2.medium"},
 			},
-			Id: "us-east-1",
-			Az: "us-east-1a",
+			Region: "us-east-1",
+			Site:   "us-east-1a",
 		},
 		"remote": {
 			Scope: model.Scope{Tags: model.Tags{"california"}},
 			Hosts: model.Hosts{
-				"host": {},
+				"host": {InstanceType: "t2.medium"},
 			},
-			Id: "us-west-1",
-			Az: "us-west-1c",
+			Region: "us-west-1",
+			Site:   "us-west-1c",
 		},
 	},
 

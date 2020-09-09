@@ -77,7 +77,7 @@ type BootstrapExtension interface {
 func bootstrapModel() (*Model, error) {
 	l := GetLabel()
 	if l != nil {
-		m, found := modelRegistry[l.Model]
+		m, found := GetModel(l.Model)
 		if !found {
 			return nil, fmt.Errorf("no such model [%s]", l.Model)
 		}

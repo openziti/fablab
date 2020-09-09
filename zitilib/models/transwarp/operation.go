@@ -19,6 +19,7 @@ package transwarp
 import (
 	operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 	zitilib_runlevel_5_operation "github.com/openziti/fablab/zitilib/runlevel/5_operation"
 )
 
@@ -29,19 +30,19 @@ func newOperationFactory() model.Factory {
 }
 
 func (_ *operationFactory) Build(m *model.Model) error {
-	directEndpoint := m.MustSelectHost("local", "local").PublicIp
-	remoteProxy := m.MustSelectHost("remote", "remote").PrivateIp
+	directEndpoint := m.MustSelectHost(models.RemoteId).PublicIp
+	remoteProxy := m.MustSelectHost(models.LocalId).PrivateIp
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
 		func(_ *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
 
 		func(_ *model.Model) model.OperatingStage { return operation.Banner("transwarp") },
-		func(_ *model.Model) model.OperatingStage { return operation.Iperf("ziti", remoteProxy, "local", "local", "remote", "remote", 30) },
+		func(_ *model.Model) model.OperatingStage { return operation.Iperf("ziti", remoteProxy, models.RemoteId, models.LocalId, 30) },
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
 		func(_ *model.Model) model.OperatingStage { return operation.Banner("internet") },
-		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, "local", "local", "remote", "remote", 30)},
+		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, models.RemoteId, models.LocalId, 30) },
 		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
 
 		func(_ *model.Model) model.OperatingStage { return operation.Closer(c) },

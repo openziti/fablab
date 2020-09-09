@@ -17,10 +17,16 @@
 package model
 
 import (
+	"github.com/openziti/foundation/util/stringz"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
+)
+
+const (
+	SelectorTagPrefix = "."
+	SelectorIdPrefix  = "#"
 )
 
 func (m *Model) IsBound() bool {
@@ -52,127 +58,79 @@ func (m *Model) GetAction(name string) (Action, bool) {
 	return action, found
 }
 
-func (m *Model) SelectRegions(regionSpec string) []*Region {
+func (m *Model) SelectRegions(spec string) []*Region {
+	matcher := compileSelector(spec)
 	var regions []*Region
-	for id, region := range m.Regions {
-		if regionSpec == "*" || regionSpec == id {
+	for _, region := range m.Regions {
+		if matcher(region) {
 			regions = append(regions, region)
-		} else if strings.HasPrefix(regionSpec, "@") {
-			for _, tag := range region.Tags {
-				if tag == regionSpec[1:] {
-					regions = append(regions, region)
-				}
-			}
 		}
 	}
 	return regions
 }
 
-func (m *Model) SelectRegion(regionSpec string) (*Region, error) {
-	regions := m.SelectRegions(regionSpec)
+func (m *Model) SelectRegion(spec string) (*Region, error) {
+	regions := m.SelectRegions(spec)
 	if len(regions) == 1 {
 		return regions[0], nil
 	} else {
-		return nil, errors.Errorf("[%s] matched [%d] regions, expected 1", regionSpec, len(regions))
+		return nil, errors.Errorf("[%s] matched [%d] regions, expected 1", spec, len(regions))
 	}
 }
 
-func (m *Model) MustSelectRegion(regionSpec string) *Region {
-	region, err := m.SelectRegion(regionSpec)
+func (m *Model) MustSelectRegion(spec string) *Region {
+	region, err := m.SelectRegion(spec)
 	if err != nil {
 		panic(err)
 	}
 	return region
 }
 
-func (m *Model) SelectHosts(regionSpec, hostSpec string) []*Host {
+func (m *Model) SelectHosts(spec string) []*Host {
+	matcher := compileSelector(spec)
 	var hosts []*Host
-	regions := m.SelectRegions(regionSpec)
-	for _, region := range regions {
-		for id, host := range region.Hosts {
-			if hostSpec == "*" || hostSpec == id {
+	for _, region := range m.Regions {
+		for _, host := range region.Hosts {
+			if matcher(host) {
 				hosts = append(hosts, host)
-			} else if strings.HasPrefix(hostSpec, "@") {
-				for _, tag := range host.Tags {
-					if tag == hostSpec[1:] {
-						hosts = append(hosts, host)
-					}
-				}
 			}
 		}
 	}
 	return hosts
 }
 
-func (m *Model) SelectHost(regionSpec, hostSpec string) (*Host, error) {
-	hosts := m.SelectHosts(regionSpec, hostSpec)
+func (m *Model) MustSelectHosts(spec string, minCount int) ([]*Host, error) {
+	hosts := m.SelectHosts(spec)
+	if len(hosts) < minCount {
+		return nil, errors.Errorf("[%s] matched [%d] hosts, expected at least %v", spec, len(hosts), minCount)
+	}
+	return hosts, nil
+}
+
+func (m *Model) SelectHost(spec string) (*Host, error) {
+	hosts := m.SelectHosts(spec)
 	if len(hosts) == 1 {
 		return hosts[0], nil
 	} else {
-		return nil, errors.Errorf("[%s, %s] matched [%d] hosts, expected 1", regionSpec, hostSpec, len(hosts))
+		return nil, errors.Errorf("[%s] matched [%d] hosts, expected 1", spec, len(hosts))
 	}
 }
 
-func (m *Model) MustSelectHost(regionSpec, hostSpec string) *Host {
-	host, err := m.SelectHost(regionSpec, hostSpec)
+func (m *Model) MustSelectHost(spec string) *Host {
+	host, err := m.SelectHost(spec)
 	if err != nil {
 		panic(err)
 	}
 	return host
 }
 
-func (m *Model) SelectComponents(regionSpec, hostSpec, componentSpec string) []*Component {
+func (m *Model) SelectComponents(spec string) []*Component {
+	matcher := compileSelector(spec)
 	var components []*Component
-	hosts := m.SelectHosts(regionSpec, hostSpec)
-	for _, host := range hosts {
-		for componentId, component := range host.Components {
-			if componentSpec == "*" || componentSpec == componentId {
-				components = append(components, component)
-			} else if strings.HasPrefix(componentSpec, "@") {
-				for _, tag := range component.Tags {
-					if tag == componentSpec[1:] {
-						components = append(components, component)
-					}
-				}
-			}
-		}
-	}
-	return components
-}
-
-func (m *Model) GetAllRegions() []*Region {
-	var regions []*Region
 	for _, region := range m.Regions {
-		regions = append(regions, region)
-	}
-	return regions
-}
-
-func (r *Region) GetAllHosts() []*Host {
-	hosts := make([]*Host, 0)
-	for _, host := range r.Hosts {
-		hosts = append(hosts, host)
-	}
-	return hosts
-}
-
-func (h *Host) HasTag(tag string) bool {
-	for _, hostTag := range h.Tags {
-		if hostTag == tag {
-			return true
-		}
-	}
-	return false
-}
-
-func (h *Host) SelectComponents(componentSpec string) []*Component {
-	var components []*Component
-	for id, component := range h.Components {
-		if componentSpec == "*" || componentSpec == id {
-			components = append(components, component)
-		} else if strings.HasPrefix(componentSpec, "@") {
-			for _, tag := range component.Tags {
-				if tag == componentSpec[1:] {
+		for _, host := range region.Hosts {
+			for _, component := range host.Components {
+				if matcher(component) {
 					components = append(components, component)
 				}
 			}
@@ -181,19 +139,144 @@ func (h *Host) SelectComponents(componentSpec string) []*Component {
 	return components
 }
 
-func (h *Host) SelectComponent(componentSpec string) (*Component, error) {
-	components := h.SelectComponents(componentSpec)
+func (m *Model) SelectComponent(spec string) (*Component, error) {
+	components := m.SelectComponents(spec)
 	if len(components) == 1 {
 		return components[0], nil
 	} else {
-		return nil, errors.Errorf("[%s] returned [%d] components, expected 1", componentSpec, len(components))
+		return nil, errors.Errorf("[%s] matched [%d] components, expected 1", spec, len(components))
 	}
 }
 
-func (h *Host) MustSelectComponent(componentSpec string) *Component {
-	component, err := h.SelectComponent(componentSpec)
-	if err != nil {
-		panic(err)
+type EntityMatcher func(Entity) bool
+
+func (m EntityMatcher) Or(m2 EntityMatcher) EntityMatcher {
+	return func(e Entity) bool {
+		return m(e) || m2(e)
 	}
-	return component
+}
+
+func (m EntityMatcher) And(m2 EntityMatcher) EntityMatcher {
+	return func(e Entity) bool {
+		return m(e) && m2(e)
+	}
+}
+
+func compileSelector(in string) EntityMatcher {
+	parts := strings.Split(in, ">")
+
+	// stack them in reverse order so we can evaluate target entity up the parents
+	matchers := make([]EntityMatcher, len(parts))
+	for idx, part := range parts {
+		matcher := compileLevelSelector(part)
+		matchers[len(parts)-(idx+1)] = matcher
+	}
+
+	return func(entity Entity) bool {
+		current := entity
+		for _, matcher := range matchers {
+			if current == nil || !matcher(current) {
+				return false
+			}
+			current = current.GetParentEntity()
+		}
+		return true
+	}
+}
+
+func compileLevelSelector(in string) EntityMatcher {
+	specs := strings.Split(in, ",")
+	result := compileSelectorGroup(specs[0])
+	for _, spec := range specs[1:] {
+		result = result.Or(compileSelectorGroup(spec))
+	}
+	return result
+}
+
+func compileSelectorGroup(in string) EntityMatcher {
+	parts := strings.Split(in, " ")
+	parts = stringz.Remove(parts, "")
+	result := specToMatcher(parts[0])
+	for _, part := range parts[1:] {
+		result = result.And(specToMatcher(part))
+	}
+	return result
+}
+
+func specToMatcher(spec string) EntityMatcher {
+	spec = strings.TrimSpace(spec)
+	if spec == "*" {
+		return func(Entity) bool {
+			return true
+		}
+	}
+
+	var entityType string
+	var entityId string
+	var entityTags []string
+
+	if !strings.HasPrefix(spec, SelectorTagPrefix) && !strings.HasPrefix(spec, SelectorIdPrefix) {
+		if idx := strings.Index(spec, SelectorIdPrefix); idx > 0 {
+			entityType = spec[0:idx]
+			spec = spec[idx:]
+		} else if idx := strings.Index(spec, SelectorTagPrefix); idx > 0 {
+			entityType = spec[0:idx]
+			spec = spec[idx:]
+		}
+	}
+
+	if strings.HasPrefix(spec, SelectorIdPrefix) {
+		if idx := strings.Index(spec, SelectorTagPrefix); idx > 0 {
+			entityId = spec[1:idx]
+			spec = spec[idx:]
+		} else {
+			entityId = spec[1:]
+			spec = ""
+		}
+	}
+
+	if strings.HasPrefix(spec, SelectorTagPrefix) {
+		entityTags = strings.Split(spec, SelectorTagPrefix)
+		entityTags = stringz.Remove(entityTags, "")
+	}
+
+	var matcher EntityMatcher
+	if entityId != "" {
+		matcher = func(e Entity) bool {
+			return e.GetId() == entityId
+		}
+	}
+
+	for _, tag := range entityTags {
+		tagMatcher := newTagSelector(tag)
+		if matcher == nil {
+			matcher = tagMatcher
+		} else {
+			matcher = matcher.And(tagMatcher)
+		}
+	}
+
+	if matcher == nil {
+		return func(e Entity) bool {
+			return true
+		}
+	}
+
+	if entityType == "" {
+		return matcher
+	}
+
+	return func(e Entity) bool {
+		return e.Matches(entityType, matcher)
+	}
+}
+
+func newTagSelector(tag string) EntityMatcher {
+	return func(e Entity) bool {
+		return stringz.Contains(e.GetScope().Tags, tag)
+	}
+}
+
+func Selector(levels ...string) string {
+	return strings.Join(levels, " > ")
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/component"
 	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 	"time"
 )
 
@@ -29,11 +30,11 @@ func NewStartAction() model.ActionBinder {
 	return action.bind
 }
 
-func (self *startAction) bind(m *model.Model) model.Action {
+func (self *startAction) bind(*model.Model) model.Action {
 	workflow := actions.Workflow()
-	workflow.AddAction(component.Start("@ctrl", "@ctrl", "@ctrl"))
+	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
-	workflow.AddAction(component.Start("@router", "@router", "@router"))
+	workflow.AddAction(component.Start(models.RouterTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 	return workflow
 }

@@ -161,11 +161,11 @@ func (r *Region) Merge(parent *Region) (*Region, error) {
 		return nil, fmt.Errorf("error merging region scope (%w)", err)
 	}
 
-	if r.Id != "" {
-		merged.Id = r.Id
+	if r.Region != "" {
+		merged.Region = r.Region
 	}
-	if r.Az != "" {
-		merged.Az = r.Az
+	if r.Site != "" {
+		merged.Site = r.Site
 	}
 
 	if merged.Hosts, err = r.Hosts.Merge(parent.Hosts); err != nil {

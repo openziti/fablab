@@ -31,7 +31,16 @@ import (
 )
 
 func Metrics(closer chan struct{}) model.OperatingStage {
-	return &metrics{closer: closer}
+	return MetricsWithIdMapper(closer, func(id string) string {
+		return "#" + id
+	})
+}
+
+func MetricsWithIdMapper(closer chan struct{}, f func(string) string) model.OperatingStage {
+	return &metrics{
+		closer:             closer,
+		idToSelectorMapper: f,
+	}
 }
 
 func (metrics *metrics) Operate(m *model.Model, _ string) error {
@@ -53,9 +62,7 @@ func (metrics *metrics) Operate(m *model.Model, _ string) error {
 	metrics.ch.AddReceiveHandler(metrics)
 
 	request := &mgmt_pb.StreamMetricsRequest{
-		Matchers: []*mgmt_pb.StreamMetricsRequest_MetricMatcher{
-			&mgmt_pb.StreamMetricsRequest_MetricMatcher{},
-		},
+		Matchers: []*mgmt_pb.StreamMetricsRequest_MetricMatcher{},
 	}
 	body, err := proto.Marshal(request)
 	if err != nil {
@@ -63,18 +70,9 @@ func (metrics *metrics) Operate(m *model.Model, _ string) error {
 	}
 
 	requestMsg := channel2.NewMessage(int32(mgmt_pb.ContentType_StreamMetricsRequestType), body)
-	errCh, err := metrics.ch.SendAndSync(requestMsg)
+	err = metrics.ch.SendWithTimeout(requestMsg, 5*time.Second)
 	if err != nil {
 		logrus.Fatalf("error queuing metrics request (%v)", err)
-	}
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("error sending metrics request (%w)", err)
-		}
-
-	case <-time.After(5 * time.Second):
-		return fmt.Errorf("timeout")
 	}
 
 	metrics.m = m
@@ -94,7 +92,8 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		logrus.Error("error handling metrics receive (%w)", err)
 	}
 
-	host, err := metrics.m.SelectHost("*", response.SourceId)
+	hostSelector := metrics.idToSelectorMapper(response.SourceId)
+	host, err := metrics.m.SelectHost(hostSelector)
 	if err == nil {
 		if host.Data == nil {
 			host.Data = make(map[string]interface{})
@@ -131,9 +130,10 @@ func (metrics *metrics) runMetrics() {
 }
 
 type metrics struct {
-	ch     channel2.Channel
-	m      *model.Model
-	closer chan struct{}
+	ch                 channel2.Channel
+	m                  *model.Model
+	closer             chan struct{}
+	idToSelectorMapper func(string) string
 }
 
 func SummarizeZitiFabricMetrics(metrics *mgmt_pb.StreamMetricsEvent) (model.ZitiFabricRouterMetricsSummary, error) {

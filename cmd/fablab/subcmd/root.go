@@ -17,6 +17,7 @@
 package subcmd
 
 import (
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
@@ -29,6 +30,7 @@ func Execute() error {
 
 func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose logging")
+	RootCmd.PersistentFlags().StringVarP(&instanceId, "instance", "i", "", "specify the instance to use")
 }
 
 var RootCmd = &cobra.Command{
@@ -38,6 +40,9 @@ var RootCmd = &cobra.Command{
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
+		model.InitInstanceId(instanceId)
 	},
 }
+
 var verbose bool
+var instanceId string

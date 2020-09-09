@@ -24,22 +24,20 @@ import (
 	"time"
 )
 
-func IperfUdp(scenarioName, endpoint, serverRegion, serverHost, clientRegion, clientHost, bandwidth string, seconds int) model.OperatingStage {
+func IperfUdp(scenarioName, endpoint, serverHosts, clientHosts, bandwidth string, seconds int) model.OperatingStage {
 	return &iperfUdp{
 		scenarioName: scenarioName,
 		endpoint:     endpoint,
-		serverRegion: serverRegion,
-		serverHost:   serverHost,
-		clientRegion: clientRegion,
-		clientHost:   clientHost,
+		serverHosts:  serverHosts,
+		clientHosts:  clientHosts,
 		bandwidth:    bandwidth,
 		seconds:      seconds,
 	}
 }
 
 func (i *iperfUdp) Operate(m *model.Model, _ string) error {
-	serverHosts := m.SelectHosts(i.serverRegion, i.serverHost)
-	clientHosts := m.SelectHosts(i.clientRegion, i.clientHost)
+	serverHosts := m.SelectHosts(i.serverHosts)
+	clientHosts := m.SelectHosts(i.clientHosts)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
@@ -95,10 +93,8 @@ func (i *iperfUdp) runServer(factory fablib.SshConfigFactory) {
 type iperfUdp struct {
 	scenarioName string
 	endpoint     string
-	serverRegion string
-	serverHost   string
-	clientRegion string
-	clientHost   string
+	serverHosts  string
+	clientHosts  string
 	bandwidth    string
 	seconds      int
 }

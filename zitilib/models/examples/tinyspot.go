@@ -17,11 +17,15 @@
 package zitilib_examples
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/binding"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	"github.com/openziti/fablab/kernel/model"
 )
 
 func init() {
 	model.RegisterModel("zitilib/examples/tinyspot", tinyspot)
+	model.AddBootstrapExtension(binding.AwsCredentialsLoader)
+	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
 var tinyspot = &model.Model{
@@ -41,16 +45,13 @@ var tinyspot = &model.Model{
 
 	Regions: model.Regions{
 		"tiny": {
-			Scope: model.Scope{
-				Tags: model.Tags{"ctrl", "router", "loop", "initiator", "terminator", "iperf_server"},
-			},
-			Id: "us-east-1",
-			Az: "us-east-1c",
+			Region: "us-east-1",
+			Site:   "us-east-1c",
 			Hosts: model.Hosts{
 				"001": {
 					InstanceResourceType: "spot",
 					SpotPrice:            "0.02",
-					Scope:                model.Scope{Tags: model.Tags{"ctrl", "router", "loop-dialer", "loop-listener", "initiator", "terminator", "iperf_server"}},
+					Scope:                model.Scope{Tags: model.Tags{"loop-dialer", "loop-listener", "iperf_server"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
@@ -60,7 +61,7 @@ var tinyspot = &model.Model{
 							PublicIdentity: "ctrl",
 						},
 						"001": {
-							Scope:          model.Scope{Tags: model.Tags{"router", "terminator"}},
+							Scope:          model.Scope{Tags: model.Tags{"router", "initiator", "terminator"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "ingress_router.yml",
 							ConfigName:     "001.yml",

@@ -21,14 +21,25 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+	"sync"
 	"time"
 )
 
+var warnOnce = sync.Once{}
+var pipePresent = true
+
 func sshAuthMethodAgent() ssh.AuthMethod {
+	if !pipePresent {
+		return nil
+	}
+
 	if sshAgent, err := npipe.DialTimeout(`\\.\pipe\openssh-ssh-agent`, 1*time.Second); err == nil {
 		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 	} else {
-		logrus.WithError(err).Warn("could not connect to ssh-agent pipe")
+		warnOnce.Do(func() {
+			pipePresent = false
+			logrus.WithError(err).Warn("could not connect to openssh ssh-agent pipe, will not be tried again this run")
+		})
 	}
 	return nil
 }

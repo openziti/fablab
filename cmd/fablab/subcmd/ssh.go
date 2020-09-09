@@ -28,9 +28,9 @@ func init() {
 }
 
 var sshCmd = &cobra.Command{
-	Use:   "ssh <regionSpec> <hostSpec>",
+	Use:   "ssh <hostSpec>",
 	Short: "establish an ssh connection to the model",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(1),
 	Run:   ssh,
 }
 
@@ -54,7 +54,7 @@ func ssh(_ *cobra.Command, args []string) {
 			logrus.Fatalf("model not bound")
 		}
 
-		hosts := m.SelectHosts(args[0], args[1])
+		hosts := m.SelectHosts(args[0])
 		if len(hosts) != 1 {
 			logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 		}

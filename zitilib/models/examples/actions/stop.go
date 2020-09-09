@@ -21,6 +21,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/component"
 	"github.com/openziti/fablab/kernel/fablib/actions/host"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/zitilib/models"
 )
 
 func NewStopAction() model.ActionBinder {
@@ -30,10 +31,10 @@ func NewStopAction() model.ActionBinder {
 
 func (_ *stopAction) bind(m *model.Model) model.Action {
 	return actions.Workflow(
-		host.GroupKill("@loop", "@loop-dialer", "ziti-fabric-test"),
-		host.GroupKill("@loop", "@loop-listener", "ziti-fabric-test"),
-		component.Stop("@router", "@router", "@router"),
-		component.Stop("@ctrl", "@ctrl", "@ctrl"),
+		host.GroupKill(models.LoopDialerTag, "ziti-fabric-test"),
+		host.GroupKill(models.LoopListenerTag, "ziti-fabric-test"),
+		component.Stop(models.RouterTag),
+		component.Stop(models.ControllerTag),
 	)
 }
 

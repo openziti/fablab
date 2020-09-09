@@ -30,7 +30,7 @@ func newDistributionFactory() model.Factory {
 
 func (_ *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
-		func(_ *model.Model) model.DistributionStage { return distribution.Locations("*", "*", "logs")},
+		func(_ *model.Model) model.DistributionStage { return distribution.Locations("*", "logs") },
 		func(_ *model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 	return nil

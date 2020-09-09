@@ -24,18 +24,17 @@ import (
 )
 
 type iperfClient struct {
-	regionSpec string
-	hostSpec   string
-	address    string
-	port       int
+	hostSpec string
+	address  string
+	port     int
 }
 
-func IperfClient(regionSpec, hostSpec, address string, port int) model.OperatingStage {
-	return &iperfClient{regionSpec, hostSpec, address, port}
+func IperfClient(hostSpec, address string, port int) model.OperatingStage {
+	return &iperfClient{hostSpec, address, port}
 }
 
 func (self *iperfClient) Operate(m *model.Model, _ string) error {
-	hosts := m.SelectHosts(self.regionSpec, self.hostSpec)
+	hosts := m.SelectHosts(self.hostSpec)
 	if len(hosts) != 1 {
 		return errors.Errorf("expected [1] iperf client host, found [%d]", len(hosts))
 	}

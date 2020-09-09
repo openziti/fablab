@@ -17,8 +17,10 @@
 package transwarp
 
 import (
+	aws_ssh_keys0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	semaphore0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/semaphore"
 	terraform0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/terraform"
+	aws_ssh_keys6 "github.com/openziti/fablab/kernel/fablib/runlevel/6_disposal/aws_ssh_key"
 	terraform6 "github.com/openziti/fablab/kernel/fablib/runlevel/6_disposal/terraform"
 	"github.com/openziti/fablab/kernel/model"
 	"time"
@@ -38,6 +40,7 @@ func (self *infrastructureFactory) Build(m *model.Model) error {
 
 func (_ *infrastructureFactory) buildInfrastructure(m *model.Model) {
 	m.Infrastructure = model.InfrastructureBinders{
+		func(m *model.Model) model.InfrastructureStage { return aws_ssh_keys0.Express() },
 		func(_ *model.Model) model.InfrastructureStage { return terraform0.Express() },
 		func(_ *model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
 	}
@@ -46,5 +49,6 @@ func (_ *infrastructureFactory) buildInfrastructure(m *model.Model) {
 func (_ *infrastructureFactory) buildDisposal(m *model.Model) {
 	m.Disposal = model.DisposalBinders{
 		func(_ *model.Model) model.DisposalStage { return terraform6.Dispose() },
+		func(m *model.Model) model.DisposalStage { return aws_ssh_keys6.Dispose() },
 	}
 }

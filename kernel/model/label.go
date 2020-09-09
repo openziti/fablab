@@ -124,7 +124,7 @@ func CreateLabel(instanceId, modelName string) error {
 	if err := assertNoLabel(instanceId); err != nil {
 		return fmt.Errorf("error with instance path [%s] (%s)", instanceId, err)
 	}
-	if _, found := modelRegistry[modelName]; !found {
+	if _, found := GetModel(modelName); !found {
 		return fmt.Errorf("no such model [%s]", modelName)
 	}
 	l := &Label{
@@ -138,7 +138,7 @@ func CreateLabel(instanceId, modelName string) error {
 }
 
 func ValidateModelName(modelName string) error {
-	if _, found := modelRegistry[modelName]; !found {
+	if _, found := GetModel(modelName); !found {
 		return fmt.Errorf("no such model [%s]", modelName)
 	}
 	return nil

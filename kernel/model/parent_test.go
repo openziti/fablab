@@ -39,8 +39,8 @@ func TestParentBase(t *testing.T) {
 	assert.True(t, found)
 
 	baseRegion := value.(*Region)
-	assert.Equal(t, "us-east-1", baseRegion.Id)
-	assert.Equal(t, "us-east-1a", baseRegion.Az)
+	assert.Equal(t, "us-east-1", baseRegion.Region)
+	assert.Equal(t, "us-east-1a", baseRegion.Site)
 
 	assert.Equal(t, 1, len(baseRegion.Hosts))
 	value, found = baseRegion.Hosts["a"]
@@ -66,7 +66,7 @@ func TestParentMerge(t *testing.T) {
 		},
 		Regions: Regions{
 			"base": {
-				Az: "us-east-1b",
+				Site: "us-east-1b",
 				Hosts: Hosts{
 					"a": {
 						Scope: Scope{Tags: Tags{"1"}},
@@ -95,8 +95,8 @@ func TestParentMerge(t *testing.T) {
 	assert.True(t, found)
 
 	baseRegion := value.(*Region)
-	assert.Equal(t, "us-east-1", baseRegion.Id)
-	assert.Equal(t, "us-east-1b", baseRegion.Az)
+	assert.Equal(t, "us-east-1", baseRegion.Region)
+	assert.Equal(t, "us-east-1b", baseRegion.Site)
 
 	assert.Equal(t, 1, len(baseRegion.Hosts))
 	value, found = baseRegion.Hosts["a"]
@@ -124,8 +124,8 @@ func parentTestModel() *Model {
 		},
 		Regions: Regions{
 			"base": {
-				Id: "us-east-1",
-				Az: "us-east-1a",
+				Region: "us-east-1",
+				Site:   "us-east-1a",
 				Hosts: Hosts{
 					"a": {
 						Scope: Scope{Tags: Tags{"0"}},

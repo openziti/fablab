@@ -14,26 +14,31 @@
 	limitations under the License.
 */
 
-package mattermozt
+package edge
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/openziti/fablab/kernel/model"
-	"github.com/openziti/fablab/zitilib/runlevel/1_configuration"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 )
 
-func newConfigurationFactory() model.Factory {
-	return &configurationFactory{}
+func newKittingFactory() model.Factory {
+	return &kittingFactory{}
 }
 
-func (self *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(m *model.Model) model.ConfigurationStage {
-			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
+func (self *kittingFactory) Build(m *model.Model) error {
+	m.Kitting = model.KittingBinders{
+		func(m *model.Model) model.KittingStage {
+			zitiBinaries := []string{
+				"ziti-controller",
+				"ziti-fabric",
+				"ziti-fabric-test",
+				"ziti-router",
+			}
+			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries)
 		},
-		func(m *model.Model) model.ConfigurationStage { return config.Component() },
 	}
 	return nil
 }
 
-type configurationFactory struct{}
+type kittingFactory struct{}

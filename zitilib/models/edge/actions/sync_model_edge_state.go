@@ -14,31 +14,25 @@
 	limitations under the License.
 */
 
-package mattermozt
+package actions
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
+	"github.com/openziti/fablab/kernel/fablib/actions"
 	"github.com/openziti/fablab/kernel/model"
-	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
+	"github.com/openziti/fablab/zitilib/actions/edge"
+	"github.com/openziti/fablab/zitilib/models"
 )
 
-func newKittingFactory() model.Factory {
-	return &kittingFactory{}
+func NewSyncModelEdgeStateAction() model.ActionBinder {
+	action := &syncModelEdgeStateAction{}
+	return action.bind
 }
 
-func (self *kittingFactory) Build(m *model.Model) error {
-	m.Kitting = model.KittingBinders{
-		func(m *model.Model) model.KittingStage {
-			zitiBinaries := []string{
-				"ziti-controller",
-				"ziti-fabric",
-				"ziti-fabric-test",
-				"ziti-router",
-			}
-			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries)
-		},
-	}
-	return nil
+func (a *syncModelEdgeStateAction) bind(*model.Model) model.Action {
+	workflow := actions.Workflow()
+	workflow.AddAction(edge.Login(models.HasControllerComponent))
+	workflow.AddAction(edge.SyncModelEdgeState(".edge-router"))
+	return workflow
 }
 
-type kittingFactory struct{}
+type syncModelEdgeStateAction struct{}

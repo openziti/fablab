@@ -36,5 +36,8 @@ func ListModels() []string {
 
 func GetModel(name string) (*Model, bool) {
 	m, found := modelRegistry[name]
+	if m != nil {
+		m.init(name)
+	}
 	return m, found
 }

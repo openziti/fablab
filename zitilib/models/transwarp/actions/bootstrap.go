@@ -24,6 +24,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/semaphore"
 	"github.com/openziti/fablab/kernel/model"
 	actions2 "github.com/openziti/fablab/zitilib/actions"
+	"github.com/openziti/fablab/zitilib/models"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
@@ -42,15 +43,15 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Restart controller with new database.
 	 */
-	workflow.AddAction(component.Stop("*", "*", "ctrl"))
-	workflow.AddAction(host.Exec(m.MustSelectHost("*", "@ctrl"), "rm -f ~/ctrl.db"))
-	workflow.AddAction(component.Start("*", "*", "ctrl"))
+	workflow.AddAction(component.Stop(models.ControllerTag))
+	workflow.AddAction(host.Exec(m.MustSelectHost(models.HasControllerComponent), "rm -f ~/ctrl.db"))
+	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
 
 	/*
 	 * Create routers.
 	 */
-	for _, router := range m.SelectComponents("*", "*", "@router") {
+	for _, router := range m.SelectComponents(models.RouterTag) {
 		certPath := filepath.Join(model.PkiBuild(), fmt.Sprintf("/intermediate/certs/%s-client.cert", router.PublicIdentity))
 		workflow.AddAction(actions2.Fabric("create", "router", certPath))
 	}
@@ -58,8 +59,9 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Create services and terminators.
 	 */
-	iperfServer := m.MustSelectHost("*", "@iperf_server")
-	terminatingRouters := m.SelectComponents("remote", "remote", "remote")
+	iperfServer := m.MustSelectHost(".iperf_server")
+	terminatingRouters := m.SelectComponents(models.RemoteId)
+
 	if len(terminatingRouters) != 1 {
 		logrus.Fatalf("expect 1 terminating router, got [%d]", len(terminatingRouters))
 	}
@@ -74,7 +76,7 @@ func (_ *bootstrapAction) bind(m *model.Model) model.Action {
 	/*
 	 * Stop controller.
 	 */
-	workflow.AddAction(component.Stop("*", "*", "@ctrl"))
+	workflow.AddAction(component.Stop(models.ControllerTag))
 
 	return workflow
 }

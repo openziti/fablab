@@ -83,14 +83,18 @@ func RemoveInstance(instanceId string) error {
 	return nil
 }
 
-func SetActiveInstance(instanceId string) error {
-	if _, err := LoadLabelForInstance(instanceId); err != nil {
-		return fmt.Errorf("invalid instance path [%s] (%w)", instancePath(instanceId), err)
+func InitInstanceId(newInstanceId string) {
+	instanceId = newInstanceId
+}
+
+func SetActiveInstance(newInstanceId string) error {
+	if _, err := LoadLabelForInstance(newInstanceId); err != nil {
+		return fmt.Errorf("invalid instance path [%s] (%w)", instancePath(newInstanceId), err)
 	}
-	if err := ioutil.WriteFile(activeInstance(), []byte(instanceId), os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(activeInstance(), []byte(newInstanceId), os.ModePerm); err != nil {
 		return fmt.Errorf("unable to store active instance [%s] (%w)", activeInstance(), err)
 	}
-	instanceId = instanceId
+	instanceId = newInstanceId
 	return nil
 }
 
@@ -112,9 +116,16 @@ func ActiveInstanceId() string {
 
 func BootstrapInstance() error {
 	var err error
-	if instanceId, err = loadActiveInstance(); err != nil {
-		return fmt.Errorf("unable to load active instance (%w)", err)
+
+	// If we've already bootstrapped, don't change the current instance
+	if instanceId == "" {
+		if instanceId, err = loadActiveInstance(); err != nil {
+			return fmt.Errorf("unable to load active instance (%w)", err)
+		}
 	}
+
+	logrus.Infof("Bootstrapping instance %v", instanceId)
+
 	if _, err := os.Stat(ActiveInstancePath()); err != nil {
 		if os.IsNotExist(err) {
 			logrus.Warnf("invalid active instance")

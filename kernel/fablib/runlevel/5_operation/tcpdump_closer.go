@@ -23,21 +23,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func TcpdumpCloser(region, host string) model.OperatingStage {
+func TcpdumpCloser(host string) model.OperatingStage {
 	return &tcpdumpCloser{
-		region: region,
-		host:   host,
+		host: host,
 	}
 }
 
 func (t *tcpdumpCloser) Operate(m *model.Model, _ string) error {
-	hosts := m.SelectHosts(t.region, t.host)
-	var ssh fablib.SshConfigFactory
-	if len(hosts) == 1 {
-		ssh = fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
-	} else {
-		return fmt.Errorf("found [%d] hosts", len(hosts))
+	host, err := m.SelectHost(t.host)
+	if err != nil {
+		return err
 	}
+
+	ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 
 	if err := fablib.RemoteKillFilter(ssh, "tcpdump", "sudo"); err != nil {
 		return fmt.Errorf("error closing tcpdump (%w)", err)
@@ -47,6 +45,5 @@ func (t *tcpdumpCloser) Operate(m *model.Model, _ string) error {
 }
 
 type tcpdumpCloser struct {
-	region string
-	host   string
+	host string
 }

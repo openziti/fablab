@@ -19,13 +19,55 @@ package model
 import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"sort"
+	"strings"
+)
+
+const (
+	InheritTagPrefix = "^"
 )
 
 type Scope struct {
+	parent    *Scope
 	Variables Variables
 	Data      Data
 	Tags      Tags
 	bound     bool
+}
+
+func (scope *Scope) setParent(parent *Scope) {
+	scope.parent = parent
+
+	tags := map[string]struct{}{}
+	for _, tag := range scope.Tags {
+		tags[tag] = struct{}{}
+	}
+
+	for _, tag := range parent.Tags {
+		if strings.HasPrefix(tag, InheritTagPrefix) {
+			tags[tag] = struct{}{}
+		}
+	}
+
+	scope.Tags = nil
+	for tag := range tags {
+		scope.Tags = append(scope.Tags, tag)
+	}
+	sort.Strings(scope.Tags)
+}
+
+func (scope *Scope) HasTag(tag string) bool {
+	for _, hostTag := range scope.Tags {
+		if hostTag == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func (scope *Scope) WithTags(tags ...string) *Scope {
+	scope.Tags = tags
+	return scope
 }
 
 type Data map[string]interface{}
