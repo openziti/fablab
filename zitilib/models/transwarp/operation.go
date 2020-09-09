@@ -34,19 +34,19 @@ func (_ *operationFactory) Build(m *model.Model) error {
 	remoteProxy := m.MustSelectHost(models.LocalId).PrivateIp
 
 	c := make(chan struct{})
-	m.Operation = model.OperatingBinders{
-		func(_ *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
+	m.Operation = model.OperatingStages{
+		zitilib_runlevel_5_operation.Metrics(c),
 
-		func(_ *model.Model) model.OperatingStage { return operation.Banner("transwarp") },
-		func(_ *model.Model) model.OperatingStage { return operation.Iperf("ziti", remoteProxy, models.RemoteId, models.LocalId, 30) },
-		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
+		operation.Banner("transwarp"),
+		operation.Iperf("ziti", remoteProxy, models.RemoteId, models.LocalId, 30),
+		operation.Persist(),
 
-		func(_ *model.Model) model.OperatingStage { return operation.Banner("internet") },
-		func(_ *model.Model) model.OperatingStage { return operation.Iperf("internet", directEndpoint, models.RemoteId, models.LocalId, 30) },
-		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
+		operation.Banner("internet"),
+		operation.Iperf("internet", directEndpoint, models.RemoteId, models.LocalId, 30),
+		operation.Persist(),
 
-		func(_ *model.Model) model.OperatingStage { return operation.Closer(c) },
-		func(_ *model.Model) model.OperatingStage { return operation.Persist() },
+		operation.Closer(c),
+		operation.Persist(),
 	}
 
 	return nil

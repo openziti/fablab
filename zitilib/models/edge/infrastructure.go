@@ -42,18 +42,18 @@ func (self *infrastructureFactory) Build(m *model.Model) error {
 }
 
 func (self *infrastructureFactory) buildInfrastructure(m *model.Model) error {
-	m.Infrastructure = model.InfrastructureBinders{
-		func(*model.Model) model.InfrastructureStage { return aws_ssh_keys0.Express() },
-		func(*model.Model) model.InfrastructureStage { return terraform0.Express() },
-		func(*model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
+	m.Infrastructure = model.InfrastructureStages{
+		aws_ssh_keys0.Express(),
+		terraform0.Express(),
+		semaphore0.Restart(90 * time.Second),
 	}
 	return nil
 }
 
 func (self *infrastructureFactory) buildDisposal(m *model.Model) error {
-	m.Disposal = model.DisposalBinders{
-		func(*model.Model) model.DisposalStage { return terraform6.Dispose() },
-		func(*model.Model) model.DisposalStage { return aws_ssh_keys6.Dispose() },
+	m.Disposal = model.DisposalStages{
+		terraform6.Dispose(),
+		aws_ssh_keys6.Dispose(),
 	}
 	return nil
 }

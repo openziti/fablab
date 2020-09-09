@@ -41,9 +41,9 @@ func (self *operationFactory) Build(m *model.Model) error {
 	closer := make(chan struct{})
 	var joiners []chan struct{}
 
-	m.Operation = append(m.Operation, model.OperatingBinders{
-		func(*model.Model) model.OperatingStage { return zitilib_5_operation.Mesh(closer) },
-		func(*model.Model) model.OperatingStage { return zitilib_5_operation.Metrics(closer) },
+	m.Operation = append(m.Operation, model.OperatingStages{
+		zitilib_5_operation.Mesh(closer),
+		zitilib_5_operation.Metrics(closer),
 	}...)
 
 	listeners, err := self.listeners(m)
@@ -52,9 +52,7 @@ func (self *operationFactory) Build(m *model.Model) error {
 	}
 	m.Operation = append(m.Operation, listeners...)
 
-	m.Operation = append(m.Operation, func(*model.Model) model.OperatingStage {
-		return fablib_5_operation.Timer(5*time.Second, nil)
-	})
+	m.AddOperatingStage(fablib_5_operation.Timer(5*time.Second, nil))
 
 	dialers, dialerJoiners, err := self.dialers(m)
 	if err != nil {
@@ -63,16 +61,16 @@ func (self *operationFactory) Build(m *model.Model) error {
 	joiners = append(joiners, dialerJoiners...)
 	m.Operation = append(m.Operation, dialers...)
 
-	m.Operation = append(m.Operation, model.OperatingBinders{
-		func(*model.Model) model.OperatingStage { return fablib_5_operation.Joiner(joiners) },
-		func(*model.Model) model.OperatingStage { return fablib_5_operation.Closer(closer) },
-		func(*model.Model) model.OperatingStage { return fablib_5_operation.Persist() },
+	m.Operation = append(m.Operation, model.OperatingStages{
+		fablib_5_operation.Joiner(joiners),
+		fablib_5_operation.Closer(closer),
+		fablib_5_operation.Persist(),
 	}...)
 
 	return nil
 }
 
-func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingBinder, err error) {
+func (_ *operationFactory) listeners(m *model.Model) (stages []model.OperatingStage, err error) {
 	hosts := m.SelectHosts(models.LoopListenerTag)
 	if len(hosts) < 1 {
 		return nil, fmt.Errorf("no '%v' hosts in model", models.LoopListenerTag)
@@ -80,15 +78,13 @@ func (_ *operationFactory) listeners(m *model.Model) (binders []model.OperatingB
 
 	for _, host := range hosts {
 		boundHost := host
-		binders = append(binders, func(*model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopListener(boundHost, nil, "tcp:0.0.0.0:8171")
-		})
+		stages = append(stages, zitilib_5_operation.LoopListener(boundHost, nil, "tcp:0.0.0.0:8171"))
 	}
 
-	return binders, nil
+	return stages, nil
 }
 
-func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBinder, joiners []chan struct{}, err error) {
+func (_ *operationFactory) dialers(m *model.Model) (stages []model.OperatingStage, joiners []chan struct{}, err error) {
 	initiator, err := m.SelectHost("component.initiator.router")
 	if err != nil {
 		return nil, nil, err
@@ -96,7 +92,7 @@ func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBin
 
 	endpoint := fmt.Sprintf("tls:%s:7002", initiator.PublicIp)
 
-	binders = make([]model.OperatingBinder, 0)
+	stages = make([]model.OperatingStage, 0)
 
 	hosts, err := m.MustSelectHosts(models.LoopDialerTag, 1)
 	if err != nil {
@@ -106,13 +102,11 @@ func (_ *operationFactory) dialers(m *model.Model) (binders []model.OperatingBin
 	for _, host := range hosts {
 		boundHost := host
 		joiner := make(chan struct{}, 1)
-		binders = append(binders, func(*model.Model) model.OperatingStage {
-			return zitilib_5_operation.LoopDialer(boundHost, "10-ambient.loop2.yml", endpoint, joiner)
-		})
+		stages = append(stages, zitilib_5_operation.LoopDialer(boundHost, "10-ambient.loop2.yml", endpoint, joiner))
 		joiners = append(joiners, joiner)
 	}
 
-	return binders, joiners, nil
+	return stages, joiners, nil
 }
 
 type operationFactory struct{}

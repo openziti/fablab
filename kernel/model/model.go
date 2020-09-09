@@ -53,20 +53,14 @@ type Model struct {
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
-	Infrastructure      InfrastructureBinders
-	Configuration       ConfigurationBinders
-	Distribution        DistributionBinders
-	Activation          ActivationBinders
-	Operation           OperatingBinders
-	Disposal            DisposalBinders
+	Infrastructure      InfrastructureStages
+	Configuration       ConfigurationStages
+	Distribution        DistributionStages
+	Activation          ActivationStages
+	Operation           OperatingStages
+	Disposal            DisposalStages
 
-	actions              map[string]Action
-	infrastructureStages []InfrastructureStage
-	configurationStages  []ConfigurationStage
-	distributionStages   []DistributionStage
-	activationStages     []ActivationStage
-	operationStages      []OperatingStage
-	disposalStages       []DisposalStage
+	actions map[string]Action
 
 	initialized concurrenz.AtomicBoolean
 }
@@ -391,54 +385,52 @@ type Action interface {
 	Execute(m *Model) error
 }
 
+type InfrastructureStages []InfrastructureStage
+
 type InfrastructureStage interface {
 	Express(m *Model, l *Label) error
 }
+
+type ConfigurationStages []ConfigurationStage
 
 type ConfigurationStage interface {
 	Configure(m *Model) error
 }
 
+type DistributionStages []DistributionStage
+
 type DistributionStage interface {
 	Distribute(m *Model) error
 }
+
+type ActivationStages []ActivationStage
 
 type ActivationStage interface {
 	Activate(m *Model) error
 }
 
+type OperatingStages []OperatingStage
+
 type OperatingStage interface {
 	Operate(m *Model, run string) error
 }
+
+type DisposalStages []DisposalStage
 
 type DisposalStage interface {
 	Dispose(m *Model) error
 }
 
-type InfrastructureBinder func(m *Model) InfrastructureStage
-type InfrastructureBinders []InfrastructureBinder
-
-type ConfigurationBinder func(m *Model) ConfigurationStage
-type ConfigurationBinders []ConfigurationBinder
-
-type DistributionBinder func(m *Model) DistributionStage
-type DistributionBinders []DistributionBinder
-
-type ActivationBinder func(m *Model) ActivationStage
-type ActivationBinders []ActivationBinder
-
-type OperatingBinder func(m *Model) OperatingStage
-type OperatingBinders []OperatingBinder
-
-type DisposalBinder func(m *Model) DisposalStage
-type DisposalBinders []DisposalBinder
-
 func (m *Model) AddOperatingStage(stage OperatingStage) {
-	m.Operation = append(m.Operation, func(m *Model) OperatingStage { return stage })
+	m.Operation = append(m.Operation, stage)
+}
+
+func (m *Model) AddOperatingStages(stages ...OperatingStage) {
+	m.Operation = append(m.Operation, stages...)
 }
 
 func (m *Model) Express(l *Label) error {
-	for _, stage := range m.infrastructureStages {
+	for _, stage := range m.Infrastructure {
 		if err := stage.Express(m, l); err != nil {
 			return fmt.Errorf("error expressing infrastructure (%w)", err)
 		}
@@ -451,7 +443,7 @@ func (m *Model) Express(l *Label) error {
 }
 
 func (m *Model) Build(l *Label) error {
-	for _, stage := range m.configurationStages {
+	for _, stage := range m.Configuration {
 		if err := stage.Configure(m); err != nil {
 			return fmt.Errorf("error building configuration (%w)", err)
 		}
@@ -464,7 +456,7 @@ func (m *Model) Build(l *Label) error {
 }
 
 func (m *Model) Sync(l *Label) error {
-	for _, stage := range m.distributionStages {
+	for _, stage := range m.Distribution {
 		if err := stage.Distribute(m); err != nil {
 			return fmt.Errorf("error distributing (%w)", err)
 		}
@@ -477,7 +469,7 @@ func (m *Model) Sync(l *Label) error {
 }
 
 func (m *Model) Activate(l *Label) error {
-	for _, stage := range m.activationStages {
+	for _, stage := range m.Activation {
 		if err := stage.Activate(m); err != nil {
 			return fmt.Errorf("error activating (%w)", err)
 		}
@@ -491,7 +483,7 @@ func (m *Model) Activate(l *Label) error {
 
 func (m *Model) Operate(l *Label) error {
 	run := fmt.Sprintf("%d", info.NowInMilliseconds())
-	for _, stage := range m.operationStages {
+	for _, stage := range m.Operation {
 		if err := stage.Operate(m, run); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}
@@ -504,7 +496,7 @@ func (m *Model) Operate(l *Label) error {
 }
 
 func (m *Model) Dispose(l *Label) error {
-	for _, stage := range m.disposalStages {
+	for _, stage := range m.Disposal {
 		if err := stage.Dispose(m); err != nil {
 			return fmt.Errorf("error disposing (%w)", err)
 		}

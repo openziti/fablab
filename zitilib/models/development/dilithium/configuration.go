@@ -30,11 +30,9 @@ func newConfigurationFactory() model.Factory {
 }
 
 func (_ *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(*model.Model) model.ConfigurationStage { return Kit() },
-		func(*model.Model) model.ConfigurationStage {
-			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"dilithium"})
-		},
+	m.Configuration = model.ConfigurationStages{
+		Kit(),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"dilithium"}),
 	}
 	return nil
 }

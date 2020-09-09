@@ -29,20 +29,17 @@ func newConfigurationFactory() model.Factory {
 }
 
 func (f *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(*model.Model) model.ConfigurationStage {
-			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
-		},
-		func(*model.Model) model.ConfigurationStage { return config.Component() },
-		func(*model.Model) model.ConfigurationStage {
-			zitiBinaries := []string{
-				"ziti-controller",
-				"ziti-fabric",
-				"ziti-fabric-test",
-				"ziti-router",
-			}
-			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries)
-		},
+	zitiBinaries := []string{
+		"ziti-controller",
+		"ziti-fabric",
+		"ziti-fabric-test",
+		"ziti-router",
+	}
+
+	m.Configuration = model.ConfigurationStages{
+		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
+		config.Component(),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries),
 	}
 	return nil
 }
