@@ -66,13 +66,6 @@ func (m *Model) mergeActionsAndBinders(parent *Model) error {
 	mergedConfiguration = append(mergedConfiguration, m.Configuration...)
 	m.Configuration = mergedConfiguration
 
-	mergedKitting := make(KittingBinders, 0)
-	if err := copier.Copy(&mergedKitting, parent.Kitting); err != nil {
-		return fmt.Errorf("error copying parent kitting binders (%w)", err)
-	}
-	mergedKitting = append(mergedKitting, m.Kitting...)
-	m.Kitting = mergedKitting
-
 	mergedDistribution := make(DistributionBinders, 0)
 	if err := copier.Copy(&mergedDistribution, parent.Distribution); err != nil {
 		return fmt.Errorf("error copying parent distribution binders (%w)", err)

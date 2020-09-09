@@ -27,7 +27,7 @@ func newActivationFactory() model.Factory {
 
 func (_ *activationFactory) Build(m *model.Model) error {
 	m.Activation = model.ActivationBinders{
-		func(m *model.Model) model.ActivationStage { return action.Activation("bootstrap", "start") },
+		func(*model.Model) model.ActivationStage { return action.Activation("bootstrap", "start") },
 	}
 	return nil
 }

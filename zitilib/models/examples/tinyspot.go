@@ -37,7 +37,6 @@ var tinyspot = &model.Model{
 		newActionsFactory(),
 		newInfrastructureFactory(),
 		newConfigurationFactory(),
-		newKittingFactory(),
 		newDistributionFactory(),
 		newActivationFactory(),
 		newOperationFactory(),

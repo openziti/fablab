@@ -29,10 +29,10 @@ func newDistributionFactory() model.Factory {
 
 func (f *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.ControllerTag, "logs") },
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.RouterTag, "logs") },
+		func(*model.Model) model.DistributionStage { return distribution.Locations(models.ControllerTag, "logs") },
+		func(*model.Model) model.DistributionStage { return distribution.Locations(models.RouterTag, "logs") },
 
-		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
+		func(*model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 	return nil
 }

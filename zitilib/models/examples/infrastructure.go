@@ -27,17 +27,17 @@ func (self *infrastructureFactory) Build(m *model.Model) error {
 
 func (_ *infrastructureFactory) buildInfrastructure(m *model.Model) error {
 	m.Infrastructure = model.InfrastructureBinders{
-		func(m *model.Model) model.InfrastructureStage { return aws_ssh_keys0.Express() },
-		func(m *model.Model) model.InfrastructureStage { return terraform0.Express() },
-		func(m *model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
+		func(*model.Model) model.InfrastructureStage { return aws_ssh_keys0.Express() },
+		func(*model.Model) model.InfrastructureStage { return terraform0.Express() },
+		func(*model.Model) model.InfrastructureStage { return semaphore0.Restart(90 * time.Second) },
 	}
 	return nil
 }
 
 func (_ *infrastructureFactory) buildDisposal(m *model.Model) error {
 	m.Disposal = model.DisposalBinders{
-		func(m *model.Model) model.DisposalStage { return terraform6.Dispose() },
-		func(m *model.Model) model.DisposalStage { return aws_ssh_keys6.Dispose() },
+		func(*model.Model) model.DisposalStage { return terraform6.Dispose() },
+		func(*model.Model) model.DisposalStage { return aws_ssh_keys6.Dispose() },
 	}
 	return nil
 }

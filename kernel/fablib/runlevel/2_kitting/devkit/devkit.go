@@ -25,8 +25,12 @@ import (
 	"path/filepath"
 )
 
-func DevKit(root string, binaries []string) model.KittingStage {
+func DevKit(root string, binaries []string) model.ConfigurationStage {
 	return &devKit{root: root, binaries: binaries}
+}
+
+func (devKit *devKit) Configure(m *model.Model) error {
+	return devKit.Kit(m)
 }
 
 func (devKit *devKit) Kit(m *model.Model) error {

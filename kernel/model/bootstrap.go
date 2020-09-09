@@ -107,10 +107,6 @@ func bootstrapModel() (*Model, error) {
 		for _, binder := range m.Configuration {
 			m.configurationStages = append(m.configurationStages, binder(m))
 		}
-		m.kittingStages = nil
-		for _, binder := range m.Kitting {
-			m.kittingStages = append(m.kittingStages, binder(m))
-		}
 		m.distributionStages = nil
 		for _, binder := range m.Distribution {
 			m.distributionStages = append(m.distributionStages, binder(m))

@@ -29,7 +29,7 @@ func init() {
 
 var upCmd = &cobra.Command{
 	Use:   "up",
-	Short: "progress through lifecycle runlevels (express -> build -> kit -> sync -> activate)",
+	Short: "progress through lifecycle runlevels (express -> build -> sync -> activate)",
 	Args:  cobra.ExactArgs(0),
 	Run:   up,
 }
@@ -64,12 +64,6 @@ func up(_ *cobra.Command, _ []string) {
 
 		if err := m.Build(l); err != nil {
 			logrus.Fatalf("error building (%v)", err)
-		}
-
-		fablib.Figlet("kitting")
-
-		if err := m.Kit(l); err != nil {
-			logrus.Fatalf("error kitting (%v)", err)
 		}
 
 		fablib.Figlet("distribution")

@@ -70,8 +70,8 @@ func (f *operationFactory) Build(m *model.Model) error {
 
 	c := make(chan struct{})
 	m.Operation = model.OperatingBinders{
-		func(m *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Mesh(c) },
-		func(m *model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
+		func(*model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Mesh(c) },
+		func(*model.Model) model.OperatingStage { return zitilib_runlevel_5_operation.Metrics(c) },
 	}
 
 	m.Operation = append(m.Operation, f.forRegion("#short", shortProxy, directEndpoint, tcpdump, snaplen, seconds, m)...)
@@ -101,24 +101,24 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	binders = append(binders, stages0...)
 	if tcpdump {
 		joiner := make(chan struct{})
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
+		binders = append(binders, func(*model.Model) model.OperatingStage {
 			return operation.Tcpdump("ziti", clientHosts, snaplen, joiner)
 		})
 		joiners0 = append(joiners0, joiner)
 	}
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Iperf("ziti", initiatingRouter, serverHosts, clientHosts, seconds)
 	})
 	if tcpdump {
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
+		binders = append(binders, func(*model.Model) model.OperatingStage {
 			return operation.TcpdumpCloser(clientHosts)
 		})
 	}
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Persist()
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Joiner(joiners0)
 	})
 	/* */
@@ -127,29 +127,29 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	 * Internet Bandwidth Testing
 	 */
 	scenario1 := fmt.Sprintf("%s_internet", region)
-	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario1) })
+	binders = append(binders, func(*model.Model) model.OperatingStage { return operation.Banner(scenario1) })
 	stages1, joiners1 := f.sarStages(scenario1, m, 1)
 	binders = append(binders, stages1...)
 	if tcpdump {
 		joiner := make(chan struct{})
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
+		binders = append(binders, func(*model.Model) model.OperatingStage {
 			return operation.Tcpdump("internet", clientHosts, snaplen, joiner)
 		})
 		joiners1 = append(joiners1, joiner)
 	}
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Iperf("internet", directEndpoint, serverHosts, clientHosts, seconds)
 	})
 	if tcpdump {
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
+		binders = append(binders, func(*model.Model) model.OperatingStage {
 			return operation.TcpdumpCloser(clientHosts)
 		})
 	}
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Persist()
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Joiner(joiners1)
 	})
 	/* */
@@ -158,7 +158,7 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	 * Retrieve tcpdump Captures
 	 */
 	if tcpdump {
-		binders = append(binders, func(m *model.Model) model.OperatingStage {
+		binders = append(binders, func(*model.Model) model.OperatingStage {
 			return operation.Retrieve(clientHosts, ".", ".pcap")
 		})
 	}
@@ -171,11 +171,11 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario2) })
 	stages2, joiners2 := f.sarStages(scenario2, m, 1)
 	binders = append(binders, stages2...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.IperfUdp("ziti_1m", initiatingRouter, serverHosts, clientHosts, "1M", seconds)
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Joiner(joiners2)
 	})
 	/* */
@@ -184,19 +184,19 @@ func (f *operationFactory) forRegion(region, initiatingRouter, directEndpoint st
 	 * Internet UDP Testing
 	 */
 	scenario3 := fmt.Sprintf("%s_internet_udp", region)
-	binders = append(binders, func(m *model.Model) model.OperatingStage { return operation.Banner(scenario3) })
+	binders = append(binders, func(*model.Model) model.OperatingStage { return operation.Banner(scenario3) })
 	stages3, joiners3 := f.sarStages(scenario3, m, 1)
 	binders = append(binders, stages3...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.IperfUdp("internet_1m", directEndpoint, serverHosts, clientHosts, "1M", seconds)
 	})
 	binders = append(binders, f.sarCloserStages(m)...)
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Joiner(joiners3)
 	})
 	/* */
 
-	binders = append(binders, func(m *model.Model) model.OperatingStage {
+	binders = append(binders, func(*model.Model) model.OperatingStage {
 		return operation.Persist()
 	})
 
@@ -209,7 +209,7 @@ func (f *operationFactory) sarStages(scenario string, m *model.Model, _ int) ([]
 	for _, host := range m.SelectHosts("*") {
 		h := host // because stage is func (closure)
 		joiner := make(chan struct{})
-		stage := func(m *model.Model) model.OperatingStage {
+		stage := func(*model.Model) model.OperatingStage {
 			return operation.Sar(scenario, h, 1, joiner)
 		}
 		binders = append(binders, stage)
@@ -222,7 +222,7 @@ func (f *operationFactory) sarCloserStages(m *model.Model) []model.OperatingBind
 	binders := make(model.OperatingBinders, 0)
 	for _, host := range m.SelectHosts("*") {
 		h := host // because stage is func (closer)
-		stage := func(m *model.Model) model.OperatingStage {
+		stage := func(*model.Model) model.OperatingStage {
 			return operation.SarCloser(h)
 		}
 		binders = append(binders, stage)

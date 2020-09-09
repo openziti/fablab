@@ -55,7 +55,6 @@ type Model struct {
 	Actions             map[string]ActionBinder
 	Infrastructure      InfrastructureBinders
 	Configuration       ConfigurationBinders
-	Kitting             KittingBinders
 	Distribution        DistributionBinders
 	Activation          ActivationBinders
 	Operation           OperatingBinders
@@ -64,7 +63,6 @@ type Model struct {
 	actions              map[string]Action
 	infrastructureStages []InfrastructureStage
 	configurationStages  []ConfigurationStage
-	kittingStages        []KittingStage
 	distributionStages   []DistributionStage
 	activationStages     []ActivationStage
 	operationStages      []OperatingStage
@@ -401,10 +399,6 @@ type ConfigurationStage interface {
 	Configure(m *Model) error
 }
 
-type KittingStage interface {
-	Kit(m *Model) error
-}
-
 type DistributionStage interface {
 	Distribute(m *Model) error
 }
@@ -426,9 +420,6 @@ type InfrastructureBinders []InfrastructureBinder
 
 type ConfigurationBinder func(m *Model) ConfigurationStage
 type ConfigurationBinders []ConfigurationBinder
-
-type KittingBinder func(m *Model) KittingStage
-type KittingBinders []KittingBinder
 
 type DistributionBinder func(m *Model) DistributionStage
 type DistributionBinders []DistributionBinder
@@ -466,19 +457,6 @@ func (m *Model) Build(l *Label) error {
 		}
 	}
 	l.State = Configured
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Kit(l *Label) error {
-	for _, stage := range m.kittingStages {
-		if err := stage.Kit(m); err != nil {
-			return fmt.Errorf("error kitting (%w)", err)
-		}
-	}
-	l.State = Kitted
 	if err := l.Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}

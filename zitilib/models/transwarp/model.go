@@ -114,7 +114,6 @@ var transwarpModel = &model.Model{
 		newHostsFactory(),
 		newInfrastructureFactory(),
 		newConfigurationFactory(),
-		newKittingFactory(),
 		newDistributionFactory(),
 		newActivationFactory(),
 		newOperationFactory(),

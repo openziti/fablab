@@ -29,16 +29,16 @@ func newDistributionFactory() model.Factory {
 
 func (_ *distributionFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionBinders{
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.HasControllerComponent, "logs") },
-		func(m *model.Model) model.DistributionStage { return distribution.Locations(models.HasRouterComponent, "logs") },
-		func(m *model.Model) model.DistributionStage {
+		func(*model.Model) model.DistributionStage { return distribution.Locations(models.HasControllerComponent, "logs") },
+		func(*model.Model) model.DistributionStage { return distribution.Locations(models.HasRouterComponent, "logs") },
+		func(*model.Model) model.DistributionStage {
 			return distribution.Locations(models.LoopListenerTag, "logs")
 		},
-		func(m *model.Model) model.DistributionStage {
+		func(*model.Model) model.DistributionStage {
 			return distribution.Locations(models.LoopDialerTag, "logs")
 		},
 
-		func(m *model.Model) model.DistributionStage { return rsync.Rsync() },
+		func(*model.Model) model.DistributionStage { return rsync.Rsync() },
 	}
 	return nil
 }

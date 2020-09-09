@@ -74,7 +74,7 @@ var dilithiumModel = &model.Model{
 		newHostsFactory(),
 		newActionsFactory(),
 		newInfrastructureFactory(),
-		newKittingFactory(),
+		newConfigurationFactory(),
 		newDistributionFactory(),
 	},
 	BootstrapExtensions: []model.BootstrapExtension{
