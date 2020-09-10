@@ -16,7 +16,11 @@
 
 package zitilib
 
-import "path/filepath"
+import (
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
+	"github.com/openziti/fablab/kernel/model"
+	"path/filepath"
+)
 
 func ZitiRoot() string {
 	return zitiRoot
@@ -43,6 +47,17 @@ func ZitiCli() string {
 
 func ZitiFabricCli() string {
 	return filepath.Join(zitiBinaries(), "ziti-fabric")
+}
+
+func DefaultZitiBinaries() model.ConfigurationStage {
+	zitiBinaries := []string{
+		"ziti-controller",
+		"ziti-fabric",
+		"ziti-fabric-test",
+		"ziti-router",
+	}
+
+	return devkit.DevKit(ZitiDistBinaries(), zitiBinaries)
 }
 
 var zitiRoot string
