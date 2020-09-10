@@ -34,7 +34,8 @@ func Iperf(scenarioName, endpoint, serverHosts, clientHosts string, seconds int)
 	}
 }
 
-func (i *iperf) Operate(m *model.Model, _ string) error {
+func (i *iperf) Operate(ctx model.RunContext) error {
+	m := ctx.GetModel()
 	serverHosts := m.SelectHosts(i.serverHosts)
 	clientHosts := m.SelectHosts(i.clientHosts)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {

@@ -17,7 +17,6 @@
 package transwarp
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/runlevel/4_activation/action"
 	"github.com/openziti/fablab/kernel/model"
 )
 
@@ -28,8 +27,6 @@ func newActivationFactory() model.Factory {
 }
 
 func (_ *activationFactory) Build(m *model.Model) error {
-	m.Activation = model.ActivationStages{
-		action.Activation("bootstrap", "start"),
-	}
+	m.AddActivationActions("bootstrap", "start")
 	return nil
 }

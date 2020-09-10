@@ -30,7 +30,8 @@ func Locations(hostSpec string, paths ...string) model.DistributionStage {
 	}
 }
 
-func (self *locations) Distribute(m *model.Model) error {
+func (self *locations) Distribute(ctx model.RunContext) error {
+	m := ctx.GetModel()
 	hosts := m.SelectHosts(self.hostSpec)
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)

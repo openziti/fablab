@@ -26,7 +26,10 @@ func Linked() model.InfrastructureStage {
 	return &linked{}
 }
 
-func (linked *linked) Express(m *model.Model, l *model.Label) error {
+func (linked *linked) Express(ctx model.RunContext) error {
+	l := ctx.GetLabel()
+	m := ctx.GetModel()
+
 	var parent string
 	if value, found := l.Bindings["parent"]; found {
 		if parentName, ok := value.(string); ok {

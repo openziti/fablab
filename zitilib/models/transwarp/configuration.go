@@ -45,7 +45,7 @@ func (_ *configurationFactory) Build(m *model.Model) error {
 
 type kit struct{}
 
-func (_ *kit) Configure(_ *model.Model) error {
+func (_ *kit) Configure(_ model.RunContext) error {
 	if err := fablib.CopyTree(DilithiumEtc(), filepath.Join(model.KitBuild(), "cfg/dilithium")); err != nil {
 		return errors.Wrap(err, "error copying dilithium etc into kit")
 	}

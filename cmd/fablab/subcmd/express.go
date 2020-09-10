@@ -49,7 +49,9 @@ func express(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		if err := m.Express(l); err != nil {
+		ctx := model.NewRunContext(l, m)
+
+		if err := m.Express(ctx); err != nil {
 			logrus.Fatalf("error expressing infrastructure (%v)", err)
 		}
 

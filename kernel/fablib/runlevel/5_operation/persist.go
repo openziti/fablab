@@ -30,14 +30,16 @@ func Persist() model.OperatingStage {
 	return &persist{}
 }
 
-func (self *persist) Operate(m *model.Model, run string) error {
-	if err := self.storeDump(m, run); err != nil {
+func (self *persist) Operate(ctx model.RunContext) error {
+	if err := self.storeDump(ctx); err != nil {
 		return fmt.Errorf("error storing dump (%w)", err)
 	}
 	return nil
 }
 
-func (self *persist) storeDump(m *model.Model, run string) error {
+func (self *persist) storeDump(ctx model.RunContext) error {
+	m := ctx.GetModel()
+	run := ctx.GetId()
 	dump := m.Dump()
 
 	data, err := json.MarshalIndent(dump, "", "  ")

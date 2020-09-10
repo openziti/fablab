@@ -48,8 +48,8 @@ func sync(_ *cobra.Command, _ []string) {
 		if !found {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
-
-		if err := m.Sync(l); err != nil {
+		ctx := model.NewRunContext(l, m)
+		if err := m.Sync(ctx); err != nil {
 			logrus.Fatalf("error synchronizing all hosts (%s)", err)
 		}
 	}

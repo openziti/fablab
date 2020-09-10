@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/openziti/fablab/kernel/fablib/figlet"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
@@ -385,40 +386,110 @@ type Action interface {
 	Execute(m *Model) error
 }
 
+func NewRunContext(label *Label, model *Model) RunContext {
+	return &runContext{
+		label: label,
+		model: model,
+		runId: fmt.Sprintf("%d", info.NowInMilliseconds()),
+	}
+}
+
+type RunContext interface {
+	GetModel() *Model
+	GetLabel() *Label
+	GetId() string
+}
+
+type runContext struct {
+	label *Label
+	model *Model
+	runId string
+}
+
+func (ctx *runContext) GetModel() *Model {
+	return ctx.model
+}
+
+func (ctx *runContext) GetLabel() *Label {
+	return ctx.label
+}
+
+func (ctx *runContext) GetId() string {
+	return ctx.runId
+}
+
 type InfrastructureStages []InfrastructureStage
 
 type InfrastructureStage interface {
-	Express(m *Model, l *Label) error
+	Express(ctx RunContext) error
 }
 
 type ConfigurationStages []ConfigurationStage
 
 type ConfigurationStage interface {
-	Configure(m *Model) error
+	Configure(ctx RunContext) error
 }
 
 type DistributionStages []DistributionStage
 
 type DistributionStage interface {
-	Distribute(m *Model) error
+	Distribute(ctx RunContext) error
 }
 
 type ActivationStages []ActivationStage
 
 type ActivationStage interface {
-	Activate(m *Model) error
+	Activate(ctx RunContext) error
 }
 
 type OperatingStages []OperatingStage
 
 type OperatingStage interface {
-	Operate(m *Model, run string) error
+	Operate(ctx RunContext) error
 }
 
 type DisposalStages []DisposalStage
 
 type DisposalStage interface {
-	Dispose(m *Model) error
+	Dispose(ctx RunContext) error
+}
+
+type actionStage string
+
+func (stage actionStage) Activate(ctx RunContext) error {
+	return stage.execute(ctx)
+}
+
+func (stage actionStage) Operate(ctx RunContext) error {
+	return stage.execute(ctx)
+}
+
+func (stage actionStage) execute(ctx RunContext) error {
+	actionName := string(stage)
+	m := ctx.GetModel()
+	action, found := m.GetAction(actionName)
+	if !found {
+		return fmt.Errorf("no [%s] action", actionName)
+	}
+	figlet.FigletMini("action: " + actionName)
+	if err := action.Execute(m); err != nil {
+		return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
+	}
+	return nil
+}
+
+func (m *Model) AddActivationStage(stage ActivationStage) {
+	m.Activation = append(m.Activation, stage)
+}
+
+func (m *Model) AddActivationStages(stage ...ActivationStage) {
+	m.Activation = append(m.Activation, stage...)
+}
+
+func (m *Model) AddActivationActions(actions ...string) {
+	for _, action := range actions {
+		m.AddActivationStage(actionStage(action))
+	}
 }
 
 func (m *Model) AddOperatingStage(stage OperatingStage) {
@@ -429,80 +500,85 @@ func (m *Model) AddOperatingStages(stages ...OperatingStage) {
 	m.Operation = append(m.Operation, stages...)
 }
 
-func (m *Model) Express(l *Label) error {
+func (m *Model) AddOperatingActions(actions ...string) {
+	for _, action := range actions {
+		m.AddOperatingStage(actionStage(action))
+	}
+}
+
+func (m *Model) Express(ctx RunContext) error {
 	for _, stage := range m.Infrastructure {
-		if err := stage.Express(m, l); err != nil {
+		if err := stage.Express(ctx); err != nil {
 			return fmt.Errorf("error expressing infrastructure (%w)", err)
 		}
 	}
-	l.State = Expressed
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Expressed
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Build(l *Label) error {
+func (m *Model) Build(ctx RunContext) error {
 	for _, stage := range m.Configuration {
-		if err := stage.Configure(m); err != nil {
+		if err := stage.Configure(ctx); err != nil {
 			return fmt.Errorf("error building configuration (%w)", err)
 		}
 	}
-	l.State = Configured
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Configured
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Sync(l *Label) error {
+func (m *Model) Sync(ctx RunContext) error {
 	for _, stage := range m.Distribution {
-		if err := stage.Distribute(m); err != nil {
+		if err := stage.Distribute(ctx); err != nil {
 			return fmt.Errorf("error distributing (%w)", err)
 		}
 	}
-	l.State = Distributed
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Distributed
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Activate(l *Label) error {
+func (m *Model) Activate(ctx RunContext) error {
 	for _, stage := range m.Activation {
-		if err := stage.Activate(m); err != nil {
+		if err := stage.Activate(ctx); err != nil {
 			return fmt.Errorf("error activating (%w)", err)
 		}
 	}
-	l.State = Activated
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Activated
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Operate(l *Label) error {
-	run := fmt.Sprintf("%d", info.NowInMilliseconds())
+func (m *Model) Operate(ctx RunContext) error {
 	for _, stage := range m.Operation {
-		if err := stage.Operate(m, run); err != nil {
+		if err := stage.Operate(ctx); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}
 	}
-	l.State = Operating
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Operating
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Dispose(l *Label) error {
+func (m *Model) Dispose(ctx RunContext) error {
 	for _, stage := range m.Disposal {
-		if err := stage.Dispose(m); err != nil {
+		if err := stage.Dispose(ctx); err != nil {
 			return fmt.Errorf("error disposing (%w)", err)
 		}
 	}
-	l.State = Disposed
-	if err := l.Save(); err != nil {
+	ctx.GetLabel().State = Disposed
+	if err := ctx.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil

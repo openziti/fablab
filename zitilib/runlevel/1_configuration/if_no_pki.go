@@ -26,7 +26,7 @@ func IfNoPki(stages ...model.ConfigurationStage) model.ConfigurationStage {
 	return &ifNoPki{stages: stages}
 }
 
-func (self *ifNoPki) Configure(m *model.Model) error {
+func (self *ifNoPki) Configure(ctx model.RunContext) error {
 	if existing, err := hasExisitingPki(); err == nil {
 		if existing {
 			logrus.Infof("skipping configuration. existing pki system at [%s]", model.PkiBuild())
@@ -37,7 +37,7 @@ func (self *ifNoPki) Configure(m *model.Model) error {
 	}
 
 	for _, stage := range self.stages {
-		if err := stage.Configure(m); err != nil {
+		if err := stage.Configure(ctx); err != nil {
 			return fmt.Errorf("error running configuration stage (%w)", err)
 		}
 	}

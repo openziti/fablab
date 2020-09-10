@@ -28,7 +28,8 @@ func Component() model.ConfigurationStage {
 	return &componentConfig{}
 }
 
-func (componentConfig *componentConfig) Configure(m *model.Model) error {
+func (componentConfig *componentConfig) Configure(ctx model.RunContext) error {
+	m := ctx.GetModel()
 	for regionId, r := range m.Regions {
 		for hostId, h := range r.Hosts {
 			if err := componentConfig.generateComponentForHost(regionId, hostId, m, h); err != nil {

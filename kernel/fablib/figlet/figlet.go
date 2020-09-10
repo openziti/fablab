@@ -14,9 +14,11 @@
 	limitations under the License.
 */
 
-package fablib
+package figlet
 
-import "github.com/michaelquigley/figlet/figletlib"
+import (
+	"github.com/michaelquigley/figlet/figletlib"
+)
 
 func Figlet(text string) {
 	font, err := figletlib.ReadFontFromBytes(standardFont[:])

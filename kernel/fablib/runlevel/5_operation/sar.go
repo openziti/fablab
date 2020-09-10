@@ -39,13 +39,15 @@ func SarCloser(host *model.Host) model.OperatingStage {
 	}
 }
 
-func (s *sar) Operate(m *model.Model, _ string) error {
+func (s *sar) Operate(ctx model.RunContext) error {
+	m := ctx.GetModel()
 	ssh := fablib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
 	go s.runSar(ssh)
 	return nil
 }
 
-func (s *sarCloser) Operate(m *model.Model, _ string) error {
+func (s *sarCloser) Operate(ctx model.RunContext) error {
+	m := ctx.GetModel()
 	ssh := fablib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
 	if err := fablib.RemoteKill(ssh, "sar"); err != nil {
 		return fmt.Errorf("error closing sar (%w)", err)

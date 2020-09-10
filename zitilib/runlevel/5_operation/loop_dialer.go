@@ -34,17 +34,17 @@ func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{
 	}
 }
 
-func (self *loopDialer) Operate(m *model.Model, run string) error {
-	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
+func (self *loopDialer) Operate(ctx model.RunContext) error {
+	ssh := fablib.NewSshConfigFactoryImpl(ctx.GetModel(), self.host.PublicIp)
 	if err := fablib.RemoteKill(ssh, "ziti-fabric-test loop2 dialer"); err != nil {
 		return fmt.Errorf("error killing loop2 listeners (%w)", err)
 	}
 
-	go self.run(m, run)
+	go self.run(ctx)
 	return nil
 }
 
-func (self *loopDialer) run(m *model.Model, run string) {
+func (self *loopDialer) run(ctx model.RunContext) {
 	defer func() {
 		if self.joiner != nil {
 			close(self.joiner)
@@ -52,8 +52,8 @@ func (self *loopDialer) run(m *model.Model, run string) {
 		}
 	}()
 
-	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
-	logFile := fmt.Sprintf("/home/%s/logs/loop2-dialer-%s.log", ssh.User(), run)
+	ssh := fablib.NewSshConfigFactoryImpl(ctx.GetModel(), self.host.PublicIp)
+	logFile := fmt.Sprintf("/home/%s/logs/loop2-dialer-%s.log", ssh.User(), ctx.GetId())
 	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s %s >> %s 2>&1",
 		ssh.User(), ssh.User(), self.scenario, self.endpoint, self.host.GetId(), strings.Join(self.extraArgs, " "), logFile)
 	if output, err := fablib.RemoteExec(ssh, dialerCmd); err != nil {

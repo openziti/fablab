@@ -32,7 +32,9 @@ func Retrieve(host, path, extension string) model.OperatingStage {
 	}
 }
 
-func (self *retrieve) Operate(m *model.Model, run string) error {
+func (self *retrieve) Operate(ctx model.RunContext) error {
+	m := ctx.GetModel()
+	run := ctx.GetId()
 	hosts := m.SelectHosts(self.host)
 	if len(hosts) == 1 {
 		host := hosts[0]

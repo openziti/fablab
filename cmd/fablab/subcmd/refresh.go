@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/fablib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -50,25 +50,27 @@ func refresh(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		fablib.Figlet("configuration")
+		ctx := model.NewRunContext(l, m)
 
-		if err := m.Build(l); err != nil {
+		figlet.Figlet("configuration")
+
+		if err := m.Build(ctx); err != nil {
 			logrus.Fatalf("error building (%v)", err)
 		}
 
-		fablib.Figlet("distribution")
+		figlet.Figlet("distribution")
 
-		if err := m.Sync(l); err != nil {
+		if err := m.Sync(ctx); err != nil {
 			logrus.Fatalf("error distributing (%v)", err)
 		}
 
-		fablib.Figlet("activation")
+		figlet.Figlet("activation")
 
-		if err := m.Activate(l); err != nil {
+		if err := m.Activate(ctx); err != nil {
 			logrus.Fatalf("error activating (%v)", err)
 		}
 
-		fablib.Figlet("refreshed")
+		figlet.Figlet("refreshed")
 	} else {
 		logrus.Fatalf("no label for run")
 	}
