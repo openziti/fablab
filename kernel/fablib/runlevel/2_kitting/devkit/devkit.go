@@ -29,7 +29,7 @@ func DevKit(root string, binaries []string) model.ConfigurationStage {
 	return &devKit{root: root, binaries: binaries}
 }
 
-func (devKit *devKit) Configure(model.RunContext) error {
+func (devKit *devKit) Configure(model.Run) error {
 	cfgRoot := filepath.Join(model.KitBuild(), "cfg")
 	fi, err := os.Stat(model.ConfigBuild())
 	if err == nil && fi.IsDir() {

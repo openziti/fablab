@@ -49,7 +49,7 @@ func dispose(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		ctx := model.NewRunContext(l, m)
+		ctx := model.NewRun(l, m)
 
 		if err := m.Dispose(ctx); err != nil {
 			logrus.Fatalf("error building configuration (%v)", err)

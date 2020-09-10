@@ -26,7 +26,7 @@ func Banner(msg string) model.OperatingStage {
 	return &banner{msg: msg}
 }
 
-func (b *banner) Operate(model.RunContext) error {
+func (b *banner) Operate(model.Run) error {
 	figlet.Figlet(b.msg)
 	fmt.Println()
 	return nil

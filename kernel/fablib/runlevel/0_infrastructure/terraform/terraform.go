@@ -31,9 +31,9 @@ func Express() model.InfrastructureStage {
 	return &terraform{}
 }
 
-func (t *terraform) Express(ctx model.RunContext) error {
-	m := ctx.GetModel()
-	l := ctx.GetLabel()
+func (t *terraform) Express(run model.Run) error {
+	m := run.GetModel()
+	l := run.GetLabel()
 
 	if err := t.generate(m); err != nil {
 		return fmt.Errorf("%w", err)

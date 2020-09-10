@@ -35,8 +35,8 @@ func IperfUdp(scenarioName, endpoint, serverHosts, clientHosts, bandwidth string
 	}
 }
 
-func (i *iperfUdp) Operate(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (i *iperfUdp) Operate(run model.Run) error {
+	m := run.GetModel()
 	serverHosts := m.SelectHosts(i.serverHosts)
 	clientHosts := m.SelectHosts(i.clientHosts)
 	if len(serverHosts) == 1 && len(clientHosts) == 1 {

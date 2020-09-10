@@ -34,17 +34,17 @@ func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{
 	}
 }
 
-func (self *loopDialer) Operate(ctx model.RunContext) error {
-	ssh := fablib.NewSshConfigFactoryImpl(ctx.GetModel(), self.host.PublicIp)
+func (self *loopDialer) Operate(run model.Run) error {
+	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
 	if err := fablib.RemoteKill(ssh, "ziti-fabric-test loop2 dialer"); err != nil {
 		return fmt.Errorf("error killing loop2 listeners (%w)", err)
 	}
 
-	go self.run(ctx)
+	go self.run(run)
 	return nil
 }
 
-func (self *loopDialer) run(ctx model.RunContext) {
+func (self *loopDialer) run(ctx model.Run) {
 	defer func() {
 		if self.joiner != nil {
 			close(self.joiner)

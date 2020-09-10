@@ -34,8 +34,8 @@ func Tcpdump(scenarioName, host string, snaplen int, joiner chan struct{}) model
 	}
 }
 
-func (t *tcpdump) Operate(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (t *tcpdump) Operate(run model.Run) error {
+	m := run.GetModel()
 	host, err := m.SelectHost(t.host)
 	if err != nil {
 		return err

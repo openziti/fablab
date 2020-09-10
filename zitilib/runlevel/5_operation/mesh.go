@@ -33,7 +33,7 @@ func Mesh(closer chan struct{}) model.OperatingStage {
 	return &mesh{closer: closer}
 }
 
-func (mesh *mesh) Operate(ctx model.RunContext) error {
+func (mesh *mesh) Operate(run model.Run) error {
 	if endpoint, id, err := dotziti.LoadIdentity(model.ActiveInstanceId()); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
@@ -49,7 +49,7 @@ func (mesh *mesh) Operate(ctx model.RunContext) error {
 		return fmt.Errorf("unable to load 'fablab' identity (%w)", err)
 	}
 
-	mesh.m = ctx.GetModel()
+	mesh.m = run.GetModel()
 
 	go mesh.runMesh()
 

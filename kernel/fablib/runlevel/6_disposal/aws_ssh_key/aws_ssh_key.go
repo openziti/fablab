@@ -19,8 +19,8 @@ func Dispose() model.DisposalStage {
 type awsKeyManager struct {
 }
 
-func (stage awsKeyManager) Dispose(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (stage awsKeyManager) Dispose(run model.Run) error {
+	m := run.GetModel()
 	bindings := model.GetBindings()
 	if managedKey, found := bindings.GetBool("credentials", "aws", "managed_key"); !found || !managedKey {
 		return nil

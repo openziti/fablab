@@ -27,8 +27,8 @@ func Fabric() model.ConfigurationStage {
 	return &fabric{}
 }
 
-func (f *fabric) Configure(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (f *fabric) Configure(run model.Run) error {
+	m := run.GetModel()
 	if err := generateCa(); err != nil {
 		return fmt.Errorf("error generating ca (%s)", err)
 	}

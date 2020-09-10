@@ -50,7 +50,7 @@ func up(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		ctx := model.NewRunContext(l, m)
+		ctx := model.NewRun(l, m)
 
 		figlet.Figlet("infrastructure")
 

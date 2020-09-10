@@ -25,7 +25,7 @@ func Closer(ch chan struct{}) model.OperatingStage {
 	return &closer{close: ch}
 }
 
-func (closer *closer) Operate(model.RunContext) error {
+func (closer *closer) Operate(model.Run) error {
 	logrus.Info("closing")
 	close(closer.close)
 	return nil

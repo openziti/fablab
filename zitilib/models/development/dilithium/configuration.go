@@ -43,7 +43,7 @@ func Kit() model.ConfigurationStage {
 	return &kit{}
 }
 
-func (self *kit) Configure(_ model.RunContext) error {
+func (self *kit) Configure(_ model.Run) error {
 	if err := fablib.CopyTree(DilithiumEtc(), filepath.Join(model.KitBuild(), "etc")); err != nil {
 		return errors.Wrap(err, "error copying dilithium etc into kit")
 	}

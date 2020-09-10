@@ -29,8 +29,8 @@ func TcpdumpCloser(host string) model.OperatingStage {
 	}
 }
 
-func (t *tcpdumpCloser) Operate(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (t *tcpdumpCloser) Operate(run model.Run) error {
+	m := run.GetModel()
 	host, err := m.SelectHost(t.host)
 	if err != nil {
 		return err

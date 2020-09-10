@@ -32,9 +32,9 @@ func Retrieve(host, path, extension string) model.OperatingStage {
 	}
 }
 
-func (self *retrieve) Operate(ctx model.RunContext) error {
-	m := ctx.GetModel()
-	run := ctx.GetId()
+func (self *retrieve) Operate(run model.Run) error {
+	m := run.GetModel()
+	runId := run.GetId()
 	hosts := m.SelectHosts(self.host)
 	if len(hosts) == 1 {
 		host := hosts[0]
@@ -47,7 +47,7 @@ func (self *retrieve) Operate(ctx model.RunContext) error {
 					paths = append(paths, file.Name())
 				}
 			}
-			forensicsPath := model.AllocateForensicScenario(run, host.GetRegion().GetId())
+			forensicsPath := model.AllocateForensicScenario(runId, host.GetRegion().GetId())
 			if err := os.MkdirAll(forensicsPath, os.ModePerm); err != nil {
 				return fmt.Errorf("error creating forensics root [%s] (%w)", forensicsPath, err)
 			}

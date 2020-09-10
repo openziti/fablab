@@ -33,8 +33,8 @@ func IperfClient(hostSpec, address string, port int) model.OperatingStage {
 	return &iperfClient{hostSpec, address, port}
 }
 
-func (self *iperfClient) Operate(ctx model.RunContext) error {
-	m := ctx.GetModel()
+func (self *iperfClient) Operate(run model.Run) error {
+	m := run.GetModel()
 	hosts := m.SelectHosts(self.hostSpec)
 	if len(hosts) != 1 {
 		return errors.Errorf("expected [1] iperf client host, found [%d]", len(hosts))
