@@ -48,8 +48,8 @@ func build(_ *cobra.Command, _ []string) {
 		if !found {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
-
-		if err := m.Build(l); err != nil {
+		ctx := model.NewRun(l, m)
+		if err := m.Build(ctx); err != nil {
 			logrus.Fatalf("error building configuration (%v)", err)
 		}
 

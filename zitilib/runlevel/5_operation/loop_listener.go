@@ -17,17 +17,17 @@ func LoopListener(host *model.Host, joiner chan struct{}, bindAddress string, ex
 	}
 }
 
-func (self *loopListener) Operate(m *model.Model, run string) error {
-	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
+func (self *loopListener) Operate(run model.Run) error {
+	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
 	if err := fablib.RemoteKill(ssh, "ziti-fabric-test loop2 listener"); err != nil {
 		return fmt.Errorf("error killing loop2 listeners (%w)", err)
 	}
 
-	go self.run(m, run)
+	go self.run(run)
 	return nil
 }
 
-func (self *loopListener) run(m *model.Model, run string) {
+func (self *loopListener) run(run model.Run) {
 	defer func() {
 		if self.joiner != nil {
 			close(self.joiner)
@@ -35,9 +35,9 @@ func (self *loopListener) run(m *model.Model, run string) {
 		}
 	}()
 
-	ssh := fablib.NewSshConfigFactoryImpl(m, self.host.PublicIp)
+	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
 
-	logFile := fmt.Sprintf("/home/%s/logs/loop2-listener-%s.log", ssh.User(), run)
+	logFile := fmt.Sprintf("/home/%s/logs/loop2-listener-%s.log", ssh.User(), run.GetId())
 	listenerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 listener -b %v %v >> %s 2>&1",
 		ssh.User(), self.bindAddress, strings.Join(self.extraArgs, " "), logFile)
 	if output, err := fablib.RemoteExec(ssh, listenerCmd); err != nil {

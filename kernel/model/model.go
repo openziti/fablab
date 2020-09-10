@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/openziti/fablab/kernel/fablib/figlet"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
@@ -53,22 +54,14 @@ type Model struct {
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
-	Infrastructure      InfrastructureBinders
-	Configuration       ConfigurationBinders
-	Kitting             KittingBinders
-	Distribution        DistributionBinders
-	Activation          ActivationBinders
-	Operation           OperatingBinders
-	Disposal            DisposalBinders
+	Infrastructure      InfrastructureStages
+	Configuration       ConfigurationStages
+	Distribution        DistributionStages
+	Activation          ActivationStages
+	Operation           OperatingStages
+	Disposal            DisposalStages
 
-	actions              map[string]Action
-	infrastructureStages []InfrastructureStage
-	configurationStages  []ConfigurationStage
-	kittingStages        []KittingStage
-	distributionStages   []DistributionStage
-	activationStages     []ActivationStage
-	operationStages      []OperatingStage
-	disposalStages       []DisposalStage
+	actions map[string]Action
 
 	initialized concurrenz.AtomicBoolean
 }
@@ -393,146 +386,199 @@ type Action interface {
 	Execute(m *Model) error
 }
 
-type InfrastructureStage interface {
-	Express(m *Model, l *Label) error
+func NewRun(label *Label, model *Model) Run {
+	return &runImpl{
+		label: label,
+		model: model,
+		runId: fmt.Sprintf("%d", info.NowInMilliseconds()),
+	}
 }
+
+type Run interface {
+	GetModel() *Model
+	GetLabel() *Label
+	GetId() string
+}
+
+type runImpl struct {
+	label *Label
+	model *Model
+	runId string
+}
+
+func (run *runImpl) GetModel() *Model {
+	return run.model
+}
+
+func (run *runImpl) GetLabel() *Label {
+	return run.label
+}
+
+func (run *runImpl) GetId() string {
+	return run.runId
+}
+
+type InfrastructureStages []InfrastructureStage
+
+type InfrastructureStage interface {
+	Express(run Run) error
+}
+
+type ConfigurationStages []ConfigurationStage
 
 type ConfigurationStage interface {
-	Configure(m *Model) error
+	Configure(run Run) error
 }
 
-type KittingStage interface {
-	Kit(m *Model) error
-}
+type DistributionStages []DistributionStage
 
 type DistributionStage interface {
-	Distribute(m *Model) error
+	Distribute(run Run) error
 }
+
+type ActivationStages []ActivationStage
 
 type ActivationStage interface {
-	Activate(m *Model) error
+	Activate(run Run) error
 }
+
+type OperatingStages []OperatingStage
 
 type OperatingStage interface {
-	Operate(m *Model, run string) error
+	Operate(run Run) error
 }
+
+type DisposalStages []DisposalStage
 
 type DisposalStage interface {
-	Dispose(m *Model) error
+	Dispose(run Run) error
 }
 
-type InfrastructureBinder func(m *Model) InfrastructureStage
-type InfrastructureBinders []InfrastructureBinder
+type actionStage string
 
-type ConfigurationBinder func(m *Model) ConfigurationStage
-type ConfigurationBinders []ConfigurationBinder
+func (stage actionStage) Activate(run Run) error {
+	return stage.execute(run)
+}
 
-type KittingBinder func(m *Model) KittingStage
-type KittingBinders []KittingBinder
+func (stage actionStage) Operate(run Run) error {
+	return stage.execute(run)
+}
 
-type DistributionBinder func(m *Model) DistributionStage
-type DistributionBinders []DistributionBinder
+func (stage actionStage) execute(run Run) error {
+	actionName := string(stage)
+	m := run.GetModel()
+	action, found := m.GetAction(actionName)
+	if !found {
+		return fmt.Errorf("no [%s] action", actionName)
+	}
+	figlet.FigletMini("action: " + actionName)
+	if err := action.Execute(m); err != nil {
+		return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
+	}
+	return nil
+}
 
-type ActivationBinder func(m *Model) ActivationStage
-type ActivationBinders []ActivationBinder
+func (m *Model) AddActivationStage(stage ActivationStage) {
+	m.Activation = append(m.Activation, stage)
+}
 
-type OperatingBinder func(m *Model) OperatingStage
-type OperatingBinders []OperatingBinder
+func (m *Model) AddActivationStages(stage ...ActivationStage) {
+	m.Activation = append(m.Activation, stage...)
+}
 
-type DisposalBinder func(m *Model) DisposalStage
-type DisposalBinders []DisposalBinder
+func (m *Model) AddActivationActions(actions ...string) {
+	for _, action := range actions {
+		m.AddActivationStage(actionStage(action))
+	}
+}
 
 func (m *Model) AddOperatingStage(stage OperatingStage) {
-	m.Operation = append(m.Operation, func(m *Model) OperatingStage { return stage })
+	m.Operation = append(m.Operation, stage)
 }
 
-func (m *Model) Express(l *Label) error {
-	for _, stage := range m.infrastructureStages {
-		if err := stage.Express(m, l); err != nil {
+func (m *Model) AddOperatingStages(stages ...OperatingStage) {
+	m.Operation = append(m.Operation, stages...)
+}
+
+func (m *Model) AddOperatingActions(actions ...string) {
+	for _, action := range actions {
+		m.AddOperatingStage(actionStage(action))
+	}
+}
+
+func (m *Model) Express(run Run) error {
+	for _, stage := range m.Infrastructure {
+		if err := stage.Express(run); err != nil {
 			return fmt.Errorf("error expressing infrastructure (%w)", err)
 		}
 	}
-	l.State = Expressed
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Expressed
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Build(l *Label) error {
-	for _, stage := range m.configurationStages {
-		if err := stage.Configure(m); err != nil {
+func (m *Model) Build(run Run) error {
+	for _, stage := range m.Configuration {
+		if err := stage.Configure(run); err != nil {
 			return fmt.Errorf("error building configuration (%w)", err)
 		}
 	}
-	l.State = Configured
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Configured
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Kit(l *Label) error {
-	for _, stage := range m.kittingStages {
-		if err := stage.Kit(m); err != nil {
-			return fmt.Errorf("error kitting (%w)", err)
-		}
-	}
-	l.State = Kitted
-	if err := l.Save(); err != nil {
-		return fmt.Errorf("error updating instance label (%w)", err)
-	}
-	return nil
-}
-
-func (m *Model) Sync(l *Label) error {
-	for _, stage := range m.distributionStages {
-		if err := stage.Distribute(m); err != nil {
+func (m *Model) Sync(run Run) error {
+	for _, stage := range m.Distribution {
+		if err := stage.Distribute(run); err != nil {
 			return fmt.Errorf("error distributing (%w)", err)
 		}
 	}
-	l.State = Distributed
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Distributed
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Activate(l *Label) error {
-	for _, stage := range m.activationStages {
-		if err := stage.Activate(m); err != nil {
+func (m *Model) Activate(run Run) error {
+	for _, stage := range m.Activation {
+		if err := stage.Activate(run); err != nil {
 			return fmt.Errorf("error activating (%w)", err)
 		}
 	}
-	l.State = Activated
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Activated
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Operate(l *Label) error {
-	run := fmt.Sprintf("%d", info.NowInMilliseconds())
-	for _, stage := range m.operationStages {
-		if err := stage.Operate(m, run); err != nil {
+func (m *Model) Operate(run Run) error {
+	for _, stage := range m.Operation {
+		if err := stage.Operate(run); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}
 	}
-	l.State = Operating
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Operating
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
 }
 
-func (m *Model) Dispose(l *Label) error {
-	for _, stage := range m.disposalStages {
-		if err := stage.Dispose(m); err != nil {
+func (m *Model) Dispose(run Run) error {
+	for _, stage := range m.Disposal {
+		if err := stage.Dispose(run); err != nil {
 			return fmt.Errorf("error disposing (%w)", err)
 		}
 	}
-	l.State = Disposed
-	if err := l.Save(); err != nil {
+	run.GetLabel().State = Disposed
+	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil

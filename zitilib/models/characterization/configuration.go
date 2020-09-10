@@ -18,7 +18,9 @@ package zitilib_characterization
 
 import (
 	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 	"github.com/openziti/fablab/zitilib/runlevel/1_configuration"
 )
 
@@ -27,11 +29,17 @@ func newConfigurationFactory() model.Factory {
 }
 
 func (f *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(m *model.Model) model.ConfigurationStage {
-			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
-		},
-		func(m *model.Model) model.ConfigurationStage { return config.Component() },
+	zitiBinaries := []string{
+		"ziti-controller",
+		"ziti-fabric",
+		"ziti-fabric-test",
+		"ziti-router",
+	}
+
+	m.Configuration = model.ConfigurationStages{
+		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
+		config.Component(),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries),
 	}
 	return nil
 }

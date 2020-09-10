@@ -48,8 +48,8 @@ func activate(_ *cobra.Command, _ []string) {
 		if !found {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
-
-		if err := m.Activate(l); err != nil {
+		ctx := model.NewRun(l, m)
+		if err := m.Activate(ctx); err != nil {
 			logrus.Fatalf("error synchronizing all hosts (%v)", err)
 		}
 	}

@@ -27,7 +27,7 @@ func Dispose() model.DisposalStage {
 	return &terraform{}
 }
 
-func (terraform *terraform) Dispose(m *model.Model) error {
+func (terraform *terraform) Dispose(model.Run) error {
 	prc := fablib.NewProcess("terraform", "destroy", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(fablib.StdoutTail)

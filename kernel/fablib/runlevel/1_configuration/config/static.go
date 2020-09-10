@@ -31,7 +31,8 @@ func Static(configs []StaticConfig) model.ConfigurationStage {
 	return &staticConfig{configs: configs}
 }
 
-func (staticConfig *staticConfig) Configure(m *model.Model) error {
+func (staticConfig *staticConfig) Configure(run model.Run) error {
+	m := run.GetModel()
 	for _, config := range staticConfig.configs {
 		logrus.Debugf("generating static configuration [%s] => [%s]", config.Src, config.Name)
 

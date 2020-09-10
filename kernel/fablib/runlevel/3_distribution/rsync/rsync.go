@@ -28,7 +28,8 @@ func Rsync() model.DistributionStage {
 	return &rsyncStage{}
 }
 
-func (rsync *rsyncStage) Distribute(m *model.Model) error {
+func (rsync *rsyncStage) Distribute(run model.Run) error {
+	m := run.GetModel()
 	for regionId, r := range m.Regions {
 		for hostId, host := range r.Hosts {
 			config := newConfig(m, host.PublicIp)

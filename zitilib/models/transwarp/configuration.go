@@ -17,9 +17,14 @@
 package transwarp
 
 import (
+	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 	zitilib_runlevel_1_configuration "github.com/openziti/fablab/zitilib/runlevel/1_configuration"
+	"github.com/pkg/errors"
+	"path/filepath"
 )
 
 type configurationFactory struct{}
@@ -29,11 +34,20 @@ func newConfigurationFactory() model.Factory {
 }
 
 func (_ *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(_ *model.Model) model.ConfigurationStage {
-			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
-		},
-		func(_ *model.Model) model.ConfigurationStage { return config.Component() },
+	m.Configuration = model.ConfigurationStages{
+		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
+		config.Component(),
+		&kit{},
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"ziti-controller", "ziti-router", "dilithium"}),
+	}
+	return nil
+}
+
+type kit struct{}
+
+func (_ *kit) Configure(_ model.Run) error {
+	if err := fablib.CopyTree(DilithiumEtc(), filepath.Join(model.KitBuild(), "cfg/dilithium")); err != nil {
+		return errors.Wrap(err, "error copying dilithium etc into kit")
 	}
 	return nil
 }

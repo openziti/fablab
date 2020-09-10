@@ -27,7 +27,7 @@ func Joiner(joiners []chan struct{}) model.OperatingStage {
 	}
 }
 
-func (j *joiner) Operate(m *model.Model, _ string) error {
+func (j *joiner) Operate(model.Run) error {
 	logrus.Debugf("will join with [%d] joiners", len(j.joiners))
 	count := 0
 	for _, joiner := range j.joiners {

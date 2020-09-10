@@ -17,25 +17,26 @@
 package subcmd
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	RootCmd.AddCommand(kitCmd)
+	RootCmd.AddCommand(refreshCmd)
 }
 
-var kitCmd = &cobra.Command{
-	Use:   "kit",
-	Short: "kit the distribution for the model",
+var refreshCmd = &cobra.Command{
+	Use:   "refresh",
+	Short: "progress through lifecycle runlevels (build -> sync -> activate)",
 	Args:  cobra.ExactArgs(0),
-	Run:   kit,
+	Run:   refresh,
 }
 
-func kit(_ *cobra.Command, _ []string) {
+func refresh(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%s)", err)
+		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
 	l := model.GetLabel()
@@ -49,10 +50,27 @@ func kit(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		if err := m.Kit(l); err != nil {
-			logrus.Fatalf("error building configuration (%v)", err)
+		ctx := model.NewRun(l, m)
+
+		figlet.Figlet("configuration")
+
+		if err := m.Build(ctx); err != nil {
+			logrus.Fatalf("error building (%v)", err)
 		}
 
+		figlet.Figlet("distribution")
+
+		if err := m.Sync(ctx); err != nil {
+			logrus.Fatalf("error distributing (%v)", err)
+		}
+
+		figlet.Figlet("activation")
+
+		if err := m.Activate(ctx); err != nil {
+			logrus.Fatalf("error activating (%v)", err)
+		}
+
+		figlet.Figlet("FABUL0US!1!")
 	} else {
 		logrus.Fatalf("no label for run")
 	}

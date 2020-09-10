@@ -18,7 +18,9 @@ package edge
 
 import (
 	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/2_kitting/devkit"
 	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 	"github.com/openziti/fablab/zitilib/runlevel/1_configuration"
 )
 
@@ -27,19 +29,25 @@ func newConfigurationFactory() model.Factory {
 }
 
 func (self *configurationFactory) Build(m *model.Model) error {
-	m.Configuration = model.ConfigurationBinders{
-		func(m *model.Model) model.ConfigurationStage {
-			return zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti())
-		},
-		func(m *model.Model) model.ConfigurationStage { return config.Component() },
-		func(m *model.Model) model.ConfigurationStage {
-			configs := []config.StaticConfig{
-				{Src: "loop/10-ambient.loop2.yml", Name: "10-ambient.loop2.yml"},
-				{Src: "loop/4k-chatter.loop2.yml", Name: "4k-chatter.loop2.yml"},
-			}
-			return config.Static(configs)
-		},
+	configs := []config.StaticConfig{
+		{Src: "loop/10-ambient.loop2.yml", Name: "10-ambient.loop2.yml"},
+		{Src: "loop/4k-chatter.loop2.yml", Name: "4k-chatter.loop2.yml"},
 	}
+
+	zitiBinaries := []string{
+		"ziti-controller",
+		"ziti-fabric",
+		"ziti-fabric-test",
+		"ziti-router",
+	}
+
+	m.Configuration = model.ConfigurationStages{
+		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
+		config.Component(),
+		config.Static(configs),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), zitiBinaries),
+	}
+
 	return nil
 }
 

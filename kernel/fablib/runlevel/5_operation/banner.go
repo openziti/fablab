@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/fablib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 )
 
@@ -26,8 +26,8 @@ func Banner(msg string) model.OperatingStage {
 	return &banner{msg: msg}
 }
 
-func (b *banner) Operate(_ *model.Model, _ string) error {
-	fablib.Figlet(b.msg)
+func (b *banner) Operate(model.Run) error {
+	figlet.Figlet(b.msg)
 	fmt.Println()
 	return nil
 }

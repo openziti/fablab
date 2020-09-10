@@ -45,7 +45,9 @@ func (l awsKeyManager) Bootstrap(*model.Model) error {
 	return nil
 }
 
-func (stage awsKeyManager) Express(m *model.Model, _ *model.Label) error {
+func (stage awsKeyManager) Express(run model.Run) error {
+	m := run.GetModel()
+
 	bindings := model.GetBindings()
 	if managedKey, found := bindings.GetBool("credentials", "aws", "managed_key"); !found || !managedKey {
 		return nil

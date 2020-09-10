@@ -40,7 +40,7 @@ func newOperationFactory() model.Factory {
 func (self *operationFactory) Build(m *model.Model) error {
 	closer := make(chan struct{})
 
-	m.AddOperatingStage(fablib_5_operation.Actions("syncModelEdgeState"))
+	m.AddOperatingActions("syncModelEdgeState")
 	m.AddOperatingStage(zitilib_5_operation.Mesh(closer))
 	m.AddOperatingStage(zitilib_5_operation.MetricsWithIdMapper(closer, func(id string) string {
 		return "component.edgeId:" + id

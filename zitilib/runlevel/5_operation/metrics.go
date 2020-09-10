@@ -43,7 +43,7 @@ func MetricsWithIdMapper(closer chan struct{}, f func(string) string) model.Oper
 	}
 }
 
-func (metrics *metrics) Operate(m *model.Model, _ string) error {
+func (metrics *metrics) Operate(run model.Run) error {
 	if endpoint, id, err := dotziti.LoadIdentity(model.ActiveInstanceId()); err == nil {
 		if address, err := transport.ParseAddress(endpoint); err == nil {
 			dialer := channel2.NewClassicDialer(id, address, nil)
@@ -75,7 +75,7 @@ func (metrics *metrics) Operate(m *model.Model, _ string) error {
 		logrus.Fatalf("error queuing metrics request (%v)", err)
 	}
 
-	metrics.m = m
+	metrics.m = run.GetModel()
 	go metrics.runMetrics()
 
 	return nil

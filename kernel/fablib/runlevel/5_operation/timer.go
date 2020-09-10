@@ -26,7 +26,7 @@ func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
 	return &timer{duration: duration, closer: closer}
 }
 
-func (timer *timer) Operate(_ *model.Model, _ string) error {
+func (timer *timer) Operate(model.Run) error {
 	logrus.Infof("waiting for %s", timer.duration)
 	time.Sleep(timer.duration)
 	if timer.closer != nil {

@@ -49,7 +49,9 @@ func run(_ *cobra.Command, _ []string) {
 			logrus.Fatalf("no such model [%s]", l.Model)
 		}
 
-		if err := m.Operate(l); err != nil {
+		ctx := model.NewRun(l, m)
+
+		if err := m.Operate(ctx); err != nil {
 			logrus.Fatalf("error operating model (%v)", err)
 		}
 	}

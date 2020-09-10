@@ -6,6 +6,7 @@ require (
 	github.com/Jeffail/gabs v1.4.0
 	github.com/aws/aws-sdk-go v1.31.14
 	github.com/golang/protobuf v1.4.0
+	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4

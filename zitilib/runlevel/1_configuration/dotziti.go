@@ -32,7 +32,8 @@ func DotZiti() model.ConfigurationStage {
 	return &dotZiti{}
 }
 
-func (d *dotZiti) Configure(m *model.Model) error {
+func (d *dotZiti) Configure(run model.Run) error {
+	m := run.GetModel()
 	if err := generateCert("dotziti", "127.0.0.1"); err != nil {
 		return fmt.Errorf("error generating cert for [dotziti] (%s)", err)
 	}

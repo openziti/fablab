@@ -99,35 +99,6 @@ func bootstrapModel() (*Model, error) {
 			}
 		}
 
-		m.infrastructureStages = nil
-		for _, binder := range m.Infrastructure {
-			m.infrastructureStages = append(m.infrastructureStages, binder(m))
-		}
-		m.configurationStages = nil
-		for _, binder := range m.Configuration {
-			m.configurationStages = append(m.configurationStages, binder(m))
-		}
-		m.kittingStages = nil
-		for _, binder := range m.Kitting {
-			m.kittingStages = append(m.kittingStages, binder(m))
-		}
-		m.distributionStages = nil
-		for _, binder := range m.Distribution {
-			m.distributionStages = append(m.distributionStages, binder(m))
-		}
-		m.activationStages = nil
-		for _, binder := range m.Activation {
-			m.activationStages = append(m.activationStages, binder(m))
-		}
-		m.operationStages = nil
-		for _, binder := range m.Operation {
-			m.operationStages = append(m.operationStages, binder(m))
-		}
-		m.disposalStages = nil
-		for _, binder := range m.Disposal {
-			m.disposalStages = append(m.disposalStages, binder(m))
-		}
-
 		m.actions = make(map[string]Action)
 		for name, binder := range m.Actions {
 			m.actions[name] = binder(m)

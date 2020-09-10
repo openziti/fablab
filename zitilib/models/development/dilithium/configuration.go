@@ -1,5 +1,5 @@
 /*
-	Copyright NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package transwarp
+package dilithium
 
 import (
 	"github.com/openziti/fablab/kernel/fablib"
@@ -25,29 +25,29 @@ import (
 	"path/filepath"
 )
 
-type kittingFactory struct{}
-
-func newKittingFactory() model.Factory {
-	return &kittingFactory{}
+func newConfigurationFactory() model.Factory {
+	return &configurationFactory{}
 }
 
-func (_ *kittingFactory) Build(m *model.Model) error {
-	m.Kitting = model.KittingBinders{
-		func(_ *model.Model) model.KittingStage {
-			return &kit{}
-		},
-		func(_ *model.Model) model.KittingStage {
-			return devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"ziti-controller", "ziti-router", "dilithium"})
-		},
+func (_ *configurationFactory) Build(m *model.Model) error {
+	m.Configuration = model.ConfigurationStages{
+		Kit(),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"dilithium"}),
+	}
+	return nil
+}
+
+type configurationFactory struct{}
+
+func Kit() model.ConfigurationStage {
+	return &kit{}
+}
+
+func (self *kit) Configure(_ model.Run) error {
+	if err := fablib.CopyTree(DilithiumEtc(), filepath.Join(model.KitBuild(), "etc")); err != nil {
+		return errors.Wrap(err, "error copying dilithium etc into kit")
 	}
 	return nil
 }
 
 type kit struct{}
-
-func (_ *kit) Kit(_ *model.Model) error {
-	if err := fablib.CopyTree(DilithiumEtc(), filepath.Join(model.KitBuild(), "cfg/dilithium")); err != nil {
-		return errors.Wrap(err, "error copying dilithium etc into kit")
-	}
-	return nil
-}
