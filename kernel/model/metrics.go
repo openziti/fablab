@@ -13,7 +13,7 @@ func (s MetricSet) AddGroupedMetric(group, name string, val interface{}) {
 	if group == "" || group == name {
 		s[name] = val
 	} else {
-		name = strings.TrimPrefix(name, group)
+		name = strings.TrimPrefix(name, group+".")
 		groupMapVal, found := s[group]
 		if !found {
 			groupMap := MetricSet{}
@@ -72,7 +72,7 @@ type StdOutMetricsWriter struct {
 }
 
 func (StdOutMetricsWriter) AcceptHostMetrics(host *Host, event *MetricsEvent) {
-	fmt.Printf("metrics event - host %v at timestamp: %v", host.GetId(), event.Timestamp)
+	fmt.Printf("metrics event - host %v at timestamp: %v\n", host.GetId(), event.Timestamp)
 	for k, v := range event.Metrics {
 		fmt.Printf("\t%v = %v\n", k, v)
 	}

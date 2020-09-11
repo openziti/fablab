@@ -28,17 +28,25 @@ func Start(componentSpec string) model.Action {
 	}
 }
 
+func StartInParallel(componentSpec string) model.Action {
+	return &start{
+		componentSpec: componentSpec,
+		parallel:      true,
+	}
+}
+
 func (start *start) Execute(m *model.Model) error {
-	for _, c := range m.SelectComponents(start.componentSpec) {
+	return m.ForEachComponent(start.componentSpec, start.parallel, func(c *model.Component) error {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
 		if err := fablib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
 			return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 type start struct {
 	componentSpec string
+	parallel      bool
 }

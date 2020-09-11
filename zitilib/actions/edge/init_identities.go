@@ -8,24 +8,21 @@ import (
 	"strings"
 )
 
-func InitIdentities(componentSpec string) model.Action {
+func InitIdentities(componentSpec string, parallel bool) model.Action {
 	return &initIdentitiesAction{
 		componentSpec: componentSpec,
+		parallel:      parallel,
 	}
 }
 
 func (action *initIdentitiesAction) Execute(m *model.Model) error {
-	for _, c := range m.SelectComponents(action.componentSpec) {
+	return m.ForEachComponent(action.componentSpec, action.parallel, func(c *model.Component) error {
 		if _, err := cli.Exec(m, "edge", "delete", "identity", c.PublicIdentity); err != nil {
 			return err
 		}
 
-		if err := action.createAndEnrollIdentity(c); err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return action.createAndEnrollIdentity(c)
+	})
 }
 
 func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) error {
@@ -55,4 +52,5 @@ func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) 
 
 type initIdentitiesAction struct {
 	componentSpec string
+	parallel      bool
 }

@@ -44,7 +44,7 @@ func (self *stageFactory) Build(m *model.Model) error {
 
 	m.Distribution = model.DistributionStages{
 		distribution.Locations("*", "logs"),
-		rsync.Rsync(),
+		rsync.Parallel(),
 	}
 
 	m.AddActivationActions("bootstrap", "start")
@@ -62,16 +62,17 @@ func (self *stageFactory) Build(m *model.Model) error {
 }
 
 func (self *stageFactory) addOperationStages(m *model.Model) error {
-	phase := fablib_5_operation.NewPhase()
+	runPhase := fablib_5_operation.NewPhase()
+	cleanupPhase := fablib_5_operation.NewPhase()
 
 	m.AddOperatingActions("syncModelEdgeState")
-	m.AddOperatingStage(zitilib_5_operation.Mesh(phase.GetCloser()))
-	m.AddOperatingStage(zitilib_5_operation.ModelMetricsWithIdMapper(phase.GetCloser(), func(id string) string {
+	m.AddOperatingStage(zitilib_5_operation.Mesh(runPhase.GetCloser()))
+	m.AddOperatingStage(zitilib_5_operation.ModelMetricsWithIdMapper(runPhase.GetCloser(), func(id string) string {
 		return "component.edgeId:" + id
 	}))
 
 	for _, host := range m.SelectHosts("*") {
-		m.AddOperatingStage(fablib_5_operation.StreamSarMetrics(host, 5, 3, phase))
+		m.AddOperatingStage(fablib_5_operation.StreamSarMetrics(host, 5, 3, runPhase, cleanupPhase))
 	}
 
 	if err := self.listeners(m); err != nil {
@@ -80,11 +81,11 @@ func (self *stageFactory) addOperationStages(m *model.Model) error {
 
 	m.AddOperatingStage(fablib_5_operation.Timer(5*time.Second, nil))
 
-	if err := self.dialers(m, phase); err != nil {
+	if err := self.dialers(m, runPhase); err != nil {
 		return fmt.Errorf("error creating dialers (%w)", err)
 	}
 
-	m.AddOperatingStage(phase)
+	m.AddOperatingStage(runPhase)
 	m.AddOperatingStage(fablib_5_operation.Persist())
 
 	return nil

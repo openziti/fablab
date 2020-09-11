@@ -19,6 +19,7 @@ package distribution
 import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/fablib/parallel"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +35,7 @@ func (self *locations) Distribute(run model.Run) error {
 	m := run.GetModel()
 	hosts := m.SelectHosts(self.hostSpec)
 
-	var tasks []fablib.Task
+	var tasks []parallel.Task
 
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
@@ -52,7 +53,7 @@ func (self *locations) Distribute(run model.Run) error {
 		}
 	}
 
-	return fablib.InParallel(tasks...)
+	return parallel.Execute(tasks)
 }
 
 type locations struct {

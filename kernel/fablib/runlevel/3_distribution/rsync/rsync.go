@@ -24,34 +24,26 @@ import (
 	"strings"
 )
 
-func Rsync() model.DistributionStage {
+func Sequential() model.DistributionStage {
 	return &rsyncStage{}
 }
 
+func Parallel() model.DistributionStage {
+	return &rsyncStage{parallel: true}
+}
+
 func (rsync *rsyncStage) Distribute(run model.Run) error {
-	m := run.GetModel()
-	var tasks []fablib.Task
-	for regionId, r := range m.Regions {
-		for hostId, host := range r.Hosts {
-			config := newConfig(m, host.PublicIp)
-			boundRegionId := regionId
-			boundHostId := hostId
-
-			tasks = append(tasks, func() error {
-				if err := synchronizeHost(config); err != nil {
-					return fmt.Errorf("error synchronizing host [%s/%s] (%s)", boundRegionId, boundHostId, err)
-				}
-				return nil
-			})
+	return run.GetModel().ForEachHost("*", rsync.parallel, func(host *model.Host) error {
+		config := newConfig(run.GetModel(), host.PublicIp)
+		if err := synchronizeHost(config); err != nil {
+			return fmt.Errorf("error synchronizing host [%s/%s] (%s)", host.GetRegion().GetId(), host.GetId(), err)
 		}
-	}
-
-	return fablib.InParallel(tasks...)
-
-	return nil
+		return nil
+	})
 }
 
 type rsyncStage struct {
+	parallel bool
 }
 
 func synchronizeHost(config *Config) error {

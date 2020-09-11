@@ -24,13 +24,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, phase Phase) model.OperatingStage {
+func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, runPhase Phase, cleanupPhase Phase) model.OperatingStage {
 	return &streamSarMetrics{
 		host:                host,
 		intervalSeconds:     intervalSeconds,
 		reportIntervalCount: reportIntervalCount,
-		closer:              phase.GetCloser(),
-		joiner:              phase.AddJoiner(),
+		closer:              runPhase.GetCloser(),
+		joiner:              cleanupPhase.AddJoiner(),
 	}
 }
 
@@ -39,7 +39,7 @@ type streamSarMetrics struct {
 	intervalSeconds     int
 	reportIntervalCount int
 	joiner              chan struct{}
-	closer              chan struct{}
+	closer              <-chan struct{}
 	closed              concurrenz.AtomicBoolean
 }
 

@@ -23,26 +23,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func GroupExec(hostSpec, cmd string) model.Action {
+func GroupExec(hostSpec string, parallel bool, cmds ...string) model.Action {
 	return &groupExec{
 		hostSpec: hostSpec,
-		cmd:      cmd,
+		parallel: parallel,
+		cmds:     cmds,
 	}
 }
 
 func (groupExec *groupExec) Execute(m *model.Model) error {
-	for _, h := range m.SelectHosts(groupExec.hostSpec) {
+	return m.ForEachHost(groupExec.hostSpec, groupExec.parallel, func(h *model.Host) error {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
 
-		if o, err := fablib.RemoteExec(sshConfigFactory, groupExec.cmd); err != nil {
+		if o, err := fablib.RemoteExecSeq(sshConfigFactory, groupExec.cmds...); err != nil {
 			logrus.Errorf("output [%s]", o)
-			return fmt.Errorf("error executing process [%s] on [%s] (%s)", groupExec.cmd, h.PublicIp, err)
+			return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 type groupExec struct {
 	hostSpec string
-	cmd      string
+	parallel bool
+	cmds     []string
 }

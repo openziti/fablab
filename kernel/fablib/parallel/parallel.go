@@ -1,10 +1,10 @@
-package fablib
+package parallel
 
 import "github.com/openziti/fabric/controller/network"
 
 type Task func() error
 
-func InParallel(tasks ...Task) error {
+func Execute(tasks []Task) error {
 	errorsC := make(chan error, len(tasks))
 	var joiners []chan struct{}
 	for _, task := range tasks {

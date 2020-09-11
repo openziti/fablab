@@ -17,6 +17,7 @@
 package model
 
 import (
+	"github.com/openziti/fablab/kernel/fablib/parallel"
 	"github.com/openziti/foundation/util/stringz"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -146,6 +147,64 @@ func (m *Model) SelectComponent(spec string) (*Component, error) {
 	} else {
 		return nil, errors.Errorf("[%s] matched [%d] components, expected 1", spec, len(components))
 	}
+}
+
+func (m *Model) ForEachHost(spec string, parallel bool, f func(host *Host) error) error {
+	if parallel {
+		return m.ForEachHostParallel(spec, f)
+	}
+	return m.ForEachHostSequential(spec, f)
+}
+
+func (m *Model) ForEachHostSequential(spec string, f func(host *Host) error) error {
+	hosts := m.SelectHosts(spec)
+	for _, host := range hosts {
+		if err := f(host); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Model) ForEachHostParallel(spec string, f func(host *Host) error) error {
+	hosts := m.SelectHosts(spec)
+	var tasks []parallel.Task
+	for _, host := range hosts {
+		boundHost := host
+		tasks = append(tasks, func() error {
+			return f(boundHost)
+		})
+	}
+	return parallel.Execute(tasks)
+}
+
+func (m *Model) ForEachComponent(spec string, parallel bool, f func(c *Component) error) error {
+	if parallel {
+		return m.ForEachComponentParallel(spec, f)
+	}
+	return m.ForEachComponentSequential(spec, f)
+}
+
+func (m *Model) ForEachComponentSequential(spec string, f func(c *Component) error) error {
+	components := m.SelectComponents(spec)
+	for _, c := range components {
+		if err := f(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Model) ForEachComponentParallel(spec string, f func(c *Component) error) error {
+	components := m.SelectComponents(spec)
+	var tasks []parallel.Task
+	for _, component := range components {
+		boundComponent := component
+		tasks = append(tasks, func() error {
+			return f(boundComponent)
+		})
+	}
+	return parallel.Execute(tasks)
 }
 
 type EntityMatcher func(Entity) bool

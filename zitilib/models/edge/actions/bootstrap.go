@@ -50,17 +50,17 @@ func (a *bootstrapAction) bind(m *model.Model) model.Action {
 		workflow.AddAction(zitilib_actions.Fabric("create", "router", filepath.Join(model.PkiBuild(), cert)))
 	}
 
-	for _, h := range m.SelectHosts("*") {
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername)))
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername)))
-		workflow.AddAction(host.Exec(h, fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername)))
-	}
+	workflow.AddAction(host.GroupExec("*", true,
+		fmt.Sprintf("mkdir -p /home/%s/.ziti", sshUsername),
+		fmt.Sprintf("rm -f /home/%s/.ziti/identities.yml", sshUsername),
+		fmt.Sprintf("ln -s /home/%s/fablab/cfg/remote_identities.yml /home/%s/.ziti/identities.yml", sshUsername, sshUsername),
+	))
 
 	workflow.AddAction(edge.Login(models.HasControllerComponent))
 
-	workflow.AddAction(component.Stop(models.EdgeRouterTag))
-	workflow.AddAction(edge.InitEdgeRouters(models.EdgeRouterTag))
-	workflow.AddAction(edge.InitIdentities(models.SdkAppTag))
+	workflow.AddAction(component.StopInParallel(models.EdgeRouterTag))
+	workflow.AddAction(edge.InitEdgeRouters(models.EdgeRouterTag, true))
+	workflow.AddAction(edge.InitIdentities(models.SdkAppTag, true))
 
 	workflow.AddAction(zitilib_actions.Edge("create", "service", "perf-test"))
 	workflow.AddAction(zitilib_actions.Edge("create", "service-policy", "perf-bind", "Bind", "--service-roles", "@perf-test", "--identity-roles", "#service"))

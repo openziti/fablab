@@ -131,29 +131,41 @@ func RemoteConsole(factory SshConfigFactory, cmd string) error {
 }
 
 func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
+	return RemoteExecSeq(sshConfig, cmd)
+}
+
+func RemoteExecSeq(sshConfig SshConfigFactory, cmds ...string) (string, error) {
+	if len(cmds) == 0 {
+		return "", nil
+	}
 	config := sshConfig.Config()
 
-	logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmd)
+	logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmds[0])
 
 	client, err := ssh.Dial("tcp", sshConfig.Address(), config)
 	if err != nil {
 		return "", err
 	}
 
-	session, err := client.NewSession()
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = session.Close() }()
 	var b bytes.Buffer
-	session.Stdout = &b
 
-	err = session.Run(cmd)
-	if err != nil {
-		return b.String(), err
+	for idx, cmd := range cmds {
+		session, err := client.NewSession()
+		if err != nil {
+			return "", err
+		}
+		defer func() { _ = session.Close() }()
+		session.Stdout = &b
+
+		if idx > 0 {
+			logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmd)
+		}
+		if err = session.Run(cmd); err != nil {
+			return b.String(), err
+		}
 	}
 
-	return b.String(), err
+	return b.String(), nil
 }
 
 func RemoteKill(factory SshConfigFactory, match string) error {

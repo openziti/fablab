@@ -51,7 +51,7 @@ func (stagesFactory) Build(m *model.Model) error {
 
 	m.Distribution = model.DistributionStages{
 		distribution.Locations("#host", "logs"),
-		rsync.Rsync(),
+		rsync.Sequential(),
 	}
 
 	m.Disposal = model.DisposalStages{
