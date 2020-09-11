@@ -112,11 +112,7 @@ var transwarpModel = &model.Model{
 
 	Factories: []model.Factory{
 		newHostsFactory(),
-		newInfrastructureFactory(),
-		newConfigurationFactory(),
-		newDistributionFactory(),
-		newActivationFactory(),
-		newOperationFactory(),
+		newStagesFactory(),
 
 		zitilib_transwarp_actions.NewActionsFactory(),
 	},

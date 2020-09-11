@@ -19,7 +19,7 @@ package zitilib_runlevel_5_operation
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/fablib/timeutil"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fabric/pb/mgmt_pb"
 	"github.com/openziti/foundation/channel2"
@@ -30,13 +30,13 @@ import (
 	"time"
 )
 
-func Metrics(closer chan struct{}) model.OperatingStage {
+func Metrics(closer <-chan struct{}) model.OperatingStage {
 	return MetricsWithIdMapper(closer, func(id string) string {
 		return "#" + id
 	})
 }
 
-func MetricsWithIdMapper(closer chan struct{}, f func(string) string) model.OperatingStage {
+func MetricsWithIdMapper(closer <-chan struct{}, f func(string) string) model.OperatingStage {
 	return &metrics{
 		closer:             closer,
 		idToSelectorMapper: f,
@@ -132,14 +132,14 @@ func (metrics *metrics) runMetrics() {
 type metrics struct {
 	ch                 channel2.Channel
 	m                  *model.Model
-	closer             chan struct{}
+	closer             <-chan struct{}
 	idToSelectorMapper func(string) string
 }
 
 func SummarizeZitiFabricMetrics(metrics *mgmt_pb.StreamMetricsEvent) (model.ZitiFabricRouterMetricsSummary, error) {
 	summary := model.ZitiFabricRouterMetricsSummary{
 		SourceId:    metrics.SourceId,
-		TimestampMs: fablib.TimeToMilliseconds(time.Unix(metrics.Timestamp.Seconds, int64(metrics.Timestamp.Nanos))),
+		TimestampMs: timeutil.TimeToMilliseconds(time.Unix(metrics.Timestamp.Seconds, int64(metrics.Timestamp.Nanos))),
 	}
 
 	if value, found := metrics.FloatMetrics["fabric.rx.bytesrate.m1_rate"]; found {

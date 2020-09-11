@@ -34,11 +34,7 @@ var tiny = &model.Model{
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newActionsFactory(),
-		newInfrastructureFactory(),
-		newConfigurationFactory(),
-		newDistributionFactory(),
-		newActivationFactory(),
-		newOperationFactory(),
+		newStageFactory(),
 	},
 
 	Regions: model.Regions{

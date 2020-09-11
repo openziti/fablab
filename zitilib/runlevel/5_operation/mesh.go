@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-func Mesh(closer chan struct{}) model.OperatingStage {
+func Mesh(closer <-chan struct{}) model.OperatingStage {
 	return &mesh{closer: closer}
 }
 
@@ -154,5 +154,5 @@ func (mesh *mesh) interrogate() error {
 type mesh struct {
 	ch     channel2.Channel
 	m      *model.Model
-	closer chan struct{}
+	closer <-chan struct{}
 }
