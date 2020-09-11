@@ -16,10 +16,27 @@
 
 package model
 
+import (
+	"github.com/openziti/fablab/kernel/fablib/timeutil"
+)
+
 type HostSummary struct {
 	Cpu     []*CpuTimeslice     `json:"cpu,omitempty"`
 	Memory  []*MemoryTimeslice  `json:"memory,omitempty"`
 	Process []*ProcessTimeslice `json:"process,omitempty"`
+}
+
+func (hs *HostSummary) ToMetricsEvents() (events []*MetricsEvent) {
+	for _, e := range hs.Cpu {
+		events = append(events, e.toMetricsEvent())
+	}
+	for _, e := range hs.Memory {
+		events = append(events, e.toMetricsEvent())
+	}
+	for _, e := range hs.Process {
+		events = append(events, e.toMetricsEvent())
+	}
+	return events
 }
 
 type CpuTimeslice struct {
@@ -30,6 +47,22 @@ type CpuTimeslice struct {
 	PercentIowait float64 `json:"percent_iowait"`
 	PercentSteal  float64 `json:"percent_steal"`
 	PercentIdle   float64 `json:"percent_idle"`
+}
+
+func (ts *CpuTimeslice) toMetricsEvent() *MetricsEvent {
+	event := &MetricsEvent{
+		Timestamp: timeutil.MillisecondsToTime(ts.TimestampMs),
+		Metrics:   MetricSet{},
+	}
+
+	event.Metrics["percent_user"] = ts.PercentUser
+	event.Metrics["percent_nice"] = ts.PercentNice
+	event.Metrics["percent_system"] = ts.PercentSystem
+	event.Metrics["percent_iowait"] = ts.PercentIowait
+	event.Metrics["percent_steal"] = ts.PercentSteal
+	event.Metrics["percent_idle"] = ts.PercentIdle
+
+	return event
 }
 
 type MemoryTimeslice struct {
@@ -47,6 +80,27 @@ type MemoryTimeslice struct {
 	DirtyK        int64   `json:"dirty_k"`
 }
 
+func (ts *MemoryTimeslice) toMetricsEvent() *MetricsEvent {
+	event := &MetricsEvent{
+		Timestamp: timeutil.MillisecondsToTime(ts.TimestampMs),
+		Metrics:   MetricSet{},
+	}
+
+	event.Metrics["free_k"] = ts.MemFreeK
+	event.Metrics["avail_k"] = ts.AvailK
+	event.Metrics["used_k"] = ts.UsedK
+	event.Metrics["used_percent"] = ts.UsedPercent
+	event.Metrics["buffers_k"] = ts.BuffersK
+	event.Metrics["cached_k"] = ts.CachedK
+	event.Metrics["commit_k"] = ts.CommitK
+	event.Metrics["commit_percent"] = ts.CommitPercent
+	event.Metrics["active_k"] = ts.ActiveK
+	event.Metrics["inactive_k"] = ts.InactiveK
+	event.Metrics["dirty_k"] = ts.DirtyK
+
+	return event
+}
+
 type ProcessTimeslice struct {
 	TimestampMs     int64   `json:"timestamp_ms"`
 	RunQueueSize    int64   `json:"run_queue_size"`
@@ -55,6 +109,22 @@ type ProcessTimeslice struct {
 	LoadAverage5m   float64 `json:"load_average_5m`
 	LoadAverage15m  float64 `json:"load_average_15m"`
 	Blocked         int64   `json:"blocked"`
+}
+
+func (ts *ProcessTimeslice) toMetricsEvent() *MetricsEvent {
+	event := &MetricsEvent{
+		Timestamp: timeutil.MillisecondsToTime(ts.TimestampMs),
+		Metrics:   MetricSet{},
+	}
+
+	event.Metrics["run_queue_size"] = ts.RunQueueSize
+	event.Metrics["process_list_size"] = ts.ProcessListSize
+	event.Metrics["load_average_1m"] = ts.LoadAverage1m
+	event.Metrics["load_average_5m"] = ts.LoadAverage5m
+	event.Metrics["load_average_15m"] = ts.LoadAverage15m
+	event.Metrics["blocked"] = ts.Blocked
+
+	return event
 }
 
 type ZitiFabricMeshSummary struct {

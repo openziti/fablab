@@ -30,14 +30,24 @@ func Rsync() model.DistributionStage {
 
 func (rsync *rsyncStage) Distribute(run model.Run) error {
 	m := run.GetModel()
+	var tasks []fablib.Task
 	for regionId, r := range m.Regions {
 		for hostId, host := range r.Hosts {
 			config := newConfig(m, host.PublicIp)
-			if err := synchronizeHost(config); err != nil {
-				return fmt.Errorf("error synchronizing host [%s/%s] (%s)", regionId, hostId, err)
-			}
+			boundRegionId := regionId
+			boundHostId := hostId
+
+			tasks = append(tasks, func() error {
+				if err := synchronizeHost(config); err != nil {
+					return fmt.Errorf("error synchronizing host [%s/%s] (%s)", boundRegionId, boundHostId, err)
+				}
+				return nil
+			})
 		}
 	}
+
+	return fablib.InParallel(tasks...)
+
 	return nil
 }
 

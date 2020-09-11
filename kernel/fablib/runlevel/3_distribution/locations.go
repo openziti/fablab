@@ -33,18 +33,26 @@ func Locations(hostSpec string, paths ...string) model.DistributionStage {
 func (self *locations) Distribute(run model.Run) error {
 	m := run.GetModel()
 	hosts := m.SelectHosts(self.hostSpec)
+
+	var tasks []fablib.Task
+
 	for _, host := range hosts {
 		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
 		for _, path := range self.paths {
+			boundHost := host
 			mkdir := fmt.Sprintf("mkdir -p %s", path)
-			if _, err := fablib.RemoteExec(ssh, mkdir); err == nil {
-				logrus.Infof("%s => %s", host.PublicIp, path)
-			} else {
-				return fmt.Errorf("error creating path [%s] on host [%s] (%w)", path, host.PublicIp, err)
-			}
+			tasks = append(tasks, func() error {
+				if _, err := fablib.RemoteExec(ssh, mkdir); err == nil {
+					logrus.Infof("%s => %s", boundHost.PublicIp, path)
+					return nil
+				} else {
+					return fmt.Errorf("error creating path [%s] on host [%s] (%w)", path, boundHost.PublicIp, err)
+				}
+			})
 		}
 	}
-	return nil
+
+	return fablib.InParallel(tasks...)
 }
 
 type locations struct {
