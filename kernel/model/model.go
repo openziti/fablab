@@ -250,7 +250,7 @@ type Host struct {
 }
 
 func (host *Host) init(id string, region *Region) {
-	logrus.Infof("initialing host: %v.%v", region.GetId(), id)
+	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.id = id
 	host.region = region
 	host.Scope.setParent(&region.Scope)

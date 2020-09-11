@@ -28,7 +28,7 @@ func (s MetricSet) AddGroupedMetric(group, name string, val interface{}) {
 
 func (s MetricSet) VisitUngroupedMetrics(f func(name string, val interface{})) {
 	for k, v := range s {
-		if _, ok := v.(MetricsEvent); !ok {
+		if _, ok := v.(MetricSet); !ok {
 			f(k, v)
 		}
 	}
@@ -36,7 +36,7 @@ func (s MetricSet) VisitUngroupedMetrics(f func(name string, val interface{})) {
 
 func (s MetricSet) VisitGroupedMetrics(f func(name string, group MetricSet)) {
 	for k, v := range s {
-		if groupSet, ok := v.(map[string]interface{}); ok {
+		if groupSet, ok := v.(MetricSet); ok {
 			f(k, groupSet)
 		}
 	}

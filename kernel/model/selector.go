@@ -18,6 +18,7 @@ package model
 
 import (
 	"github.com/openziti/fablab/kernel/fablib/parallel"
+	"github.com/openziti/foundation/util/errorz"
 	"github.com/openziti/foundation/util/stringz"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -50,6 +51,19 @@ func (m *Model) MustStringVariable(name ...string) string {
 	result, ok := value.(string)
 	if !ok {
 		logrus.Fatalf("variable [%v] expected to have type string, but was %v", name, reflect.TypeOf(value))
+	}
+	return result
+}
+
+func (m *Model) GetRequiredStringVariable(holder errorz.ErrorHolder, name ...string) string {
+	value, found := m.GetVariable(name...)
+	if !found {
+		holder.SetError(errors.Errorf("missing variable [%s]", name))
+		return ""
+	}
+	result, ok := value.(string)
+	if !ok {
+		holder.SetError(errors.Errorf("variable [%v] expected to have type string, but was %v", name, reflect.TypeOf(value)))
 	}
 	return result
 }

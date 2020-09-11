@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package zitilib_runlevel_5_operation
+package operation
 
 import (
 	"errors"
@@ -22,33 +22,52 @@ import (
 	influxdb "github.com/influxdata/influxdb1-client"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/foundation/util/errorz"
 	"net/url"
 	"time"
 )
 
-type influxReporter struct {
-	url         url.URL
-	database    string
-	username    string
-	password    string
-	metricsChan chan *hostMetricsEvent
-
-	client *influxdb.Client
+func InfluxMetricsReporter() model.OperatingStage {
+	return &influxMetricsReporterStage{}
 }
 
-type hostMetricsEvent struct {
-	host  *model.Host
-	event *model.MetricsEvent
+type influxMetricsReporterStage struct {
+	errorz.ErrorHolderImpl
 }
 
-func (reporter *influxReporter) AcceptHostMetrics(host *model.Host, event *model.MetricsEvent) {
-	reporter.metricsChan <- &hostMetricsEvent{
-		host:  host,
-		event: event,
+func (stage *influxMetricsReporterStage) Operate(run model.Run) error {
+	m := run.GetModel()
+	urlVar := m.GetRequiredStringVariable(stage, "metrics", "influxdb", "url")
+	db := m.GetRequiredStringVariable(stage, "metrics", "influxdb", "db")
+	username := m.GetRequiredStringVariable(stage, "credentials", "influxdb", "username")
+	password := m.GetRequiredStringVariable(stage, "credentials", "influxdb", "password")
+
+	if stage.HasError() {
+		return stage.GetError()
 	}
+
+	influxUrl, err := url.Parse(urlVar)
+	if err != nil {
+		return err
+	}
+
+	config := influxConfig{
+		url:      *influxUrl,
+		database: db,
+		username: username,
+		password: password,
+	}
+
+	handler, err := NewInfluxDBMetricsHandler(&config)
+	if err != nil {
+		return err
+	}
+
+	m.MetricsHandlers = append(m.MetricsHandlers, handler)
+	return nil
 }
 
-func NewInfluxDBMetricsHandler(cfg *influxConfig) (interface{}, error) {
+func NewInfluxDBMetricsHandler(cfg *influxConfig) (model.MetricsHandler, error) {
 	rep := &influxReporter{
 		url:         cfg.url,
 		database:    cfg.database,
@@ -63,6 +82,23 @@ func NewInfluxDBMetricsHandler(cfg *influxConfig) (interface{}, error) {
 
 	go rep.run()
 	return rep, nil
+}
+
+type influxReporter struct {
+	url         url.URL
+	database    string
+	username    string
+	password    string
+	metricsChan chan *hostMetricsEvent
+
+	client *influxdb.Client
+}
+
+func (reporter *influxReporter) AcceptHostMetrics(host *model.Host, event *model.MetricsEvent) {
+	reporter.metricsChan <- &hostMetricsEvent{
+		host:  host,
+		event: event,
+	}
 }
 
 func (reporter *influxReporter) makeClient() (err error) {
@@ -86,15 +122,15 @@ func (reporter *influxReporter) run() {
 		select {
 		case msg := <-reporter.metricsChan:
 			if err := reporter.send(msg); err != nil {
-				log.Printf("unable to send metrics to HandlerTypeInfluxDB. err=%v", err)
+				log.Printf("unable to send metrics to influxdb. err=%v", err)
 			}
 		case <-pingTicker:
 			_, _, err := reporter.client.Ping()
 			if err != nil {
-				log.Printf("got error while sending a ping to HandlerTypeInfluxDB, trying to recreate influxdb. err=%v", err)
+				log.Printf("got error while sending a ping to influxdb, trying to recreate influxdb. err=%v", err)
 
 				if err = reporter.makeClient(); err != nil {
-					log.Printf("unable to make HandlerTypeInfluxDB influxdb. err=%v", err)
+					log.Printf("unable to make client connection to influxdb. err=%v", err)
 				}
 			}
 		}
@@ -200,4 +236,9 @@ func LoadInfluxConfig(src map[interface{}]interface{}) (*influxConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+type hostMetricsEvent struct {
+	host  *model.Host
+	event *model.MetricsEvent
 }

@@ -66,6 +66,7 @@ func (self *stageFactory) addOperationStages(m *model.Model) error {
 	cleanupPhase := fablib_5_operation.NewPhase()
 
 	m.AddOperatingActions("syncModelEdgeState")
+	m.AddOperatingStage(fablib_5_operation.InfluxMetricsReporter())
 	m.AddOperatingStage(zitilib_5_operation.Mesh(runPhase.GetCloser()))
 	m.AddOperatingStage(zitilib_5_operation.ModelMetricsWithIdMapper(runPhase.GetCloser(), func(id string) string {
 		return "component.edgeId:" + id

@@ -64,10 +64,20 @@ var edge = &model.Model{
 					"username": &model.Variable{Required: true, Sensitive: true},
 					"password": &model.Variable{Required: true, Sensitive: true},
 				},
+				"influxdb": model.Variables{
+					"username": &model.Variable{Required: true, Sensitive: true},
+					"password": &model.Variable{Required: true, Sensitive: true},
+				},
 			},
 			"distribution": model.Variables{
 				"rsync_bin": &model.Variable{Default: "rsync"},
 				"ssh_bin":   &model.Variable{Default: "ssh"},
+			},
+			"metrics": model.Variables{
+				"influxdb": model.Variables{
+					"url": &model.Variable{Default: "http://localhost:8086"},
+					"db":  &model.Variable{Default: "ziti"},
+				},
 			},
 		},
 	},
