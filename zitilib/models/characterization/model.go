@@ -67,11 +67,7 @@ var Ziti = &model.Model{
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newActionsFactory(),
-		newInfrastructureFactory(),
-		newConfigurationFactory(),
-		newDistributionFactory(),
-		newActivationFactory(),
-		newOperationFactory(),
+		newStagesFactory(),
 	},
 
 	Regions: model.Regions{

@@ -18,49 +18,81 @@ package zitilib_characterization
 
 import (
 	"fmt"
+	aws_ssh_keys0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
+	semaphore0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/semaphore"
+	terraform0 "github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/terraform"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/1_configuration/config"
+	distribution "github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution"
+	"github.com/openziti/fablab/kernel/fablib/runlevel/3_distribution/rsync"
 	operation "github.com/openziti/fablab/kernel/fablib/runlevel/5_operation"
+	aws_ssh_keys6 "github.com/openziti/fablab/kernel/fablib/runlevel/6_disposal/aws_ssh_key"
+	terraform6 "github.com/openziti/fablab/kernel/fablib/runlevel/6_disposal/terraform"
 	"github.com/openziti/fablab/kernel/model"
+	zitilib_bootstrap "github.com/openziti/fablab/zitilib"
 	"github.com/openziti/fablab/zitilib/models"
-	"github.com/openziti/fablab/zitilib/runlevel/5_operation"
+	zitilib_runlevel_1_configuration "github.com/openziti/fablab/zitilib/runlevel/1_configuration"
+	zitilib_runlevel_5_operation "github.com/openziti/fablab/zitilib/runlevel/5_operation"
 	"time"
 )
 
-func newOperationFactory() model.Factory {
-	return &operationFactory{}
+func newStagesFactory() model.Factory {
+	return &stagesFactory{}
 }
 
-func (f *operationFactory) Build(m *model.Model) error {
-	values := m.SelectHosts("#local > #service")
-	var directEndpoint string
-	if len(values) == 1 {
-		directEndpoint = values[0].PublicIp
-	} else {
-		return fmt.Errorf("need single host for #local > #service, found [%d]", len(values))
+func (f *stagesFactory) Build(m *model.Model) error {
+	m.Infrastructure = model.InfrastructureStages{
+		aws_ssh_keys0.Express(),
+		terraform0.Express(),
+		semaphore0.Restart(90 * time.Second),
 	}
 
-	values = m.SelectHosts("#short > #short")
-	var shortProxy string
-	if len(values) == 1 {
-		shortProxy = values[0].PrivateIp
-	} else {
-		return fmt.Errorf("need single host for #short > #short, found [%d]", len(values))
+	m.Configuration = model.ConfigurationStages{
+		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
+		config.Component(),
+		zitilib_bootstrap.DefaultZitiBinaries(),
 	}
 
-	values = m.SelectHosts("#medium > #medium")
-	var mediumProxy string
-	if len(values) == 1 {
-		mediumProxy = values[0].PrivateIp
-	} else {
-		return fmt.Errorf("need a single host for #medium > #medium, found [%d]", len(values))
+	m.Distribution = model.DistributionStages{
+		distribution.Locations(models.ControllerTag, "logs"),
+		distribution.Locations(models.RouterTag, "logs"),
+		rsync.Rsync(),
 	}
 
-	values = m.SelectHosts("#long > #long")
-	var longProxy string
-	if len(values) == 1 {
-		longProxy = values[0].PrivateIp
-	} else {
-		return fmt.Errorf("need a single host for #long > #long, found [%d]", len(values))
+	m.AddActivationActions("bootstrap", "start")
+
+	if err := f.addOperationStages(m); err != nil {
+		return err
 	}
+
+	m.Disposal = model.DisposalStages{
+		terraform6.Dispose(),
+		aws_ssh_keys6.Dispose(),
+	}
+
+	return nil
+}
+
+func (f *stagesFactory) addOperationStages(m *model.Model) error {
+	value, err := m.SelectHost("#local > #service")
+	if err != nil {
+		return err
+	}
+	directEndpoint := value.PublicIp
+
+	if value, err = m.SelectHost("#short > #short"); err != nil {
+		return err
+	}
+	shortProxy := value.PrivateIp
+
+	if value, err = m.SelectHost("#medium > #medium"); err != nil {
+		return err
+	}
+	mediumProxy := value.PrivateIp
+
+	if value, err = m.SelectHost("#long > #long"); err != nil {
+		return err
+	}
+	longProxy := value.PrivateIp
 
 	minutes := m.Variables.Must("characterization", "sample_minutes")
 	seconds := int((time.Duration(minutes.(int)) * time.Minute).Seconds())
@@ -80,7 +112,7 @@ func (f *operationFactory) Build(m *model.Model) error {
 	return nil
 }
 
-func (f *operationFactory) addStagesForRegion(region, initiatingRouter, directEndpoint string, tcpdump bool, snaplen, seconds int, m *model.Model) {
+func (f *stagesFactory) addStagesForRegion(region, initiatingRouter, directEndpoint string, tcpdump bool, snaplen, seconds int, m *model.Model) {
 	serverHosts := model.Selector(models.LocalId, models.ServiceTag)
 	clientHosts := model.Selector(region, models.ClientTag)
 
@@ -161,7 +193,7 @@ func (f *operationFactory) addStagesForRegion(region, initiatingRouter, directEn
 	m.AddOperatingStage(operation.Persist())
 }
 
-func (f *operationFactory) sarStages(scenario string, m *model.Model, _ int) []chan struct{} {
+func (f *stagesFactory) sarStages(scenario string, m *model.Model, _ int) []chan struct{} {
 	joiners := make([]chan struct{}, 0)
 	for _, host := range m.SelectHosts("*") {
 		h := host // because stage is func (closure)
@@ -172,10 +204,10 @@ func (f *operationFactory) sarStages(scenario string, m *model.Model, _ int) []c
 	return joiners
 }
 
-func (f *operationFactory) sarCloserStages(m *model.Model) {
+func (f *stagesFactory) sarCloserStages(m *model.Model) {
 	for _, host := range m.SelectHosts("*") {
 		m.AddOperatingStage(operation.SarCloser(host))
 	}
 }
 
-type operationFactory struct{}
+type stagesFactory struct{}
