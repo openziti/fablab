@@ -7,10 +7,10 @@ import (
 
 func createTestModel() *Model {
 	return &Model{
-		Scope: Scope{Tags: Tags{"global"}},
+		Scope: Scope{Tags: Tags{"^global"}},
 		Regions: Regions{
 			"initiator": {
-				Scope:  Scope{Tags: Tags{"region-shared", "region-first", "^region-not-inherited"}},
+				Scope:  Scope{Tags: Tags{"^region-shared", "^region-first", "region-not-inherited"}},
 				Region: "us-east-1",
 				Site:   "us-east-1a",
 				Hosts: Hosts{
@@ -39,7 +39,7 @@ func createTestModel() *Model {
 						},
 					},
 					"client": {
-						Scope: Scope{Tags: Tags{"client", "sdk-app"}},
+						Scope: Scope{Tags: Tags{"^client", "^sdk-app"}},
 						Components: Components{
 							"client1": {
 								BinaryName:     "ziti-fabric-test",
@@ -52,7 +52,7 @@ func createTestModel() *Model {
 			"terminator": {
 				Region: "us-west-1",
 				Site:   "us-west-1b",
-				Scope:  Scope{Tags: Tags{"region-shared", "region-last"}},
+				Scope:  Scope{Tags: Tags{"^region-shared", "^region-last"}},
 				Hosts: Hosts{
 					"terminator": {
 						Scope: Scope{Tags: Tags{"terminator", "edge-router"}},
@@ -67,7 +67,7 @@ func createTestModel() *Model {
 						},
 					},
 					"service": {
-						Scope: Scope{Tags: Tags{"service", "sdk-app"}},
+						Scope: Scope{Tags: Tags{"^service", "^sdk-app"}},
 						Components: Components{
 							"server1": {
 								BinaryName:     "ziti-fabric-test",

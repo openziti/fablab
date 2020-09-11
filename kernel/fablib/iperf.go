@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/oliveagle/jsonpath"
+	"github.com/openziti/fablab/kernel/fablib/timeutil"
 	"github.com/openziti/fablab/kernel/model"
 	"time"
 )
@@ -70,7 +71,7 @@ func SummarizeIperf(data []byte) (*model.IperfSummary, error) {
 		timestamp := start.Add(time.Duration(int64(sumStart*1000.0)) * time.Millisecond)
 		bitsPerSecond := sum["bits_per_second"].(float64)
 		summary.Timeslices = append(summary.Timeslices, &model.IperfTimeslice{
-			TimestampMs:   TimeToMilliseconds(timestamp),
+			TimestampMs:   timeutil.TimeToMilliseconds(timestamp),
 			BitsPerSecond: bitsPerSecond,
 		})
 	}
@@ -126,7 +127,7 @@ func SummarizeIperfUdp(data []byte) (*model.IperfUdpSummary, error) {
 		bitsPerSecond := sum["bits_per_second"].(float64)
 		packets := sum["packets"].(float64)
 		summary.Timeslices = append(summary.Timeslices, &model.IperfUdpTimeslice{
-			TimestampMs:   TimeToMilliseconds(timestamp),
+			TimestampMs:   timeutil.TimeToMilliseconds(timestamp),
 			BitsPerSecond: bitsPerSecond,
 			Packets:       packets,
 		})

@@ -1,5 +1,5 @@
 /*
-	Copyright NetFoundry, Inc.
+	Copyright 2019 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,19 +14,14 @@
 	limitations under the License.
 */
 
-package transwarp
+package timeutil
 
-import (
-	"github.com/openziti/fablab/kernel/model"
-)
+import "time"
 
-type activationFactory struct{}
-
-func newActivationFactory() model.Factory {
-	return &activationFactory{}
+func TimeToMilliseconds(t time.Time) int64 {
+	return t.UnixNano() / 1000000
 }
 
-func (_ *activationFactory) Build(m *model.Model) error {
-	m.AddActivationActions("bootstrap", "start")
-	return nil
+func MillisecondsToTime(millis int64) time.Time {
+	return time.Unix(0, millis*time.Millisecond.Nanoseconds())
 }
