@@ -34,8 +34,7 @@ func (a *startAction) bind(*model.Model) model.Action {
 	workflow := actions.Workflow()
 	workflow.AddAction(component.Start(models.ControllerTag))
 	workflow.AddAction(semaphore.Sleep(2 * time.Second))
-	workflow.AddAction(component.StartInParallel(models.RouterTag))
-	workflow.AddAction(component.StartInParallel(models.EdgeRouterTag))
+	workflow.AddAction(component.StartInParallel(models.EdgeRouterTag, 25))
 	return workflow
 }
 

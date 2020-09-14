@@ -10,15 +10,15 @@ import (
 	"strings"
 )
 
-func InitEdgeRouters(componentSpec string, parallel bool) model.Action {
+func InitEdgeRouters(componentSpec string, concurrency int) model.Action {
 	return &initEdgeRoutersAction{
 		componentSpec: componentSpec,
-		parallel:      parallel,
+		concurrency:   concurrency,
 	}
 }
 
 func (action *initEdgeRoutersAction) Execute(m *model.Model) error {
-	return m.ForEachComponent(action.componentSpec, action.parallel, func(c *model.Component) error {
+	return m.ForEachComponent(action.componentSpec, action.concurrency, func(c *model.Component) error {
 		if _, err := cli.Exec(m, "edge", "delete", "edge-router", c.PublicIdentity); err != nil {
 			return err
 		}
@@ -53,5 +53,5 @@ func (action *initEdgeRoutersAction) createAndEnrollRouter(c *model.Component) e
 
 type initEdgeRoutersAction struct {
 	componentSpec string
-	parallel      bool
+	concurrency   int
 }

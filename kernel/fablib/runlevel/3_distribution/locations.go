@@ -19,7 +19,6 @@ package distribution
 import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/fablib"
-	"github.com/openziti/fablab/kernel/fablib/parallel"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -32,28 +31,20 @@ func Locations(hostSpec string, paths ...string) model.DistributionStage {
 }
 
 func (self *locations) Distribute(run model.Run) error {
-	m := run.GetModel()
-	hosts := m.SelectHosts(self.hostSpec)
-
-	var tasks []parallel.Task
-
-	for _, host := range hosts {
-		ssh := fablib.NewSshConfigFactoryImpl(m, host.PublicIp)
+	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
+		ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), host.PublicIp)
+		var cmds []string
 		for _, path := range self.paths {
-			boundHost := host
 			mkdir := fmt.Sprintf("mkdir -p %s", path)
-			tasks = append(tasks, func() error {
-				if _, err := fablib.RemoteExec(ssh, mkdir); err == nil {
-					logrus.Infof("%s => %s", boundHost.PublicIp, path)
-					return nil
-				} else {
-					return fmt.Errorf("error creating path [%s] on host [%s] (%w)", path, boundHost.PublicIp, err)
-				}
-			})
+			cmds = append(cmds, mkdir)
 		}
-	}
-
-	return parallel.Execute(tasks)
+		if _, err := fablib.RemoteExecAll(ssh, cmds...); err == nil {
+			logrus.Infof("%s => %s", host.PublicIp, self.paths)
+			return nil
+		} else {
+			return fmt.Errorf("error creating paths [%s] on host [%s] (%w)", self.paths, host.PublicIp, err)
+		}
+	})
 }
 
 type locations struct {

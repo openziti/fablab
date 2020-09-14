@@ -30,8 +30,8 @@ func init() {
 }
 
 type sshExecCmd struct {
-	cobraCmd *cobra.Command
-	parallel bool
+	cobraCmd    *cobra.Command
+	concurrency int
 }
 
 func newSshExecCmd() *sshExecCmd {
@@ -44,7 +44,7 @@ func newSshExecCmd() *sshExecCmd {
 	}
 
 	cmd.cobraCmd.Run = cmd.run
-	cmd.cobraCmd.Flags().BoolVarP(&cmd.parallel, "parallel", "p", false, "Run the command in paralle")
+	cmd.cobraCmd.Flags().IntVarP(&cmd.concurrency, "concurrency", "c", 1, "Number of hosts to run in parallel")
 	return cmd
 }
 
@@ -68,9 +68,10 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 			logrus.Fatalf("model not bound")
 		}
 
-		err := m.ForEachHost(args[0], cmd.parallel, func(h *model.Host) error {
+		logrus.Infof("executing %v with concurrency %v", args[1], cmd.concurrency)
+		err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
 			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
-			o, err := fablib.RemoteExecSeq(sshConfigFactory, args[1])
+			o, err := fablib.RemoteExecAll(sshConfigFactory, args[1])
 			if err != nil {
 				logrus.Errorf("output [%s]", o)
 				return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)

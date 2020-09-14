@@ -163,24 +163,7 @@ func (m *Model) SelectComponent(spec string) (*Component, error) {
 	}
 }
 
-func (m *Model) ForEachHost(spec string, parallel bool, f func(host *Host) error) error {
-	if parallel {
-		return m.ForEachHostParallel(spec, f)
-	}
-	return m.ForEachHostSequential(spec, f)
-}
-
-func (m *Model) ForEachHostSequential(spec string, f func(host *Host) error) error {
-	hosts := m.SelectHosts(spec)
-	for _, host := range hosts {
-		if err := f(host); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Model) ForEachHostParallel(spec string, f func(host *Host) error) error {
+func (m *Model) ForEachHost(spec string, concurrency int, f func(host *Host) error) error {
 	hosts := m.SelectHosts(spec)
 	var tasks []parallel.Task
 	for _, host := range hosts {
@@ -189,27 +172,10 @@ func (m *Model) ForEachHostParallel(spec string, f func(host *Host) error) error
 			return f(boundHost)
 		})
 	}
-	return parallel.Execute(tasks)
+	return parallel.Execute(tasks, int64(concurrency))
 }
 
-func (m *Model) ForEachComponent(spec string, parallel bool, f func(c *Component) error) error {
-	if parallel {
-		return m.ForEachComponentParallel(spec, f)
-	}
-	return m.ForEachComponentSequential(spec, f)
-}
-
-func (m *Model) ForEachComponentSequential(spec string, f func(c *Component) error) error {
-	components := m.SelectComponents(spec)
-	for _, c := range components {
-		if err := f(c); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Model) ForEachComponentParallel(spec string, f func(c *Component) error) error {
+func (m *Model) ForEachComponent(spec string, concurrency int, f func(c *Component) error) error {
 	components := m.SelectComponents(spec)
 	var tasks []parallel.Task
 	for _, component := range components {
@@ -218,7 +184,7 @@ func (m *Model) ForEachComponentParallel(spec string, f func(c *Component) error
 			return f(boundComponent)
 		})
 	}
-	return parallel.Execute(tasks)
+	return parallel.Execute(tasks, int64(concurrency))
 }
 
 type EntityMatcher func(Entity) bool

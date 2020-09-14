@@ -1,26 +1,39 @@
 package parallel
 
-import "github.com/openziti/fabric/controller/network"
+import (
+	"context"
+	"github.com/openziti/fabric/controller/network"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/semaphore"
+)
 
 type Task func() error
 
-func Execute(tasks []Task) error {
+func Execute(tasks []Task, concurrency int64) error {
+	if concurrency < 1 {
+		return errors.Errorf("invalid concurrency %v, must be at least 1", concurrency)
+	}
+
+	sem := semaphore.NewWeighted(concurrency)
 	errorsC := make(chan error, len(tasks))
-	var joiners []chan struct{}
 	for _, task := range tasks {
+		if err := sem.Acquire(context.Background(), 1); err != nil {
+			errorsC <- err
+			continue
+		}
 		boundTask := task
-		joiner := make(chan struct{})
-		joiners = append(joiners, joiner)
 		go func() {
-			defer close(joiner)
+			defer func() {
+				sem.Release(1)
+			}()
 			if err := boundTask(); err != nil {
 				errorsC <- err
 			}
 		}()
 	}
 
-	for _, joiner := range joiners {
-		<-joiner
+	if err := sem.Acquire(context.Background(), concurrency); err != nil {
+		return err
 	}
 
 	close(errorsC)

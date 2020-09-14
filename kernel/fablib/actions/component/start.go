@@ -23,20 +23,18 @@ import (
 )
 
 func Start(componentSpec string) model.Action {
-	return &start{
-		componentSpec: componentSpec,
-	}
+	return StartInParallel(componentSpec, 1)
 }
 
-func StartInParallel(componentSpec string) model.Action {
+func StartInParallel(componentSpec string, concurrency int) model.Action {
 	return &start{
 		componentSpec: componentSpec,
-		parallel:      true,
+		concurrency:   concurrency,
 	}
 }
 
 func (start *start) Execute(m *model.Model) error {
-	return m.ForEachComponent(start.componentSpec, start.parallel, func(c *model.Component) error {
+	return m.ForEachComponent(start.componentSpec, start.concurrency, func(c *model.Component) error {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
 		if err := fablib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
@@ -48,5 +46,5 @@ func (start *start) Execute(m *model.Model) error {
 
 type start struct {
 	componentSpec string
-	parallel      bool
+	concurrency   int
 }

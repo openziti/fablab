@@ -44,7 +44,7 @@ func (self *stageFactory) Build(m *model.Model) error {
 
 	m.Distribution = model.DistributionStages{
 		distribution.Locations("*", "logs"),
-		rsync.Parallel(),
+		rsync.Rsync(25),
 	}
 
 	m.AddActivationActions("bootstrap", "start")

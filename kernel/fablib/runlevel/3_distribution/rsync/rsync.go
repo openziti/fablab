@@ -24,16 +24,14 @@ import (
 	"strings"
 )
 
-func Sequential() model.DistributionStage {
-	return &rsyncStage{}
-}
-
-func Parallel() model.DistributionStage {
-	return &rsyncStage{parallel: true}
+func Rsync(concurrency int) model.DistributionStage {
+	return &rsyncStage{
+		concurrency: concurrency,
+	}
 }
 
 func (rsync *rsyncStage) Distribute(run model.Run) error {
-	return run.GetModel().ForEachHost("*", rsync.parallel, func(host *model.Host) error {
+	return run.GetModel().ForEachHost("*", rsync.concurrency, func(host *model.Host) error {
 		config := newConfig(run.GetModel(), host.PublicIp)
 		if err := synchronizeHost(config); err != nil {
 			return fmt.Errorf("error synchronizing host [%s/%s] (%s)", host.GetRegion().GetId(), host.GetId(), err)
@@ -43,7 +41,7 @@ func (rsync *rsyncStage) Distribute(run model.Run) error {
 }
 
 type rsyncStage struct {
-	parallel bool
+	concurrency int
 }
 
 func synchronizeHost(config *Config) error {

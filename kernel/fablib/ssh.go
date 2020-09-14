@@ -131,10 +131,10 @@ func RemoteConsole(factory SshConfigFactory, cmd string) error {
 }
 
 func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
-	return RemoteExecSeq(sshConfig, cmd)
+	return RemoteExecAll(sshConfig, cmd)
 }
 
-func RemoteExecSeq(sshConfig SshConfigFactory, cmds ...string) (string, error) {
+func RemoteExecAll(sshConfig SshConfigFactory, cmds ...string) (string, error) {
 	if len(cmds) == 0 {
 		return "", nil
 	}

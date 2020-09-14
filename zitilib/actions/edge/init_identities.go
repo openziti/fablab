@@ -8,15 +8,15 @@ import (
 	"strings"
 )
 
-func InitIdentities(componentSpec string, parallel bool) model.Action {
+func InitIdentities(componentSpec string, concurrency int) model.Action {
 	return &initIdentitiesAction{
 		componentSpec: componentSpec,
-		parallel:      parallel,
+		concurrency:   concurrency,
 	}
 }
 
 func (action *initIdentitiesAction) Execute(m *model.Model) error {
-	return m.ForEachComponent(action.componentSpec, action.parallel, func(c *model.Component) error {
+	return m.ForEachComponent(action.componentSpec, action.concurrency, func(c *model.Component) error {
 		if _, err := cli.Exec(m, "edge", "delete", "identity", c.PublicIdentity); err != nil {
 			return err
 		}
@@ -52,5 +52,5 @@ func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) 
 
 type initIdentitiesAction struct {
 	componentSpec string
-	parallel      bool
+	concurrency   int
 }

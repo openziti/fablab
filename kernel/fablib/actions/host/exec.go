@@ -33,7 +33,7 @@ func Exec(h *model.Host, cmds ...string) model.Action {
 func (exec *exec) Execute(m *model.Model) error {
 	sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
 
-	if o, err := fablib.RemoteExecSeq(sshConfigFactory, exec.cmds...); err != nil {
+	if o, err := fablib.RemoteExecAll(sshConfigFactory, exec.cmds...); err != nil {
 		logrus.Errorf("output [%s]", o)
 		return fmt.Errorf("error executing process on [%s] (%s)", exec.h.PublicIp, err)
 	}
