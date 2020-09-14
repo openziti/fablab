@@ -55,7 +55,7 @@ func (f *stagesFactory) Build(m *model.Model) error {
 	m.Distribution = model.DistributionStages{
 		distribution.Locations(models.ControllerTag, "logs"),
 		distribution.Locations(models.RouterTag, "logs"),
-		rsync.Rsync(),
+		rsync.Rsync(1),
 	}
 
 	m.AddActivationActions("bootstrap", "start")

@@ -23,24 +23,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Exec(h *model.Host, cmd string) model.Action {
+func Exec(h *model.Host, cmds ...string) model.Action {
 	return &exec{
-		h:   h,
-		cmd: cmd,
+		h:    h,
+		cmds: cmds,
 	}
 }
 
 func (exec *exec) Execute(m *model.Model) error {
 	sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
 
-	if o, err := fablib.RemoteExec(sshConfigFactory, exec.cmd); err != nil {
+	if o, err := fablib.RemoteExecAll(sshConfigFactory, exec.cmds...); err != nil {
 		logrus.Errorf("output [%s]", o)
-		return fmt.Errorf("error executing process [%s] on [%s] (%s)", exec.cmd, exec.h.PublicIp, err)
+		return fmt.Errorf("error executing process on [%s] (%s)", exec.h.PublicIp, err)
 	}
 	return nil
 }
 
 type exec struct {
-	h   *model.Host
-	cmd string
+	h    *model.Host
+	cmds []string
 }
