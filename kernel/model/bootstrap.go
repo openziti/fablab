@@ -88,6 +88,12 @@ func bootstrapModel() (*Model, error) {
 			}
 		}
 
+		for _, factory := range m.ModelFactories {
+			if err := factory.Build(m); err != nil {
+				return nil, errors.Wrapf(err, "error executing factory [%s]", reflect.TypeOf(factory))
+			}
+		}
+
 		m.BindLabel(l)
 		if err := m.BindBindings(bindings); err != nil {
 			return nil, errors.Wrap(err, "error bootstrapping model")

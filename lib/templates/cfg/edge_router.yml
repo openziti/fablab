@@ -3,6 +3,11 @@ v: 3
 forwarder:
   latencyProbeInterval: 1000
 
+#profile:
+#  memory:
+#    path: /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/memory.profile
+#    intervalMs: 500
+
 identity:
   cert: /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/certs/{{ .Component.PublicIdentity }}-client.cert
   server_cert: /home/{{ .Model.MustVariable "credentials" "ssh" "username" }}/fablab/pki/intermediate/certs/{{ .Component.PublicIdentity }}-server.cert
@@ -15,20 +20,20 @@ ctrl:
 listeners:
   - binding: proxy
     address: tcp:0.0.0.0:7001
-    service: iperf
+    service: perf-proxy
 
   #  - binding:            proxy_udp
   #    address:            udp:0.0.0.0:7001
   #    service:            iperf_udp
 
-  - binding: transport
-    address: tls:0.0.0.0:7002
+  #  - binding: transport
+  #    address: tls:0.0.0.0:7002
 
   - binding: edge
     address: tls:0.0.0.0:6262
     options:
       # (required) The public hostname and port combination that Ziti SDKs should connect on. Previously this was in the chanIngress section.
-      advertise: {{ .Host.PublicIp }}:6262
+      advertise: {{.Host.PublicIp}}:6262
 
 dialers:
   - binding: transport
@@ -37,10 +42,12 @@ dialers:
 link:
   dialers:
     - binding: transport
+  {{if eq .Component.Id "initiator"}}
   listeners:
     - binding: transport
       bind: tls:0.0.0.0:6000
       advertise: tls:{{ .Host.PublicIp }}:6000
+  {{end}}
 
 # By having an 'edge' section defined, the ziti-router will attempt to parse the edge configuration. Removing this
 # section, commenting out, or altering the name of the section will cause the router to no longer operate as an Edge
@@ -59,4 +66,4 @@ edge:
     # the edge listeners "advertise" value from the "listeners" section.
     sans:
       ip:
-        - {{ .Host.PublicIp }}
+        - {{.Host.PublicIp}}

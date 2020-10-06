@@ -35,6 +35,38 @@ type Scope struct {
 	bound     bool
 }
 
+func (scope *Scope) CloneScope() *Scope {
+	result := &Scope{
+		parent: scope.parent,
+		bound:  scope.bound,
+		Data:   Data{},
+	}
+
+	result.Variables = scope.Variables.Clone()
+
+	for k, v := range scope.Data {
+		result.Data[k] = v
+	}
+
+	for _, tag := range scope.Tags {
+		result.Tags = append(result.Tags, tag)
+	}
+
+	return result
+}
+
+func (scope *Scope) Templatize(templater *Templater) {
+	scope.Variables.ForEach(func(v *Variable) {
+		v.Templatize(templater)
+	})
+
+	var newTags Tags
+	for _, tag := range scope.Tags {
+		newTags = append(newTags, templater.Templatize(tag))
+	}
+	scope.Tags = newTags
+}
+
 func (scope *Scope) setParent(parent *Scope) {
 	scope.parent = parent
 
@@ -85,6 +117,16 @@ type Variable struct {
 	bound          bool
 }
 
+func (v *Variable) Templatize(templater *Templater) {
+	if str, ok := v.Default.(string); ok {
+		v.Default = templater.Templatize(str)
+	}
+
+	if str, ok := v.Value.(string); ok {
+		v.Value = templater.Templatize(str)
+	}
+}
+
 type Variables map[interface{}]interface{}
 
 func (v Variables) Put(newValue interface{}, name ...string) error {
@@ -115,6 +157,30 @@ func (v Variables) Put(newValue interface{}, name ...string) error {
 	}
 
 	return nil
+}
+
+func (v Variables) NewVariable(name ...string) *Variable {
+	inputMap := v
+	for i := 0; i < (len(name) - 1); i++ {
+		key := name[i]
+		var nextMap Variables
+		if value, found := inputMap[key]; found {
+			var ok bool
+			nextMap, ok = value.(Variables)
+			if !ok {
+				nextMap = Variables{}
+				inputMap[key] = nextMap
+			}
+		} else {
+			nextMap = Variables{}
+			inputMap[key] = nextMap
+		}
+		inputMap = nextMap
+	}
+
+	result := &Variable{}
+	inputMap[name[len(name)-1]] = result
+	return result
 }
 
 func (v Variables) Get(name ...string) (interface{}, bool) {
@@ -162,6 +228,34 @@ func (v Variables) Must(name ...string) interface{} {
 		logrus.Fatalf("missing variable [%s]", name)
 	}
 	return value
+}
+
+func (v Variables) Clone() Variables {
+	result := Variables{}
+	for key, val := range v {
+		switch tv := val.(type) {
+		case Variables:
+			result[key] = tv.Clone()
+		case *Variable:
+			varCopy := *tv
+			result[key] = &varCopy
+		default:
+			result[key] = val
+		}
+	}
+	return result
+}
+
+func (v Variables) ForEach(f func(v *Variable)) {
+	for _, val := range v {
+		switch tv := val.(type) {
+		case Variables:
+			tv.ForEach(f)
+		case *Variable:
+			f(tv)
+		default:
+		}
+	}
 }
 
 func (m *Model) IterateScopes(f func(i interface{}, path ...string)) {

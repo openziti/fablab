@@ -20,6 +20,7 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/binding"
 	"github.com/openziti/fablab/kernel/fablib/runlevel/0_infrastructure/aws_ssh_key"
 	"github.com/openziti/fablab/kernel/model"
+	"strings"
 )
 
 func init() {
@@ -28,20 +29,56 @@ func init() {
 	model.AddBootstrapExtension(aws_ssh_key.KeyManager)
 }
 
+type templateStrategy struct{}
+
+func (t templateStrategy) IsTemplated(entity model.Entity) bool {
+	return strings.Contains(entity.GetId(), ".Index")
+}
+
+func (t templateStrategy) GetEntityCount(entity model.Entity) int {
+	if entity.GetType() == model.EntityTypeHost {
+		if entity.GetScope().HasTag("service") {
+			return 3
+		}
+		return 3
+	}
+	return 1
+}
+
 // Static model skeleton for zitilib/edge
 //
 var edge = &model.Model{
+	//Scope: model.BuildScope().
+	//	Var("edge", "region").Default("us-east-1").
+	//	Var("edge", "az").Default("us-east-1c").
+	//	Var("edge", "sizing", "ctrl").Default("t2-medium").
+	//	Var("edge", "sizing", "initiator").Default("t2-medium").
+	//	Var("edge", "sizing", "terminator").Default("t2-medium").
+	//	Var("edge", "sizing", "client").Default("t2-medium").
+	//	Var("edge", "sizing", "service").Default("t2-medium").
+	//	Var("zitilib", "fabric", "data_plane_protocol").Default("tls").
+	//	Var("environment").Required().
+	//	Var("credentials", "aws", "access_key").Required().Sensitive().
+	//	Var("credentials", "aws", "secret_key").Required().Sensitive().
+	//	Var("credentials", "aws", "ssh_key_name").Required().
+	//	Var("credentials", "ssh", "key_path").Required().
+	//	Var("credentials", "ssh", "username").Default("fedora").
+	//	Var("credentials", "edge", "username").Required().Sensitive().
+	//	Var("credentials", "edge", "password").Required().Sensitive().
+	//	Var("credentials", "influxdb", "username").Required().Sensitive().
+	//	Var("credentials", "influxdb", "password").Required().Sensitive().
+	//	Build(),
 	Scope: model.Scope{
 		Variables: model.Variables{
 			"edge": model.Variables{
 				"region": &model.Variable{Default: "us-east-1"},
 				"az":     &model.Variable{Default: "us-east-1c"},
 				"sizing": model.Variables{
-					"ctrl":       &model.Variable{Default: "t2.medium"},
-					"initiator":  &model.Variable{Default: "t2.medium"},
-					"terminator": &model.Variable{Default: "t2.medium"},
-					"client":     &model.Variable{Default: "t2.medium"},
-					"service":    &model.Variable{Default: "t2.medium"},
+					"ctrl":       &model.Variable{Default: "t3a.medium"},
+					"initiator":  &model.Variable{Default: "t3a.medium"},
+					"terminator": &model.Variable{Default: "t3a.medium"},
+					"client":     &model.Variable{Default: "t3a.medium"},
+					"service":    &model.Variable{Default: "t3a.medium"},
 				},
 			},
 			"zitilib": model.Variables{ //configs in /lib link to this....
@@ -82,6 +119,10 @@ var edge = &model.Model{
 		},
 	},
 
+	ModelFactories: []model.Factory{
+		&model.TemplatingFactory{Strategy: templateStrategy{}},
+	},
+
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newActionsFactory(),
@@ -91,7 +132,7 @@ var edge = &model.Model{
 	Regions: model.Regions{
 		"initiator": {
 			Region: "us-east-1",
-			Site:   "us-east-1a",
+			Site:   "us-east-1c",
 			Hosts: model.Hosts{
 				"ctrl": {
 					Scope: model.Scope{Tags: model.Tags{"^ctrl"}},
@@ -105,7 +146,7 @@ var edge = &model.Model{
 					},
 				},
 				"initiator": {
-					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^initiator"}},
+					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^initiator", "^perf-test"}},
 					Components: model.Components{
 						"initiator": {
 							BinaryName:     "ziti-router",
@@ -115,12 +156,25 @@ var edge = &model.Model{
 						},
 					},
 				},
-				"client": {
+				"metricsRouter": {
+					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^metrics"}},
+					Components: model.Components{
+						"initiator": {
+							BinaryName:     "ziti-router",
+							ConfigSrc:      "edge_router_isolated.yml",
+							ConfigName:     "edge_router_metrics.yml",
+							PublicIdentity: "edge_router_metrics",
+						},
+					},
+				},
+				"client{{ .Index }}": {
 					Scope: model.Scope{Tags: model.Tags{"^client", "^sdk-app"}},
 					Components: model.Components{
-						"client1": {
+						"client{{ .Host.Index }}": {
 							BinaryName:     "ziti-fabric-test",
-							PublicIdentity: "client1",
+							PublicIdentity: "client{{ .Host.Index }}",
+							ConfigSrc:      "loop/edge-perf.loop3.yml",
+							ConfigName:     "edge-perf-{{ .Host.Index }}.loop3.yml",
 						},
 					},
 				},
@@ -128,10 +182,10 @@ var edge = &model.Model{
 		},
 		"terminator": {
 			Region: "us-west-1",
-			Site:   "us-west-1b",
+			Site:   "us-west-1c",
 			Hosts: model.Hosts{
 				"terminator": {
-					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^terminator"}},
+					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^terminator", "^perf-test"}},
 					Components: model.Components{
 						"terminator": {
 							BinaryName:     "ziti-router",
@@ -141,12 +195,12 @@ var edge = &model.Model{
 						},
 					},
 				},
-				"service": {
+				"service{{ .Index }}": {
 					Scope: model.Scope{Tags: model.Tags{"^service", "^sdk-app"}},
 					Components: model.Components{
-						"server1": {
+						"server{{ .Host.Index }}": {
 							BinaryName:     "ziti-fabric-test",
-							PublicIdentity: "server1",
+							PublicIdentity: "server{{ .Host.Index }}",
 						},
 					},
 				},

@@ -51,6 +51,7 @@ type Model struct {
 
 	Scope
 	Regions             Regions
+	ModelFactories      []Factory // Factories that change the model structure, eg: add/remove hosts
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
@@ -156,6 +157,27 @@ type Region struct {
 	Index  int
 }
 
+func (region *Region) CloneRegion(index int) *Region {
+	result := &Region{
+		Scope:  *region.CloneScope(),
+		Model:  region.Model,
+		Region: region.Region,
+		Site:   region.Site,
+		Hosts:  Hosts{},
+		Index:  index,
+	}
+	for key, host := range region.Hosts {
+		result.Hosts[key] = host.CloneHost(0)
+	}
+	return result
+}
+
+func (region *Region) Templatize(templater *Templater) {
+	region.Scope.Templatize(templater)
+	region.Region = templater.Templatize(region.Region)
+	region.Site = templater.Templatize(region.Site)
+}
+
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
@@ -255,6 +277,38 @@ type Host struct {
 	Index                int
 }
 
+func (host *Host) CloneHost(index int) *Host {
+	result := &Host{
+		Scope:                *host.CloneScope(),
+		Id:                   host.Id,
+		Region:               host.Region,
+		PublicIp:             host.PublicIp,
+		PrivateIp:            host.PrivateIp,
+		InstanceType:         host.InstanceType,
+		InstanceResourceType: host.InstanceResourceType,
+		SpotPrice:            host.SpotPrice,
+		SpotType:             host.SpotType,
+		Components:           Components{},
+		Index:                index,
+	}
+
+	for key, component := range host.Components {
+		result.Components[key] = component.CloneComponent(0)
+	}
+
+	return result
+}
+
+func (host *Host) Templatize(templater *Templater) {
+	host.Scope.Templatize(templater)
+	host.PublicIp = templater.Templatize(host.PublicIp)
+	host.PrivateIp = templater.Templatize(host.PrivateIp)
+	host.InstanceType = templater.Templatize(host.InstanceType)
+	host.InstanceResourceType = templater.Templatize(host.InstanceResourceType)
+	host.SpotPrice = templater.Templatize(host.SpotPrice)
+	host.SpotType = templater.Templatize(host.SpotType)
+}
+
 func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
@@ -348,6 +402,34 @@ type Component struct {
 	Index           int
 }
 
+func (component *Component) CloneComponent(index int) *Component {
+	result := &Component{
+		Scope:           *component.CloneScope(),
+		Id:              component.Id,
+		Host:            component.Host,
+		ScriptSrc:       component.ScriptSrc,
+		ScriptName:      component.ScriptName,
+		ConfigSrc:       component.ConfigSrc,
+		ConfigName:      component.ConfigName,
+		BinaryName:      component.BinaryName,
+		PublicIdentity:  component.PublicIdentity,
+		PrivateIdentity: component.PrivateIdentity,
+		Index:           index,
+	}
+	return result
+}
+
+func (component *Component) Templatize(templater *Templater) {
+	component.Scope.Templatize(templater)
+	component.ScriptSrc = templater.Templatize(component.ScriptSrc)
+	component.ScriptName = templater.Templatize(component.ScriptName)
+	component.ConfigSrc = templater.Templatize(component.ConfigSrc)
+	component.ConfigName = templater.Templatize(component.ConfigName)
+	component.BinaryName = templater.Templatize(component.BinaryName)
+	component.PublicIdentity = templater.Templatize(component.PublicIdentity)
+	component.PrivateIdentity = templater.Templatize(component.PrivateIdentity)
+}
+
 func (component *Component) init(id string, host *Host) {
 	component.Id = id
 	component.Scope.setParent(&host.Scope)
@@ -377,6 +459,7 @@ func (component *Component) GetHost() *Host {
 	return component.Host
 }
 
+// Region is used by templates, so we can reference via {{ .Region.Field }}
 func (component *Component) Region() *Region {
 	return component.Host.Region
 }
