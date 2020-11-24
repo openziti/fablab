@@ -60,6 +60,7 @@ type Model struct {
 	Activation          ActivationStages
 	Operation           OperatingStages
 	Disposal            DisposalStages
+	MetricsHandlers     []MetricsHandler
 
 	actions map[string]Action
 
@@ -113,6 +114,9 @@ func (m *Model) GetChildren() []Entity {
 func (m *Model) init(name string) {
 	if m.initialized.CompareAndSwap(false, true) {
 		m.name = name
+		if m.Data == nil {
+			m.Data = Data{}
+		}
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
@@ -151,7 +155,9 @@ func (region *Region) init(id string, model *Model) {
 	region.id = id
 	region.model = model
 	region.Scope.setParent(&model.Scope)
-
+	if region.Data == nil {
+		region.Data = Data{}
+	}
 	for hostId, host := range region.Hosts {
 		host.init(hostId, region)
 	}
@@ -244,11 +250,13 @@ type Host struct {
 }
 
 func (host *Host) init(id string, region *Region) {
-	logrus.Infof("initialing host: %v.%v", region.GetId(), id)
+	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.id = id
 	host.region = region
 	host.Scope.setParent(&region.Scope)
-
+	if host.Data == nil {
+		host.Data = Data{}
+	}
 	for componentId, component := range host.Components {
 		component.init(componentId, host)
 	}
@@ -329,6 +337,9 @@ func (component *Component) init(id string, host *Host) {
 	component.id = id
 	component.Scope.setParent(&host.Scope)
 	component.host = host
+	if component.Data == nil {
+		component.Data = Data{}
+	}
 }
 
 func (component *Component) GetId() string {
@@ -582,4 +593,10 @@ func (m *Model) Dispose(run Run) error {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
 	return nil
+}
+
+func (m *Model) AcceptHostMetrics(host *Host, event *MetricsEvent) {
+	for _, handler := range m.MetricsHandlers {
+		handler.AcceptHostMetrics(host, event)
+	}
 }

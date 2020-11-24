@@ -64,10 +64,20 @@ var edge = &model.Model{
 					"username": &model.Variable{Required: true, Sensitive: true},
 					"password": &model.Variable{Required: true, Sensitive: true},
 				},
+				"influxdb": model.Variables{
+					"username": &model.Variable{Required: true, Sensitive: true},
+					"password": &model.Variable{Required: true, Sensitive: true},
+				},
 			},
 			"distribution": model.Variables{
 				"rsync_bin": &model.Variable{Default: "rsync"},
 				"ssh_bin":   &model.Variable{Default: "ssh"},
+			},
+			"metrics": model.Variables{
+				"influxdb": model.Variables{
+					"url": &model.Variable{Default: "http://localhost:8086"},
+					"db":  &model.Variable{Default: "ziti"},
+				},
 			},
 		},
 	},
@@ -75,11 +85,7 @@ var edge = &model.Model{
 	Factories: []model.Factory{
 		newHostsFactory(),
 		newActionsFactory(),
-		newInfrastructureFactory(),
-		newConfigurationFactory(),
-		newDistributionFactory(),
-		newActivationFactory(),
-		newOperationFactory(),
+		newStageFactory(),
 	},
 
 	Regions: model.Regions{
@@ -88,9 +94,9 @@ var edge = &model.Model{
 			Site:   "us-east-1a",
 			Hosts: model.Hosts{
 				"ctrl": {
+					Scope: model.Scope{Tags: model.Tags{"^ctrl"}},
 					Components: model.Components{
 						"ctrl": {
-							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
 							BinaryName:     "ziti-controller",
 							ConfigSrc:      "ctrl_edge.yml",
 							ConfigName:     "ctrl_edge.yml",
@@ -99,9 +105,9 @@ var edge = &model.Model{
 					},
 				},
 				"initiator": {
+					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^initiator"}},
 					Components: model.Components{
 						"initiator": {
-							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "edge_router.yml",
 							ConfigName:     "edge_router_initiator.yml",
@@ -110,9 +116,9 @@ var edge = &model.Model{
 					},
 				},
 				"client": {
+					Scope: model.Scope{Tags: model.Tags{"^client", "^sdk-app"}},
 					Components: model.Components{
 						"client1": {
-							Scope:          model.Scope{Tags: model.Tags{"client", "sdk-app"}},
 							BinaryName:     "ziti-fabric-test",
 							PublicIdentity: "client1",
 						},
@@ -125,9 +131,9 @@ var edge = &model.Model{
 			Site:   "us-west-1b",
 			Hosts: model.Hosts{
 				"terminator": {
+					Scope: model.Scope{Tags: model.Tags{"^edge-router", "^terminator"}},
 					Components: model.Components{
 						"terminator": {
-							Scope:          model.Scope{Tags: model.Tags{"edge-router"}},
 							BinaryName:     "ziti-router",
 							ConfigSrc:      "edge_router.yml",
 							ConfigName:     "edge_router_terminator.yml",
@@ -136,9 +142,9 @@ var edge = &model.Model{
 					},
 				},
 				"service": {
+					Scope: model.Scope{Tags: model.Tags{"^service", "^sdk-app"}},
 					Components: model.Components{
 						"server1": {
-							Scope:          model.Scope{Tags: model.Tags{"service", "sdk-app"}},
 							BinaryName:     "ziti-fabric-test",
 							PublicIdentity: "server1",
 						},

@@ -23,22 +23,28 @@ import (
 )
 
 func Stop(componentSpec string) model.Action {
+	return StopInParallel(componentSpec, 1)
+}
+
+func StopInParallel(componentSpec string, concurrency int) model.Action {
 	return &stop{
 		componentSpec: componentSpec,
+		concurrency:   concurrency,
 	}
 }
 
 func (stop *stop) Execute(m *model.Model) error {
-	for _, c := range m.SelectComponents(stop.componentSpec) {
+	return m.ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
 		if err := fablib.KillService(sshConfigFactory, c.BinaryName); err != nil {
 			return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 type stop struct {
 	componentSpec string
+	concurrency   int
 }

@@ -23,22 +23,28 @@ import (
 )
 
 func Start(componentSpec string) model.Action {
+	return StartInParallel(componentSpec, 1)
+}
+
+func StartInParallel(componentSpec string, concurrency int) model.Action {
 	return &start{
 		componentSpec: componentSpec,
+		concurrency:   concurrency,
 	}
 }
 
 func (start *start) Execute(m *model.Model) error {
-	for _, c := range m.SelectComponents(start.componentSpec) {
+	return m.ForEachComponent(start.componentSpec, start.concurrency, func(c *model.Component) error {
 		sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
 
 		if err := fablib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
 			return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 type start struct {
 	componentSpec string
+	concurrency   int
 }

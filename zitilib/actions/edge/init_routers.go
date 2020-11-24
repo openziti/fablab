@@ -6,29 +6,25 @@ import (
 	"github.com/openziti/fablab/kernel/fablib/actions/host"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fablab/zitilib/cli"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 )
 
-func InitEdgeRouters(componentSpec string) model.Action {
+func InitEdgeRouters(componentSpec string, concurrency int) model.Action {
 	return &initEdgeRoutersAction{
 		componentSpec: componentSpec,
+		concurrency:   concurrency,
 	}
 }
 
 func (action *initEdgeRoutersAction) Execute(m *model.Model) error {
-	for _, c := range m.SelectComponents(action.componentSpec) {
+	return m.ForEachComponent(action.componentSpec, action.concurrency, func(c *model.Component) error {
 		if _, err := cli.Exec(m, "edge", "delete", "edge-router", c.PublicIdentity); err != nil {
 			return err
 		}
 
-		if err := action.createAndEnrollRouter(c); err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return action.createAndEnrollRouter(c)
+	})
 }
 
 func (action *initEdgeRoutersAction) createAndEnrollRouter(c *model.Component) error {
@@ -48,19 +44,14 @@ func (action *initEdgeRoutersAction) createAndEnrollRouter(c *model.Component) e
 	if err := fablib.SendFile(ssh, jwtFileName, remoteJwt); err != nil {
 		return err
 	}
-	sshConfigFactory := fablib.NewSshConfigFactoryImpl(c.GetModel(), c.GetHost().PublicIp)
-	if output, err := fablib.RemoteExec(sshConfigFactory, "mkdir -p /home/fedora/logs"); err == nil {
-		if output != "" {
-			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
-		}
-	} else {
-		return err
-	}
 
 	tmpl := "set -o pipefail; /home/fedora/fablab/bin/%s enroll /home/fedora/fablab/cfg/%s -j %s 2>&1 | tee /home/fedora/logs/%s.router.enroll.log "
-	return host.Exec(c.GetHost(), fmt.Sprintf(tmpl, c.BinaryName, c.ConfigName, remoteJwt, c.ConfigName)).Execute(c.GetModel())
+	return host.Exec(c.GetHost(),
+		"mkdir -p /home/fedora/logs",
+		fmt.Sprintf(tmpl, c.BinaryName, c.ConfigName, remoteJwt, c.ConfigName)).Execute(c.GetModel())
 }
 
 type initEdgeRoutersAction struct {
 	componentSpec string
+	concurrency   int
 }
