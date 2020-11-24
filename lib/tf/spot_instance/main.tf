@@ -34,14 +34,32 @@ resource "aws_spot_instance_request" "fablab" {
   wait_for_fulfillment        = true
   spot_type                   = var.spot_type
 
-  /** 
-    The following directive doesn't work for spot instances, so we 'aws ec2 create-tags ...' in the 'inline' section below
+  provisioner "remote-exec" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
 
-  tags = {
-    Name = var.environment_tag
+    inline = [
+      "sudo chmod 777 /etc/sysctl.d",
+    ]
   }
 
-  */
+  provisioner "file" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
+
+    source        = "etc/sysctl.d/51-network-tuning.conf"
+    destination   = "/etc/sysctl.d/51-network-tuning.conf"
+  }
 
   provisioner "remote-exec" {
     connection {
@@ -66,6 +84,4 @@ resource "aws_spot_instance_request" "fablab" {
       "sudo shutdown -r +1"
     ]
   }
-
-
 }

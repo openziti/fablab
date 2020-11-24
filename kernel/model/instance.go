@@ -124,7 +124,7 @@ func BootstrapInstance() error {
 		}
 	}
 
-	logrus.Infof("Bootstrapping instance %v", instanceId)
+	logrus.Debugf("bootstrapping instance %v", instanceId)
 
 	if _, err := os.Stat(ActiveInstancePath()); err != nil {
 		if os.IsNotExist(err) {
