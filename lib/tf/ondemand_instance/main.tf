@@ -43,6 +43,34 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
+      "sudo chmod 777 /etc/sysctl.d",
+    ]
+  }
+
+  provisioner "file" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
+
+    source        = "etc/sysctl.d/51-network-tuning.conf"
+    destination   = "/etc/sysctl.d/51-network-tuning.conf"
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
+
+    inline = [
+      "sudo chmod 755 /etc/sysctl.d",
       "sudo dnf update -y",
       "sudo dnf install -y iperf3 tcpdump sysstat",
       "sudo bash -c \"echo 'fedora soft nofile 40960' >> /etc/security/limits.conf\"",
