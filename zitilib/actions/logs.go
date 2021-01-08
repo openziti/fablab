@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func Logs() model.Action {
@@ -93,7 +94,9 @@ func (self *logs) forHostDir(localPath, remotePath string, ssh fablib.SshConfigF
 			}
 
 		} else {
-			paths = append(paths, filepath.Join(remotePath, fi.Name()))
+			if !strings.HasSuffix(fi.Name(), ".sock") {
+				paths = append(paths, filepath.Join(remotePath, fi.Name()))
+			}
 		}
 	}
 	if err := fablib.RetrieveRemoteFiles(ssh, localPath, paths...); err != nil {
