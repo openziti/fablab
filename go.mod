@@ -10,7 +10,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
-	github.com/michaelquigley/pfxlog v0.0.0-20190813191113-2be43bd0dccc
+	github.com/michaelquigley/pfxlog v0.3.2
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/openziti/fabric v0.13.2
