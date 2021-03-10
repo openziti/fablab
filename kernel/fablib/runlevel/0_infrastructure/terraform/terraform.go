@@ -151,7 +151,7 @@ func terraformOutput(name string) (string, error) {
 	if err := prc.Run(); err != nil {
 		return "", fmt.Errorf("error executing 'terraform output' (%w)", err)
 	}
-	return strings.Trim(prc.Output.String(), " \t\r\n"), nil
+	return strings.Trim(prc.Output.String(), " \t\r\n\""), nil
 }
 
 func terraformSrc() string {
