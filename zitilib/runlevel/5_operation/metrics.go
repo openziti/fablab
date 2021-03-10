@@ -92,8 +92,7 @@ func (metrics *metrics) HandleReceive(msg *channel2.Message, _ channel2.Channel)
 		logrus.Error("error handling metrics receive (%w)", err)
 	}
 
-	hostSelector := metrics.idToSelectorMapper(response.SourceId)
-	host, err := metrics.m.SelectHost(hostSelector)
+	host, err := selectHostByIdOrTag(metrics.m, response.SourceId)
 	if err == nil {
 		if host.Data == nil {
 			host.Data = make(map[string]interface{})
@@ -204,4 +203,14 @@ func linkIdFromMetricKey(metricKey string) string {
 		linkId = linkId[:endIdx]
 	}
 	return linkId
+}
+
+func selectHostByIdOrTag(m *model.Model, name string) (*model.Host, error) {
+	if host, err := m.SelectHost(model.SelectorIdPrefix + name); err == nil {
+		return host, nil
+	} else if host, err := m.SelectHost(model.SelectorTagPrefix + name); err == nil {
+		return host, nil
+	} else {
+		return nil, err
+	}
 }

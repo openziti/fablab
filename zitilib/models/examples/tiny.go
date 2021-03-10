@@ -43,7 +43,7 @@ var tiny = &model.Model{
 			Site:   "us-east-1c",
 			Hosts: model.Hosts{
 				"001": {
-					Scope: model.Scope{Tags: model.Tags{"loop-dialer", "loop-listener", "iperf_server"}},
+					Scope: model.Scope{Tags: model.Tags{"loop-dialer", "loop-listener", "iperf_server", "ctrl"}},
 					Components: model.Components{
 						"ctrl": {
 							Scope:          model.Scope{Tags: model.Tags{"ctrl"}},
