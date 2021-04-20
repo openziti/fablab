@@ -23,6 +23,7 @@ import (
 	"github.com/openziti/fablab/zitilib"
 	_ "github.com/openziti/fablab/zitilib"
 	_ "github.com/openziti/fablab/zitilib/models/characterization"
+	_ "github.com/openziti/fablab/zitilib/models/development/ctrlmesh"
 	_ "github.com/openziti/fablab/zitilib/models/development/dilithium"
 	_ "github.com/openziti/fablab/zitilib/models/edge"
 	_ "github.com/openziti/fablab/zitilib/models/examples"
