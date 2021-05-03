@@ -8,25 +8,35 @@ variable "vpc_cidr"           { default = "10.0.0.0/16" }
 variable "public_cidr"        { default = "10.0.0.0/24" }
 
 /*
- * Fedora 30 Standard Base Cloud HVM
+ * Ubuntu 20.04 LTS (Focal Fossa)
 */
 variable "amis" {
   default = {
-    us-east-1      = "ami-00bbc6858140f19ed"
-    us-east-2      = "ami-00b43acad6bfbc73a"
-    us-west-2      = "ami-0faa715e16d9b8cfc"
-    us-west-1      = "ami-0b03257899cb1d721"
-    eu-west-1      = "ami-050e739238754544e"
-    eu-central-1   = "ami-040a3cdf71cb042c0"
-    eu-west-2      = "ami-06e02c487847a397f"
-    eu-west-3      = "ami-04abc80987c29d6fb"
-    ap-southeast-1 = "ami-072318105f445e4e6"
-    ap-northeast-1 = "ami-0994d322d1354126a"
-    ap-southeast-2 = "ami-067e0a8a8c3329ceb"
-    sa-east-1      = "ami-028ce5f4a8e41f793"
-    ap-northeast-2 = "ami-083f78394597eac33"
-    ap-south-1     = "ami-0e4e37dcffc88ad29"
-    ca-central-1   = "ami-02ffb9dd4d8c6e863"
+	af-south-1		= "ami-08a4b40f2fe1e4b35"
+	ap-east-1		= "ami-0b215afe809665ae5"
+	ap-northeast-1	= "ami-0df99b3a8349462c6"
+	ap-northeast-2	= "ami-04876f29fd3a5e8ba"
+	ap-northeast-3	= "ami-0001d1dd884af8872"
+	ap-south-1		= "ami-0c1a7f89451184c8b"
+	ap-southeast-1	= "ami-0d058fe428540cd89"
+	ap-southeast-2	= "ami-0567f647e75c7bc05"
+	ca-central-1	= "ami-0801628222e2e96d6"
+	cn-north-1		= "ami-00e7797a8e3c1f7f6"
+	cn-northwest-1	= "ami-0beff0eca7fd2e2c5"
+	eu-central-1	= "ami-05f7491af5eef733a"
+	eu-north-1		= "ami-0ff338189efb7ed37"
+	eu-south-1		= "ami-018f430e4f5375e69"
+	eu-west-1		= "ami-0a8e758f5e873d1c1"
+	eu-west-2		= "ami-0194c3e07668a7e36"
+	eu-west-3		= "ami-0f7cd40eac2214b37"
+	me-south-1		= "ami-0eddb8cfbd6a5f657"
+	sa-east-1		= "ami-054a31f1b3bf90920"
+	us-east-1		= "ami-09e67e426f25ce0d7"
+	us-east-2		= "ami-00399ec92321828f5"
+	us-gov-east-1	= "ami-0dec4096f1af85e9b"
+	us-gov-west-1	= "ami-0c39aacd1cc8a1ccf"
+	us-west-1		= "ami-0d382e80be7ffdae5"
+	us-west-2		= "ami-03d5c68bab01f3496"
   }
 }
 
