@@ -45,7 +45,7 @@ type rsyncStage struct {
 }
 
 func synchronizeHost(config *Config) error {
-	if output, err := fablib.RemoteExec(config.sshConfigFactory, "mkdir -p /home/fedora/fablab"); err == nil {
+	if output, err := fablib.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -53,7 +53,7 @@ func synchronizeHost(config *Config) error {
 		return err
 	}
 
-	if err := rsync(config, model.KitBuild()+"/", fmt.Sprintf("fedora@%s:/home/fedora/fablab", config.sshConfigFactory.Hostname())); err != nil {
+	if err := rsync(config, model.KitBuild()+"/", fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab", config.sshConfigFactory.Hostname())); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 

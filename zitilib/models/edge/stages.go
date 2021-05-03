@@ -99,7 +99,7 @@ func (_ *stageFactory) listeners(m *model.Model) error {
 	}
 
 	for _, c := range components {
-		remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
+		remoteConfigFile := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".json"
 		stage := zitilib_5_operation.LoopListener(c.GetHost(), nil, "edge:perf-test", "--config-file", remoteConfigFile)
 		m.AddOperatingStage(stage)
 	}
@@ -114,7 +114,7 @@ func (_ *stageFactory) dialers(m *model.Model, phase fablib_5_operation.Phase) e
 	}
 
 	for _, c := range components {
-		remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
+		remoteConfigFile := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".json"
 		stage := zitilib_5_operation.LoopDialer(c.GetHost(), "10-ambient.loop2.yml", "edge:perf-test", phase.AddJoiner(), "--config-file", remoteConfigFile)
 		m.AddOperatingStage(stage)
 	}

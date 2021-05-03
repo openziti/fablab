@@ -58,7 +58,7 @@ var edge = &model.Model{
 				},
 				"ssh": model.Variables{
 					"key_path": &model.Variable{Required: true},
-					"username": &model.Variable{Default: "fedora"},
+					"username": &model.Variable{Default: "ubuntu"},
 				},
 				"edge": model.Variables{
 					"username": &model.Variable{Required: true, Sensitive: true},
