@@ -7,7 +7,7 @@ variable "key_name" {}
 variable "key_path" {}
 variable "region" {}
 variable "security_group_id" {}
-variable "ssh_user" { default = "fedora" }
+variable "ssh_user" { default = "ubuntu" }
 variable "subnet_id" {}
 variable "spot_price" {}
 variable "spot_type" {}
@@ -56,6 +56,19 @@ resource "aws_instance" "fablab" {
       private_key = file(var.key_path)
     }
 
+    source        = "etc/apt/apt.conf.d/99remote-not-fancy"
+    destination   = "/home/ubuntu/99remote-not-fancy"
+  }
+
+  provisioner "file" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
+
     source        = "etc/sysctl.d/51-network-tuning.conf"
     destination   = "/etc/sysctl.d/51-network-tuning.conf"
   }
@@ -70,10 +83,12 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
+      "sudo mv /home/ubuntu/99remote-not-fancy /etc/apt/apt.conf.d/",
       "sudo chmod 755 /etc/sysctl.d",
-      "sudo dnf update -y",
-      "sudo dnf install -y iperf3 tcpdump sysstat",
-      "sudo bash -c \"echo 'fedora soft nofile 40960' >> /etc/security/limits.conf\"",
+      "sudo apt update",
+      "sudo apt upgrade -y",
+      "sudo apt install -y iperf3 tcpdump sysstat",
+      "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
       "sudo shutdown -r +1"
     ]
   }

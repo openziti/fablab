@@ -18,7 +18,7 @@ var modelScope = model.Scope{
 			},
 			"ssh": model.Variables{
 				"key_path": &model.Variable{Required: true},
-				"username": &model.Variable{Default: "fedora"},
+				"username": &model.Variable{Default: "ubuntu"},
 			},
 		},
 		"distribution": model.Variables{

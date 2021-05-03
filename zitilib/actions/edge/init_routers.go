@@ -40,14 +40,14 @@ func (action *initEdgeRoutersAction) createAndEnrollRouter(c *model.Component) e
 		return err
 	}
 
-	remoteJwt := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".jwt"
+	remoteJwt := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".jwt"
 	if err := fablib.SendFile(ssh, jwtFileName, remoteJwt); err != nil {
 		return err
 	}
 
-	tmpl := "set -o pipefail; /home/fedora/fablab/bin/%s enroll /home/fedora/fablab/cfg/%s -j %s 2>&1 | tee /home/fedora/logs/%s.router.enroll.log "
+	tmpl := "set -o pipefail; /home/ubuntu/fablab/bin/%s enroll /home/ubuntu/fablab/cfg/%s -j %s 2>&1 | tee /home/ubuntu/logs/%s.router.enroll.log "
 	return host.Exec(c.GetHost(),
-		"mkdir -p /home/fedora/logs",
+		"mkdir -p /home/ubuntu/logs",
 		fmt.Sprintf(tmpl, c.BinaryName, c.ConfigName, remoteJwt, c.ConfigName)).Execute(c.GetModel())
 }
 

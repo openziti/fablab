@@ -46,7 +46,7 @@ func (action *initIdentitiesAction) createAndEnrollIdentity(c *model.Component) 
 		return err
 	}
 
-	remoteConfigFile := "/home/fedora/fablab/cfg/" + c.PublicIdentity + ".json"
+	remoteConfigFile := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".json"
 	return fablib.SendFile(ssh, configFileName, remoteConfigFile)
 }
 

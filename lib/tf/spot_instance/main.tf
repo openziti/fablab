@@ -7,7 +7,7 @@ variable "key_name" {}
 variable "key_path" {}
 variable "region" {}
 variable "security_group_id" {}
-variable "ssh_user" { default = "fedora" }
+variable "ssh_user" { default = "ubuntu" }
 variable "subnet_id" {}
 variable "spot_price" {}
 variable "spot_type" {}
@@ -57,6 +57,19 @@ resource "aws_spot_instance_request" "fablab" {
       private_key = file(var.key_path)
     }
 
+    source        = "etc/apt/apt.conf.d/99remote-not-fancy"
+    destination   = "/home/ubuntu/99remote-not-fancy"
+  }
+
+  provisioner "file" {
+    connection {
+      host        = self.public_ip
+      type        = "ssh"
+      agent       = false
+      user        = var.ssh_user
+      private_key = file(var.key_path)
+    }
+
     source        = "etc/sysctl.d/51-network-tuning.conf"
     destination   = "/etc/sysctl.d/51-network-tuning.conf"
   }
@@ -71,16 +84,12 @@ resource "aws_spot_instance_request" "fablab" {
     }
 
     inline = [
-      "sudo dnf update -y",
-      "sudo dnf install -y iperf3 tcpdump sysstat",
-      
-      // Install, then use, the AWS CLI to apply a Name tag to this instance
-      "pip3 install awscli --upgrade --user",
-      "mkdir -p /home/fedora/.aws",
-      "sudo printf '[default]\naws_access_key_id = ${var.access_key}\naws_secret_access_key = ${var.secret_key}\n' | sudo tee /home/fedora/.aws/credentials",
-      "aws ec2 create-tags --region ${var.region} --resources ${aws_spot_instance_request.fablab.spot_instance_id} --tags Key=Name,Value=${var.environment_tag}",
-
-      "sudo bash -c \"echo 'fedora soft nofile 40960' >> /etc/security/limits.conf\"",
+      "sudo mv /home/ubuntu/99remote-not-fancy /etc/apt/apt.conf.d/",
+      "sudo chmod 755 /etc/sysctl.d",
+      "sudo apt update",
+      "sudo apt upgrade -y",
+      "sudo apt install -y iperf3 tcpdump sysstat",
+      "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
       "sudo shutdown -r +1"
     ]
   }
