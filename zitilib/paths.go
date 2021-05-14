@@ -51,6 +51,7 @@ func ZitiFabricCli() string {
 
 func DefaultZitiBinaries() model.ConfigurationStage {
 	zitiBinaries := []string{
+		"ziti",
 		"ziti-controller",
 		"ziti-fabric",
 		"ziti-fabric-test",

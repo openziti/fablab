@@ -35,6 +35,7 @@ const (
 type EntityVisitor func(Entity)
 
 type Entity interface {
+	GetModel() *Model
 	GetType() string
 	GetId() string
 	GetScope() *Scope
@@ -49,8 +50,7 @@ type Model struct {
 	Parent *Model
 
 	Scope
-	Regions Regions
-
+	Regions             Regions
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
@@ -65,6 +65,10 @@ type Model struct {
 	actions map[string]Action
 
 	initialized concurrenz.AtomicBoolean
+}
+
+func (m *Model) GetModel() *Model {
+	return m
 }
 
 func (m *Model) GetId() string {
@@ -144,16 +148,17 @@ type Regions map[string]*Region
 
 type Region struct {
 	Scope
-	model  *Model
-	id     string
+	Model  *Model
+	Id     string
 	Region string
 	Site   string
 	Hosts  Hosts
+	Index  int
 }
 
 func (region *Region) init(id string, model *Model) {
-	region.id = id
-	region.model = model
+	region.Id = id
+	region.Model = model
 	region.Scope.setParent(&model.Scope)
 	if region.Data == nil {
 		region.Data = Data{}
@@ -164,7 +169,7 @@ func (region *Region) init(id string, model *Model) {
 }
 
 func (region *Region) GetId() string {
-	return region.id
+	return region.Id
 }
 
 func (region *Region) GetType() string {
@@ -176,11 +181,11 @@ func (region *Region) GetScope() *Scope {
 }
 
 func (region *Region) GetModel() *Model {
-	return region.model
+	return region.Model
 }
 
 func (region *Region) GetParentEntity() Entity {
-	return region.model
+	return region.Model
 }
 
 func (region *Region) GetChildren() []Entity {
@@ -197,7 +202,7 @@ func (region *Region) GetChildren() []Entity {
 
 func (region *Region) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType {
-		return region.model.Matches(entityType, matcher)
+		return region.Model.Matches(entityType, matcher)
 	}
 	if EntityTypeRegion == entityType {
 		return matcher(region)
@@ -238,8 +243,8 @@ func (region *Region) Accept(visitor EntityVisitor) {
 
 type Host struct {
 	Scope
-	id                   string
-	region               *Region
+	Id                   string
+	Region               *Region
 	PublicIp             string
 	PrivateIp            string
 	InstanceType         string
@@ -247,12 +252,13 @@ type Host struct {
 	SpotPrice            string
 	SpotType             string
 	Components           Components
+	Index                int
 }
 
 func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
-	host.id = id
-	host.region = region
+	host.Id = id
+	host.Region = region
 	host.Scope.setParent(&region.Scope)
 	if host.Data == nil {
 		host.Data = Data{}
@@ -263,7 +269,11 @@ func (host *Host) init(id string, region *Region) {
 }
 
 func (host *Host) GetId() string {
-	return host.id
+	return host.Id
+}
+
+func (host *Host) GetPath() string {
+	return fmt.Sprintf("%v > %v", host.Region.Id, host.Id)
 }
 
 func (host *Host) GetType() string {
@@ -275,11 +285,15 @@ func (host *Host) GetScope() *Scope {
 }
 
 func (host *Host) GetRegion() *Region {
-	return host.region
+	return host.Region
+}
+
+func (host *Host) GetModel() *Model {
+	return host.Region.GetModel()
 }
 
 func (host *Host) GetParentEntity() Entity {
-	return host.region
+	return host.Region
 }
 
 func (host *Host) Accept(visitor EntityVisitor) {
@@ -303,7 +317,7 @@ func (host *Host) GetChildren() []Entity {
 
 func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType {
-		return host.region.Matches(entityType, matcher)
+		return host.Region.Matches(entityType, matcher)
 	}
 	if EntityTypeHost == entityType {
 		return matcher(host)
@@ -322,8 +336,8 @@ type Hosts map[string]*Host
 
 type Component struct {
 	Scope
-	id              string
-	host            *Host
+	Id              string
+	Host            *Host
 	ScriptSrc       string
 	ScriptName      string
 	ConfigSrc       string
@@ -331,19 +345,24 @@ type Component struct {
 	BinaryName      string
 	PublicIdentity  string
 	PrivateIdentity string
+	Index           int
 }
 
 func (component *Component) init(id string, host *Host) {
-	component.id = id
+	component.Id = id
 	component.Scope.setParent(&host.Scope)
-	component.host = host
+	component.Host = host
 	if component.Data == nil {
 		component.Data = Data{}
 	}
 }
 
 func (component *Component) GetId() string {
-	return component.id
+	return component.Id
+}
+
+func (component *Component) GetPath() string {
+	return fmt.Sprintf("%v > %v > %v", component.Host.Region.Id, component.Host.Id, component.Id)
 }
 
 func (component *Component) GetType() string {
@@ -355,19 +374,23 @@ func (component *Component) GetScope() *Scope {
 }
 
 func (component *Component) GetHost() *Host {
-	return component.host
+	return component.Host
+}
+
+func (component *Component) Region() *Region {
+	return component.Host.Region
 }
 
 func (component *Component) GetRegion() *Region {
-	return component.host.region
+	return component.Host.Region
 }
 
 func (component *Component) GetModel() *Model {
-	return component.host.region.model
+	return component.Host.Region.Model
 }
 
 func (component *Component) GetParentEntity() Entity {
-	return component.host
+	return component.Host
 }
 
 func (component *Component) Accept(visitor EntityVisitor) {
@@ -380,7 +403,7 @@ func (component *Component) GetChildren() []Entity {
 
 func (component *Component) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType || EntityTypeHost == entityType {
-		return component.host.Matches(entityType, matcher)
+		return component.Host.Matches(entityType, matcher)
 	}
 	if EntityTypeComponent == entityType {
 		return matcher(component)
@@ -395,6 +418,12 @@ type ActionBinders map[string]ActionBinder
 
 type Action interface {
 	Execute(m *Model) error
+}
+
+type ActionFunc func(m *Model) error
+
+func (f ActionFunc) Execute(m *Model) error {
+	return f(m)
 }
 
 func NewRun(label *Label, model *Model) Run {

@@ -24,20 +24,32 @@ import (
 	"strings"
 )
 
+func Loop3Dialer(host *model.Host, scenario, endpoint string, joiner chan struct{}, extraArgs ...string) model.OperatingStage {
+	return &loopDialer{
+		host:      host,
+		scenario:  scenario,
+		endpoint:  endpoint,
+		joiner:    joiner,
+		subcmd:    "loop3",
+		extraArgs: extraArgs,
+	}
+}
+
 func LoopDialer(host *model.Host, scenario, endpoint string, joiner chan struct{}, extraArgs ...string) model.OperatingStage {
 	return &loopDialer{
 		host:      host,
 		scenario:  scenario,
 		endpoint:  endpoint,
 		joiner:    joiner,
+		subcmd:    "loop2",
 		extraArgs: extraArgs,
 	}
 }
 
 func (self *loopDialer) Operate(run model.Run) error {
 	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
-	if err := fablib.RemoteKill(ssh, "ziti-fabric-test loop2 dialer"); err != nil {
-		return fmt.Errorf("error killing loop2 listeners (%w)", err)
+	if err := fablib.RemoteKill(ssh, fmt.Sprintf("ziti-fabric-test %v dialer", self.subcmd)); err != nil {
+		return fmt.Errorf("error killing %v listeners (%w)", self.subcmd, err)
 	}
 
 	go self.run(run)
@@ -53,9 +65,9 @@ func (self *loopDialer) run(ctx model.Run) {
 	}()
 
 	ssh := fablib.NewSshConfigFactoryImpl(ctx.GetModel(), self.host.PublicIp)
-	logFile := fmt.Sprintf("/home/%s/logs/loop2-dialer-%s.log", ssh.User(), ctx.GetId())
-	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 dialer /home/%s/fablab/cfg/%s -e %s -s %s %s >> %s 2>&1",
-		ssh.User(), ssh.User(), self.scenario, self.endpoint, self.host.GetId(), strings.Join(self.extraArgs, " "), logFile)
+	logFile := fmt.Sprintf("/home/%s/logs/%v-dialer-%s.log", ssh.User(), self.subcmd, ctx.GetId())
+	dialerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test %v dialer /home/%s/fablab/cfg/%s -e %s -s %s %s >> %s 2>&1",
+		ssh.User(), self.subcmd, ssh.User(), self.scenario, self.endpoint, self.host.GetId(), strings.Join(self.extraArgs, " "), logFile)
 	if output, err := fablib.RemoteExec(ssh, dialerCmd); err != nil {
 		logrus.Errorf("error starting loop dialer [%s] (%v)", output, err)
 	}
@@ -66,5 +78,6 @@ type loopDialer struct {
 	endpoint  string
 	scenario  string
 	joiner    chan struct{}
+	subcmd    string
 	extraArgs []string
 }

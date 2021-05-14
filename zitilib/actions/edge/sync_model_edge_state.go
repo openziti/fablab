@@ -5,6 +5,7 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fablab/zitilib/cli"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 func SyncModelEdgeState(componentSpec string) model.Action {
@@ -41,6 +42,7 @@ func (action *syncModelEdgeStateAction) Execute(m *model.Model) error {
 
 		for _, c := range routerComponents {
 			if c.PublicIdentity == routerName {
+				routerId = strings.ReplaceAll(routerId, ".", ":")
 				c.Tags = append(c.Tags, "edgeId:"+routerId)
 			}
 		}

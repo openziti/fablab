@@ -17,7 +17,7 @@
 package model
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"reflect"
 )
@@ -30,29 +30,29 @@ func Bootstrap() error {
 	var err error
 	var m *Model
 	if err = BootstrapBindings(); err != nil {
-		return fmt.Errorf("unable to bootstrap config (%w)", err)
+		return errors.Wrap(err, "unable to bootstrap config")
 	}
 	if err = BootstrapInstance(); err != nil {
-		return fmt.Errorf("unable to bootstrap active instance (%w)", err)
+		return errors.Wrap(err, "unable to bootstrap active instance")
 	}
 	if instanceId != "" {
 		for _, ext := range bootstrapExtensions {
 			if err := ext.Bootstrap(m); err != nil {
-				return fmt.Errorf("unable to bootstrap extension (%w)", err)
+				return errors.Wrap(err, "unable to bootstrap extension")
 			}
 		}
 		if err = bootstrapPaths(); err != nil {
-			return fmt.Errorf("unable to bootstrap paths (%w)", err)
+			return errors.Wrap(err, "unable to bootstrap paths")
 		}
 		if err = bootstrapLabel(); err != nil {
-			return fmt.Errorf("unable to bootstrap label (%w)", err)
+			return errors.Wrap(err, "unable to bootstrap label (%w)")
 		}
 		if m, err = bootstrapModel(); err != nil {
-			return fmt.Errorf("unable to bootstrap binding (%w)", err)
+			return errors.Wrap(err, "unable to bootstrap binding (%w)")
 		}
 		for _, ext := range m.BootstrapExtensions {
 			if err := ext.Bootstrap(m); err != nil {
-				return fmt.Errorf("unable to bootstrap model-specific extension (%w)", err)
+				return errors.Wrap(err, "unable to bootstrap model-specific extension")
 			}
 		}
 
@@ -65,7 +65,7 @@ func Bootstrap() error {
 func BootstrapBindings() error {
 	var err error
 	if err = loadBindings(); err != nil {
-		return fmt.Errorf("unable to bootstrap config (%w)", err)
+		return errors.Wrap(err, "unable to bootstrap config")
 	}
 	return nil
 }
@@ -79,23 +79,23 @@ func bootstrapModel() (*Model, error) {
 	if l != nil {
 		m, found := GetModel(l.Model)
 		if !found {
-			return nil, fmt.Errorf("no such model [%s]", l.Model)
+			return nil, errors.Errorf("no such model [%s]", l.Model)
 		}
 
 		if m.Parent != nil {
 			if err := m.Merge(m.Parent); err != nil {
-				return nil, fmt.Errorf("error merging parent (%w)", err)
+				return nil, errors.Wrap(err, "error merging parent")
 			}
 		}
 
 		m.BindLabel(l)
 		if err := m.BindBindings(bindings); err != nil {
-			return nil, fmt.Errorf("error bootstrapping model (%w)", err)
+			return nil, errors.Wrap(err, "error bootstrapping model")
 		}
 
 		for _, factory := range m.Factories {
 			if err := factory.Build(m); err != nil {
-				return nil, fmt.Errorf("error executing factory [%s] (%w)", reflect.TypeOf(factory), err)
+				return nil, errors.Wrapf(err, "error executing factory [%s]", reflect.TypeOf(factory))
 			}
 		}
 

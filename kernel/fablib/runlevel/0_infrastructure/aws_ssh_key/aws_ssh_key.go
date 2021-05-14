@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -132,17 +133,27 @@ func (stage awsKeyManager) Express(run model.Run) error {
 
 func getPublicKey(privateKey []byte) ([]byte, error) {
 	block, _ := pem.Decode(privateKey)
-	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return nil, errors.Errorf("failed to decode PEM block containing public key")
-	}
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
+	if block != nil && block.Type == "RSA PRIVATE KEY" {
+		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		publicKey, err := ssh.NewPublicKey(&key.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		return ssh.MarshalAuthorizedKey(publicKey), nil
 	}
 
-	publicKey, err := ssh.NewPublicKey(&key.PublicKey)
-	if err != nil {
-		return nil, err
+	if block != nil && block.Type == "OPENSSH PRIVATE KEY" {
+		key, err := ssh.ParsePrivateKey(privateKey)
+		if err != nil {
+			pfxlog.Logger().Errorf("error parsing PK (%v)", err)
+			return nil, err
+		}
+		return ssh.MarshalAuthorizedKey(key.PublicKey()), nil
 	}
-	return ssh.MarshalAuthorizedKey(publicKey), nil
+
+	return nil, errors.Errorf("failed to decode PEM block containing public key")
 }

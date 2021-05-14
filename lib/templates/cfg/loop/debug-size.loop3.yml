@@ -1,0 +1,24 @@
+workloads:
+  - name: chatter
+    # 100 * 20 = 2000 msgs/sec
+    # 2000 * 1k = 2MB/s
+    # 2MB/s * 2 (1 dialer + 1 listener) = 4MB/s
+    # 4MB/s * 4 hosts = 16 MB/s
+    # 16 MB/s * 8 = 128 megabits/s
+    concurrency: 1
+    dialer:
+      txRequests: 1
+      txPacing: 0
+      txMaxJitter: 5
+      rxTimeout: 240000
+      payloadMinBytes: 1024
+      payloadMaxBytes: 1024
+      latencyFrequency: 20
+    listener:
+      txRequests: 0
+      txPacing: 50
+      txMaxJitter: 5
+      rxTimeout: 240000
+      payloadMinBytes: 1024
+      payloadMaxBytes: 1024
+      latencyFrequency: 20

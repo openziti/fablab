@@ -120,6 +120,10 @@ func (label *Label) SaveAtPath(path string) error {
 	return nil
 }
 
+func (label *Label) GetFilePath(fileName string) string {
+	return filepath.Join(label.path, fileName)
+}
+
 func CreateLabel(instanceId, modelName string) error {
 	if err := assertNoLabel(instanceId); err != nil {
 		return fmt.Errorf("error with instance path [%s] (%s)", instanceId, err)
