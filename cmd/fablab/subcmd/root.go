@@ -17,6 +17,7 @@
 package subcmd
 
 import (
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,6 +32,8 @@ func Execute() error {
 func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose logging")
 	RootCmd.PersistentFlags().StringVarP(&instanceId, "instance", "i", "", "specify the instance to use")
+	RootCmd.PersistentFlags().StringVar(&logFormatter, "log-formatter", "", "Specify log formatter [json|pfxlog|text]")
+
 }
 
 var RootCmd = &cobra.Command{
@@ -41,8 +44,20 @@ var RootCmd = &cobra.Command{
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 		model.InitInstanceId(instanceId)
+
+		switch logFormatter {
+		case "pfxlog":
+			logrus.SetFormatter(pfxlog.NewFormatterStartingToday())
+		case "json":
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+		case "text":
+			logrus.SetFormatter(&logrus.TextFormatter{})
+		default:
+			// let logrus do its own thing
+		}
 	},
 }
 
 var verbose bool
 var instanceId string
+var logFormatter string

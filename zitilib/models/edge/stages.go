@@ -16,6 +16,8 @@ import (
 	"github.com/openziti/fablab/zitilib/models"
 	zitilib_runlevel_1_configuration "github.com/openziti/fablab/zitilib/runlevel/1_configuration"
 	zitilib_5_operation "github.com/openziti/fablab/zitilib/runlevel/5_operation"
+	log "github.com/sirupsen/logrus"
+	"strings"
 	"time"
 )
 
@@ -24,7 +26,7 @@ func newStageFactory() model.Factory {
 }
 
 func (self *stageFactory) Build(m *model.Model) error {
-	m.MetricsHandlers = append(m.MetricsHandlers, model.StdOutMetricsWriter{})
+	// m.MetricsHandlers = append(m.MetricsHandlers, model.StdOutMetricsWriter{})
 
 	m.Infrastructure = model.InfrastructureStages{
 		aws_ssh_keys0.Express(),
@@ -36,18 +38,18 @@ func (self *stageFactory) Build(m *model.Model) error {
 		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
 		config.Component(),
 		config.Static([]config.StaticConfig{
-			{Src: "loop/10-ambient.loop2.yml", Name: "10-ambient.loop2.yml"},
-			{Src: "loop/4k-chatter.loop2.yml", Name: "4k-chatter.loop2.yml"},
+			{Src: "remote_identities.yml", Name: "remote_identities.yml"},
 		}),
 		zitilib_bootstrap.DefaultZitiBinaries(),
 	}
 
 	m.Distribution = model.DistributionStages{
+		distribution.DistributeSshKey("*"),
 		distribution.Locations("*", "logs"),
 		rsync.Rsync(25),
 	}
 
-	m.AddActivationActions("bootstrap", "start")
+	m.AddActivationActions("stop", "bootstrap", "start")
 
 	if err := self.addOperationStages(m); err != nil {
 		return err
@@ -65,12 +67,20 @@ func (self *stageFactory) addOperationStages(m *model.Model) error {
 	runPhase := fablib_5_operation.NewPhase()
 	cleanupPhase := fablib_5_operation.NewPhase()
 
+	clientMetrics := zitilib_5_operation.NewClientMetrics("metrics", runPhase.GetCloser())
+	m.AddActivationStage(clientMetrics)
+
 	m.AddOperatingActions("syncModelEdgeState")
 	m.AddOperatingStage(fablib_5_operation.InfluxMetricsReporter())
 	m.AddOperatingStage(zitilib_5_operation.Mesh(runPhase.GetCloser()))
 	m.AddOperatingStage(zitilib_5_operation.ModelMetricsWithIdMapper(runPhase.GetCloser(), func(id string) string {
+		if id == "ctrl" {
+			return "#ctrl"
+		}
+		id = strings.ReplaceAll(id, ".", ":")
 		return "component.edgeId:" + id
 	}))
+	m.AddOperatingStage(clientMetrics)
 
 	for _, host := range m.SelectHosts("*") {
 		m.AddOperatingStage(fablib_5_operation.StreamSarMetrics(host, 5, 3, runPhase, cleanupPhase))
@@ -99,8 +109,9 @@ func (_ *stageFactory) listeners(m *model.Model) error {
 	}
 
 	for _, c := range components {
-		remoteConfigFile := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".json"
-		stage := zitilib_5_operation.LoopListener(c.GetHost(), nil, "edge:perf-test", "--config-file", remoteConfigFile)
+		// remoteConfigFile := fmt.Sprintf("/home/%v/fablab/cfg/%v.json", m.MustVariable("credentials", "ssh", "username"), c.PublicIdentity)
+		//stage := zitilib_5_operation.Loop3Listener(c.GetHost(), nil, "edge:perf-test", "--config-file", remoteConfigFile)
+		stage := zitilib_5_operation.Loop3Listener(c.GetHost(), nil, "tcp:0.0.0.0:8171")
 		m.AddOperatingStage(stage)
 	}
 
@@ -108,14 +119,27 @@ func (_ *stageFactory) listeners(m *model.Model) error {
 }
 
 func (_ *stageFactory) dialers(m *model.Model, phase fablib_5_operation.Phase) error {
-	components := m.SelectComponents(models.ClientTag)
+	var components []*model.Component
+	components = m.SelectComponents(models.ClientTag)
+	//for i := 0; i < 26; i++ {
+	//	components = append(components, m.SelectComponents(fmt.Sprintf("#client%v", i))...)
+	//}
 	if len(components) < 1 {
 		return fmt.Errorf("no '%v' components in model", models.ClientTag)
 	}
 
+	initiator, err := m.SelectHost(".initiator")
+	if err != nil {
+		return err
+	}
+	log.Debugf("initiator: %v", initiator.PublicIp)
+
 	for _, c := range components {
-		remoteConfigFile := "/home/ubuntu/fablab/cfg/" + c.PublicIdentity + ".json"
-		stage := zitilib_5_operation.LoopDialer(c.GetHost(), "10-ambient.loop2.yml", "edge:perf-test", phase.AddJoiner(), "--config-file", remoteConfigFile)
+		remoteConfigFile := fmt.Sprintf("/home/%v/fablab/cfg/%v.json", m.MustVariable("credentials", "ssh", "username"), c.PublicIdentity)
+		loopFile := fmt.Sprintf("edge-perf-%v.loop3.yml", c.Host.Index)
+		stage := zitilib_5_operation.Loop3Dialer(c.GetHost(), loopFile, "edge:perf-test", phase.AddJoiner(), "--config-file", remoteConfigFile)
+		//endpoint := fmt.Sprintf("tcp:%v:7001", initiator.PublicIp)
+		//stage := zitilib_5_operation.Loop3Dialer(c.GetHost(), loopFile, endpoint, phase.AddJoiner(), "--config-file", remoteConfigFile, "--direct")
 		m.AddOperatingStage(stage)
 	}
 

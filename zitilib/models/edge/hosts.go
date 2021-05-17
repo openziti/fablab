@@ -25,11 +25,42 @@ func newHostsFactory() model.Factory {
 }
 
 func (self *hostsFactory) Build(m *model.Model) error {
-	for _, host := range m.SelectHosts("*") {
+	for _, host := range m.SelectHosts(".ctrl") {
 		if host.InstanceType == "" {
-			host.InstanceType = "t2.medium"
+			host.InstanceType = m.MustVariable("edge", "sizing", "ctrl").(string)
 		}
 	}
+
+	for _, host := range m.SelectHosts(".initiator") {
+		if host.InstanceType == "" {
+			host.InstanceType = m.MustVariable("edge", "sizing", "initiator").(string)
+		}
+	}
+
+	for _, host := range m.SelectHosts(".terminator") {
+		if host.InstanceType == "" {
+			host.InstanceType = m.MustVariable("edge", "sizing", "terminator").(string)
+		}
+	}
+
+	for _, host := range m.SelectHosts(".client") {
+		if host.InstanceType == "" {
+			host.InstanceType = m.MustVariable("edge", "sizing", "client").(string)
+		}
+	}
+
+	for _, host := range m.SelectHosts(".service") {
+		if host.InstanceType == "" {
+			host.InstanceType = m.MustVariable("edge", "sizing", "service").(string)
+		}
+	}
+
+	for _, host := range m.SelectHosts("*") {
+		if host.InstanceType == "" {
+			host.InstanceType = "t3a.medium"
+		}
+	}
+
 	return nil
 }
 

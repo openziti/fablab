@@ -17,11 +17,15 @@
 package subcmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/openziti/fablab/kernel/fablib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"html/template"
+	"io"
+	"os"
 )
 
 func init() {
@@ -37,9 +41,9 @@ type sshExecCmd struct {
 func newSshExecCmd() *sshExecCmd {
 	cmd := &sshExecCmd{
 		cobraCmd: &cobra.Command{
-			Use:   "sshexec <hostSpec> <cmd>",
+			Use:   "sshexec <hostSpec> <cmd> [<output-file-template>]",
 			Short: "establish an ssh connection to the model and runs the given command on the selected hosts",
-			Args:  cobra.ExactArgs(2),
+			Args:  cobra.RangeArgs(2, 3),
 		},
 	}
 
@@ -69,14 +73,46 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 		}
 
 		logrus.Infof("executing %v with concurrency %v", args[1], cmd.concurrency)
-		err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
-			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
-			o, err := fablib.RemoteExecAll(sshConfigFactory, args[1])
+		var tmpl *template.Template
+		if len(args) == 3 {
+			var err error
+			tmpl, err = template.New("output-file-name").Parse(args[2])
 			if err != nil {
-				logrus.Errorf("output [%s]", o)
+				logrus.WithError(err).Fatalf("invalid file name template: %v", args[2])
+			}
+		}
+
+		err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
+			var buf *bytes.Buffer
+			var out io.Writer
+			if tmpl != nil {
+				buf := &bytes.Buffer{}
+				if err := tmpl.Execute(buf, h); err != nil {
+					return err
+				}
+				fileName := buf.String()
+				file, err := os.Create(fileName)
+				if err != nil {
+					return err
+				}
+				defer func() { _ = file.Close() }()
+				out = file
+				logrus.Infof("[%v] output -> %v", h.PublicIp, fileName)
+			} else {
+				buf = &bytes.Buffer{}
+				out = buf
+			}
+			sshConfigFactory := fablib.NewSshConfigFactoryImpl(m, h.PublicIp)
+			err := fablib.RemoteExecAllTo(sshConfigFactory, out, args[1])
+			if err != nil {
+				if buf != nil {
+					logrus.Errorf("output [%s]", buf.String())
+				}
 				return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)
 			}
-			logrus.Infof("[%v] output:\n%s", h.PublicIp, o)
+			if buf != nil {
+				logrus.Infof("[%v] output:\n%s", h.PublicIp, buf.String())
+			}
 			return nil
 		})
 

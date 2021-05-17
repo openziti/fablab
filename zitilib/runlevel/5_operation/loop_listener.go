@@ -8,19 +8,30 @@ import (
 	"strings"
 )
 
+func Loop3Listener(host *model.Host, joiner chan struct{}, bindAddress string, extraArgs ...string) model.OperatingStage {
+	return &loopListener{
+		host:        host,
+		joiner:      joiner,
+		bindAddress: bindAddress,
+		subcmd:      "loop3",
+		extraArgs:   extraArgs,
+	}
+}
+
 func LoopListener(host *model.Host, joiner chan struct{}, bindAddress string, extraArgs ...string) model.OperatingStage {
 	return &loopListener{
 		host:        host,
 		joiner:      joiner,
 		bindAddress: bindAddress,
+		subcmd:      "loop2",
 		extraArgs:   extraArgs,
 	}
 }
 
 func (self *loopListener) Operate(run model.Run) error {
 	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
-	if err := fablib.RemoteKill(ssh, "ziti-fabric-test loop2 listener"); err != nil {
-		return fmt.Errorf("error killing loop2 listeners (%w)", err)
+	if err := fablib.RemoteKill(ssh, fmt.Sprintf("ziti-fabric-test %v listener", self.subcmd)); err != nil {
+		return fmt.Errorf("error killing %v listeners (%w)", self.subcmd, err)
 	}
 
 	go self.run(run)
@@ -37,9 +48,9 @@ func (self *loopListener) run(run model.Run) {
 
 	ssh := fablib.NewSshConfigFactoryImpl(run.GetModel(), self.host.PublicIp)
 
-	logFile := fmt.Sprintf("/home/%s/logs/loop2-listener-%s.log", ssh.User(), run.GetId())
-	listenerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test loop2 listener -b %v %v >> %s 2>&1",
-		ssh.User(), self.bindAddress, strings.Join(self.extraArgs, " "), logFile)
+	logFile := fmt.Sprintf("/home/%s/logs/%v-listener-%s.log", ssh.User(), self.subcmd, run.GetId())
+	listenerCmd := fmt.Sprintf("/home/%s/fablab/bin/ziti-fabric-test %v listener -b %v %v >> %s 2>&1",
+		ssh.User(), self.subcmd, self.bindAddress, strings.Join(self.extraArgs, " "), logFile)
 	if output, err := fablib.RemoteExec(ssh, listenerCmd); err != nil {
 		logrus.Errorf("error starting loop listener [%s] (%v)", output, err)
 	}
@@ -49,5 +60,6 @@ type loopListener struct {
 	host        *model.Host
 	joiner      chan struct{}
 	bindAddress string
+	subcmd      string
 	extraArgs   []string
 }

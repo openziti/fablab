@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/foundation/util/info"
+	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -135,8 +136,14 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 }
 
 func RemoteExecAll(sshConfig SshConfigFactory, cmds ...string) (string, error) {
+	var b bytes.Buffer
+	err := RemoteExecAllTo(sshConfig, &b, cmds...)
+	return b.String(), err
+}
+
+func RemoteExecAllTo(sshConfig SshConfigFactory, out io.Writer, cmds ...string) error {
 	if len(cmds) == 0 {
-		return "", nil
+		return nil
 	}
 	config := sshConfig.Config()
 
@@ -144,28 +151,29 @@ func RemoteExecAll(sshConfig SshConfigFactory, cmds ...string) (string, error) {
 
 	client, err := ssh.Dial("tcp", sshConfig.Address(), config)
 	if err != nil {
-		return "", err
+		return err
 	}
-
-	var b bytes.Buffer
+	defer func() { _ = client.Close() }()
 
 	for idx, cmd := range cmds {
 		session, err := client.NewSession()
 		if err != nil {
-			return "", err
+			return err
 		}
-		defer func() { _ = session.Close() }()
-		session.Stdout = &b
+		session.Stdout = out
 
 		if idx > 0 {
 			logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmd)
 		}
-		if err = session.Run(cmd); err != nil {
-			return b.String(), err
+		err = session.Run(cmd)
+		_ = session.Close()
+
+		if err != nil {
+			return err
 		}
 	}
 
-	return b.String(), nil
+	return nil
 }
 
 func RemoteKill(factory SshConfigFactory, match string) error {
@@ -175,7 +183,7 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error {
 	output, err := RemoteExec(factory, "ps ax")
 	if err != nil {
-		return fmt.Errorf("unable to get remote process listing [%s] (%s)", factory.Address(), err)
+		return errors.Wrapf(err, "unable to get remote process listing [%s]", factory.Address())
 	}
 
 	var pidList []int
@@ -247,27 +255,27 @@ func SendFile(factory SshConfigFactory, localPath string, remotePath string) err
 	localFile, err := ioutil.ReadFile(localPath)
 
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to read local file %v", localFile)
 	}
 
 	config := factory.Config()
 
 	conn, err := ssh.Dial("tcp", factory.Address(), config)
 	if err != nil {
-		return fmt.Errorf("error dialing ssh server (%w)", err)
+		return errors.Wrap(err, "error dialing ssh server")
 	}
 	defer func() { _ = conn.Close() }()
 
 	client, err := sftp.NewClient(conn)
 	if err != nil {
-		return fmt.Errorf("error creating sftp client (%w)", err)
+		return errors.Wrap(err, "error creating sftp client")
 	}
 	defer func() { _ = client.Close() }()
 
 	rmtFile, err := client.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to open remote file %v", remotePath)
 	}
 	defer rmtFile.Close()
 
