@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib/timeutil"
+	"github.com/openziti/fablab/kernel/lib/timeutil"
 	"strings"
 	"time"
 )

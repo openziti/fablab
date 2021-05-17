@@ -14,21 +14,32 @@
 	limitations under the License.
 */
 
-package main
+package terraform
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/model"
+	"path/filepath"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
+func Dispose() model.DisposalStage {
+	return &terraform{}
 }
 
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+func (terraform *terraform) Dispose(model.Run) error {
+	prc := lib.NewProcess("terraform", "destroy", "-auto-approve")
+	prc.Cmd.Dir = terraformRun()
+	prc.WithTail(lib.StdoutTail)
+	if err := prc.Run(); err != nil {
+		return fmt.Errorf("error running 'terraform destroy' (%w)", err)
 	}
+	return nil
+}
+
+type terraform struct {
+}
+
+func terraformRun() string {
+	return filepath.Join(model.ActiveInstancePath(), "tf")
 }

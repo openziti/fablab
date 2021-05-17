@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/figlet"
+	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

@@ -18,7 +18,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib/figlet"
+	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"

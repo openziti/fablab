@@ -14,21 +14,33 @@
 	limitations under the License.
 */
 
-package main
+package host
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
+	"fmt"
+	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
+func Exec(h *model.Host, cmds ...string) model.Action {
+	return &exec{
+		h:    h,
+		cmds: cmds,
+	}
 }
 
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+func (exec *exec) Execute(m *model.Model) error {
+	sshConfigFactory := lib.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
+
+	if o, err := lib.RemoteExecAll(sshConfigFactory, exec.cmds...); err != nil {
+		logrus.Errorf("output [%s]", o)
+		return fmt.Errorf("error executing process on [%s] (%s)", exec.h.PublicIp, err)
 	}
+	return nil
+}
+
+type exec struct {
+	h    *model.Host
+	cmds []string
 }

@@ -17,7 +17,7 @@
 package model
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/parallel"
+	"github.com/openziti/fablab/kernel/lib/parallel"
 	"github.com/openziti/foundation/util/errorz"
 	"github.com/openziti/foundation/util/stringz"
 	"github.com/pkg/errors"

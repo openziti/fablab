@@ -14,21 +14,18 @@
 	limitations under the License.
 */
 
-package main
+package rsync
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"github.com/openziti/fablab/kernel/lib"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
-}
-
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+func rsync(config *Config, sourcePath, targetPath string) error {
+	rsync := lib.NewProcess(config.rsyncBin, "-avz", "-e", config.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
+	rsync.WithTail(lib.StdoutTail)
+	if err := rsync.Run(); err != nil {
+		return fmt.Errorf("rsync failed (%w)", err)
 	}
+	return nil
 }

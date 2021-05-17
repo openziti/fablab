@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2020 NetFoundry, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
 	limitations under the License.
 */
 
-package main
+package operation
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"github.com/openziti/fablab/kernel/lib/figlet"
+	"github.com/openziti/fablab/kernel/model"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
+func Banner(msg string) model.OperatingStage {
+	return &banner{msg: msg}
 }
 
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
-	}
+func (b *banner) Operate(model.Run) error {
+	figlet.Figlet(b.msg)
+	fmt.Println()
+	return nil
+}
+
+type banner struct {
+	msg string
 }

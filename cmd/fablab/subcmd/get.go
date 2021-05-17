@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -65,7 +65,7 @@ func getFiles(_ *cobra.Command, args []string) {
 			logrus.Fatalf("your hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 		}
 
-		if err := fablib.RetrieveRemoteFiles(fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp), args[0], args[1:]...); err != nil {
+		if err := lib.RetrieveRemoteFiles(lib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp), args[0], args[1:]...); err != nil {
 			logrus.Fatalf("error executing remote shell (%v)", err)
 		}
 	}

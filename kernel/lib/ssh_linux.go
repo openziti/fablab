@@ -14,21 +14,18 @@
 	limitations under the License.
 */
 
-package main
+package lib
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
-	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
+	"net"
+	"os"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
-}
-
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+func sshAuthMethodAgent() ssh.AuthMethod {
+	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
 	}
+	return nil
 }

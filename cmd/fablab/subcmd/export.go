@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
@@ -54,7 +54,7 @@ func export(_ *cobra.Command, _ []string) {
 
 		zipName := fmt.Sprintf("%s-%d.zip", filepath.Base(model.ActiveInstancePath()), info.NowInMilliseconds())
 
-		if err := fablib.Export(zipName, m); err != nil {
+		if err := lib.Export(zipName, m); err != nil {
 			logrus.Fatalf("error exporting (%v)", err)
 		}
 

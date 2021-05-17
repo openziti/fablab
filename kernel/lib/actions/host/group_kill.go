@@ -14,33 +14,33 @@
 	limitations under the License.
 */
 
-package subcmd
+package host
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib/figlet"
+	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
-	"github.com/spf13/cobra"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+func GroupKill(hostSpec, match string) model.Action {
+	return &groupKill{
+		hostSpec: hostSpec,
+		match:    match,
+	}
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "display fablab version information",
-	Run:   version,
+func (groupKill *groupKill) Execute(m *model.Model) error {
+	for _, h := range m.SelectHosts(groupKill.hostSpec) {
+
+		sshConfigFactory := lib.NewSshConfigFactoryImpl(m, h.PublicIp)
+		if err := lib.RemoteKill(sshConfigFactory, groupKill.match); err != nil {
+			return fmt.Errorf("error killing [%s] on [%s] (%s)", groupKill.match, h.PublicIp, err)
+		}
+	}
+	return nil
 }
 
-func version(_ *cobra.Command, _ []string) {
-	figlet.Figlet("fablab")
-	fmt.Println(center("the fabulous laboratory", 30))
-	fmt.Println()
-	fmt.Println(center(model.Version, 30))
-	fmt.Println()
-}
-
-func center(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+type groupKill struct {
+	hostSpec string
+	match    string
 }

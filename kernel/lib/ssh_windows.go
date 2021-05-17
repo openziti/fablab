@@ -14,21 +14,32 @@
 	limitations under the License.
 */
 
-package main
+package lib
 
 import (
-	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/fablab/cmd/fablab/subcmd"
+	"github.com/natefinch/npipe"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
+	"sync"
+	"time"
 )
 
-func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
-}
+var warnOnce = sync.Once{}
+var pipePresent = true
 
-func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+func sshAuthMethodAgent() ssh.AuthMethod {
+	if !pipePresent {
+		return nil
 	}
+
+	if sshAgent, err := npipe.DialTimeout(`\\.\pipe\openssh-ssh-agent`, 1*time.Second); err == nil {
+		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+	} else {
+		warnOnce.Do(func() {
+			pipePresent = false
+			logrus.WithError(err).Warn("could not connect to openssh ssh-agent pipe, will not be tried again this run")
+		})
+	}
+	return nil
 }
