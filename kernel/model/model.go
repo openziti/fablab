@@ -362,7 +362,7 @@ func (component *Component) GetId() string {
 }
 
 func (component *Component) GetPath() string {
-	return fmt.Sprintf("%v > %v > %v", component.Host.Region.Id, component.Host.Id, component.Id)
+	return fmt.Sprintf("%v > %v", component.Host.GetPath(), component.Id)
 }
 
 func (component *Component) GetType() string {

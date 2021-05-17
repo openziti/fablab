@@ -135,7 +135,7 @@ func (metrics *ClientMetrics) HandleMetricsConn(conn net.Conn) {
 		event := &mgmt_pb.StreamMetricsEvent{}
 		err := proto.Unmarshal(msgBuf[:msgLen], event)
 		if err != nil {
-			logrus.Errorf("error handling metrics receive (%w), exiting", err)
+			logrus.WithError(err).Error("error handling metrics receive, exiting")
 			return
 		}
 

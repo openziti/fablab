@@ -132,7 +132,7 @@ func (_ *stageFactory) dialers(m *model.Model, phase fablib_5_operation.Phase) e
 	if err != nil {
 		return err
 	}
-	log.Debug("initiator: %v", initiator.PublicIp)
+	log.Debugf("initiator: %v", initiator.PublicIp)
 
 	for _, c := range components {
 		remoteConfigFile := fmt.Sprintf("/home/%v/fablab/cfg/%v.json", m.MustVariable("credentials", "ssh", "username"), c.PublicIdentity)

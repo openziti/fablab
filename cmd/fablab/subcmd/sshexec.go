@@ -41,7 +41,7 @@ type sshExecCmd struct {
 func newSshExecCmd() *sshExecCmd {
 	cmd := &sshExecCmd{
 		cobraCmd: &cobra.Command{
-			Use:   "sshexec <hostSpec> <cmd> <output-file-template>",
+			Use:   "sshexec <hostSpec> <cmd> [<output-file-template>]",
 			Short: "establish an ssh connection to the model and runs the given command on the selected hosts",
 			Args:  cobra.RangeArgs(2, 3),
 		},
@@ -78,7 +78,7 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 			var err error
 			tmpl, err = template.New("output-file-name").Parse(args[2])
 			if err != nil {
-				logrus.WithError(err).Fatalf("invalid file name template", args[2])
+				logrus.WithError(err).Fatalf("invalid file name template: %v", args[2])
 			}
 		}
 
