@@ -32,7 +32,7 @@ func Rsync(concurrency int) model.DistributionStage {
 
 func (rsync *rsyncStage) Distribute(run model.Run) error {
 	return run.GetModel().ForEachHost("*", rsync.concurrency, func(host *model.Host) error {
-		config := newConfig(run.GetModel(), host.PublicIp)
+		config := newConfig(host)
 		if err := synchronizeHost(config); err != nil {
 			return fmt.Errorf("error synchronizing host [%s/%s] (%s)", host.GetRegion().GetId(), host.GetId(), err)
 		}
@@ -66,18 +66,18 @@ type Config struct {
 	rsyncBin         string
 }
 
-func newConfig(m *model.Model, publicIp string) *Config {
+func newConfig(h *model.Host) *Config {
 	config := &Config{
 		sshBin:           "ssh",
-		sshConfigFactory: lib.NewSshConfigFactoryImpl(m, publicIp),
+		sshConfigFactory: lib.NewSshConfigFactoryImpl(h),
 		rsyncBin:         "rsync",
 	}
 
-	if rsyncBin, ok := m.Variables.Must("distribution", "rsync_bin").(string); ok {
+	if rsyncBin, ok := h.GetStringVariable("distribution", "rsync_bin"); ok {
 		config.rsyncBin = rsyncBin
 	}
 
-	if sshBin, ok := m.Variables.Must("distribution", "ssh_bin").(string); ok {
+	if sshBin, ok := h.GetStringVariable("distribution", "ssh_bin"); ok {
 		config.sshBin = sshBin
 	}
 

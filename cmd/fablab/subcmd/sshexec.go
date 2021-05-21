@@ -102,7 +102,7 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 				buf = &bytes.Buffer{}
 				out = buf
 			}
-			sshConfigFactory := lib.NewSshConfigFactoryImpl(m, h.PublicIp)
+			sshConfigFactory := lib.NewSshConfigFactoryImpl(h)
 			err := lib.RemoteExecAllTo(sshConfigFactory, out, args[1])
 			if err != nil {
 				if buf != nil {

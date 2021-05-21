@@ -66,7 +66,7 @@ func create(_ *cobra.Command, args []string) {
 		logrus.Infof("setting label bindings = [%v]", createBindings)
 		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
 			if l.Bindings == nil {
-				l.Bindings = make(model.Bindings)
+				l.Bindings = model.Variables{}
 			}
 			for k, v := range createBindings {
 				l.Bindings[k] = v

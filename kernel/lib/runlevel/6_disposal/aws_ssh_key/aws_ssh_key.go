@@ -21,11 +21,10 @@ type awsKeyManager struct {
 
 func (stage awsKeyManager) Dispose(run model.Run) error {
 	m := run.GetModel()
-	bindings := model.GetBindings()
-	if managedKey, found := bindings.GetBool("credentials", "aws", "managed_key"); !found || !managedKey {
+	if managedKey, found := m.GetBoolVariable("credentials", "aws", "managed_key"); !found || !managedKey {
 		return nil
 	}
-	keyName, found := bindings.GetString("credentials", "aws", "ssh_key_name")
+	keyName, found := m.GetStringVariable("credentials", "aws", "ssh_key_name")
 	if !found {
 		keyName = m.MustStringVariable("environment")
 	}

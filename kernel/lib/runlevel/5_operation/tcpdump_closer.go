@@ -36,7 +36,7 @@ func (t *tcpdumpCloser) Operate(run model.Run) error {
 		return err
 	}
 
-	ssh := lib.NewSshConfigFactoryImpl(m, host.PublicIp)
+	ssh := lib.NewSshConfigFactoryImpl(host)
 
 	if err := lib.RemoteKillFilter(ssh, "tcpdump", "sudo"); err != nil {
 		return fmt.Errorf("error closing tcpdump (%w)", err)

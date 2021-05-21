@@ -23,38 +23,34 @@ func Express() model.InfrastructureStage {
 	return KeyManager
 }
 
-type awsKeyManager struct {
-}
+type awsKeyManager struct{}
 
-func (l awsKeyManager) Bootstrap(*model.Model) error {
-	bindings := model.GetBindings()
-
-	if !bindings.Has("credentials", "aws", "ssh_key_name") {
-		environment := bindings.Must("environment")
+func (l awsKeyManager) Bootstrap(m *model.Model) error {
+	if !m.HasVariable("credentials", "aws", "ssh_key_name") {
+		environment := m.MustStringVariable("environment")
 		instanceId := model.ActiveInstanceId()
 		keyName := fmt.Sprintf("%v-%v", environment, instanceId)
-		bindings.Put(keyName, "credentials", "aws", "ssh_key_name")
+		m.PutVariable(keyName, "credentials", "aws", "ssh_key_name")
 	}
 
-	if bindings.Has("credentials", "ssh", "key_path") {
+	if m.HasVariable("credentials", "ssh", "key_path") {
 		return nil
 	}
 
 	keyPath := path.Join(model.ActiveInstancePath(), "ssh_private_key.pem")
+	m.PutVariable(keyPath, "credentials", "ssh", "key_path")
 
-	bindings.Put(keyPath, "credentials", "ssh", "key_path")
 	return nil
 }
 
 func (stage awsKeyManager) Express(run model.Run) error {
 	m := run.GetModel()
 
-	bindings := model.GetBindings()
-	if managedKey, found := bindings.GetBool("credentials", "aws", "managed_key"); !found || !managedKey {
+	if managedKey, found := m.GetBoolVariable("credentials", "aws", "managed_key"); !found || !managedKey {
 		return nil
 	}
 	logrus.Info("beginning managed key setup")
-	keyName, found := bindings.GetString("credentials", "aws", "ssh_key_name")
+	keyName, found := m.GetStringVariable("credentials", "aws", "ssh_key_name")
 	if !found {
 		keyName = m.MustStringVariable("environment")
 	}

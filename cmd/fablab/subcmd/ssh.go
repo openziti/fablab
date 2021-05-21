@@ -59,7 +59,7 @@ func ssh(_ *cobra.Command, args []string) {
 			logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 		}
 
-		if err := lib.RemoteShell(lib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)); err != nil {
+		if err := lib.RemoteShell(lib.NewSshConfigFactoryImpl(hosts[0])); err != nil {
 			logrus.Fatalf("error executing remote shell (%v)", err)
 		}
 	}

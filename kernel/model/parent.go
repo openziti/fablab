@@ -103,11 +103,11 @@ func (s Scope) Merge(parent Scope) (Scope, error) {
 		return Scope{}, fmt.Errorf("error copying parent (%w)", err)
 	}
 
-	for k, v := range s.Variables {
-		if merged.Variables == nil {
-			merged.Variables = make(Variables)
+	for k, v := range s.Defaults {
+		if merged.Defaults == nil {
+			merged.Defaults = make(Variables)
 		}
-		merged.Variables[k] = v
+		merged.Defaults[k] = v
 	}
 
 	for k, v := range s.Data {

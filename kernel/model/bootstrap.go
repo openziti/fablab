@@ -89,9 +89,6 @@ func bootstrapModel() (*Model, error) {
 		}
 
 		m.BindLabel(l)
-		if err := m.BindBindings(bindings); err != nil {
-			return nil, errors.Wrap(err, "error bootstrapping model")
-		}
 
 		for _, factory := range m.Factories {
 			if err := factory.Build(m); err != nil {

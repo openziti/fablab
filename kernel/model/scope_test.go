@@ -24,17 +24,14 @@ import (
 func TestVariablesPut(t *testing.T) {
 	v := Variables{
 		"a": Variables{
-			"b": &Variable{
-				Default: "hello",
-			},
+			"b": "hello",
 		},
 	}
 	value, found := v.Get("a", "b")
 	assert.True(t, found)
 	assert.Equal(t, "hello", value)
 
-	err := v.Put("oh, wow", "a", "b")
-	assert.Nil(t, err)
+	v.Put("oh, wow", "a", "b")
 	value, found = v.Get("a", "b")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow", value)

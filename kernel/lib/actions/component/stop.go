@@ -35,7 +35,7 @@ func StopInParallel(componentSpec string, concurrency int) model.Action {
 
 func (stop *stop) Execute(m *model.Model) error {
 	return m.ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
-		sshConfigFactory := lib.NewSshConfigFactoryImpl(m, c.GetHost().PublicIp)
+		sshConfigFactory := lib.NewSshConfigFactoryImpl(c.GetHost())
 
 		if err := lib.KillService(sshConfigFactory, c.BinaryName); err != nil {
 			return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)

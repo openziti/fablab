@@ -39,16 +39,14 @@ func SarCloser(host *model.Host) model.OperatingStage {
 	}
 }
 
-func (s *sar) Operate(run model.Run) error {
-	m := run.GetModel()
-	ssh := lib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
+func (s *sar) Operate(model.Run) error {
+	ssh := lib.NewSshConfigFactoryImpl(s.host)
 	go s.runSar(ssh)
 	return nil
 }
 
-func (s *sarCloser) Operate(run model.Run) error {
-	m := run.GetModel()
-	ssh := lib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
+func (s *sarCloser) Operate(model.Run) error {
+	ssh := lib.NewSshConfigFactoryImpl(s.host)
 	if err := lib.RemoteKill(ssh, "sar"); err != nil {
 		return fmt.Errorf("error closing sar (%w)", err)
 	}

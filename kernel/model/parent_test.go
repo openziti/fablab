@@ -30,7 +30,7 @@ func TestParentBase(t *testing.T) {
 	var found bool
 	var value interface{}
 
-	value, found = m.Variables.Get("a")
+	value, found = m.Defaults.Get("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
@@ -60,8 +60,8 @@ func TestParentMerge(t *testing.T) {
 	m := &Model{
 		Parent: parentTestModel(),
 		Scope: Scope{
-			Variables: Variables{
-				"b": &Variable{Default: "hello!"},
+			Defaults: Variables{
+				"b": "hello!",
 			},
 		},
 		Regions: Regions{
@@ -83,10 +83,10 @@ func TestParentMerge(t *testing.T) {
 	var found bool
 	var value interface{}
 
-	value, found = m.Variables.Get("a")
+	value, found = m.Defaults.Get("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
-	value, found = m.Variables.Get("b")
+	value, found = m.Defaults.Get("b")
 	assert.True(t, found)
 	assert.Equal(t, "hello!", value)
 
@@ -118,8 +118,8 @@ func TestParentMerge(t *testing.T) {
 func parentTestModel() *Model {
 	return &Model{
 		Scope: Scope{
-			Variables: Variables{
-				"a": &Variable{Default: "oh, wow!"},
+			Defaults: Variables{
+				"a": "oh, wow!",
 			},
 		},
 		Regions: Regions{

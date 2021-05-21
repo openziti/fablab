@@ -92,6 +92,10 @@ type Entity interface {
 	Accept(EntityVisitor)
 	GetChildren() []Entity
 	Matches(entityType string, matcher EntityMatcher) bool
+
+	GetVariable(name ...string) (interface{}, bool)
+	GetVariableOr(defaultValue interface{}, name ...string) interface{}
+	MustVariable(name ...string) interface{}
 }
 
 type Model struct {
@@ -113,7 +117,8 @@ type Model struct {
 
 	actions map[string]Action
 
-	initialized concurrenz.AtomicBoolean
+	initialized      concurrenz.AtomicBoolean
+	baseVarResolvers *ChainedVariableResolver
 }
 
 func (m *Model) GetModel() *Model {
@@ -170,10 +175,12 @@ func (m *Model) GetChildren() []Entity {
 
 func (m *Model) init(name string) {
 	if m.initialized.CompareAndSwap(false, true) {
+		m.baseVarResolvers = initDefaultResolvers(bindings)
 		m.name = name
 		if m.Data == nil {
 			m.Data = Data{}
 		}
+		m.Scope.initialize(m)
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
@@ -185,6 +192,16 @@ func (m *Model) Accept(visitor EntityVisitor) {
 	for _, region := range m.Regions {
 		region.Accept(visitor)
 	}
+}
+
+func (m *Model) NewDefaultVariableResolver() VariableResolver {
+	scopedResolver := NewScopedVariableResolver(m.baseVarResolvers)
+
+	combinedResolvers := &ChainedVariableResolver{}
+	combinedResolvers.AppendResolver(scopedResolver)
+	combinedResolvers.AppendResolver(m.baseVarResolvers)
+
+	return combinedResolvers
 }
 
 type Regions map[string]*Region
@@ -202,7 +219,7 @@ type Region struct {
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
-	region.Scope.setParent(&model.Scope)
+	region.Scope.initialize(region)
 	if region.Data == nil {
 		region.Data = Data{}
 	}
@@ -303,7 +320,7 @@ func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
 	host.Region = region
-	host.Scope.setParent(&region.Scope)
+	host.Scope.initialize(host)
 	if host.Data == nil {
 		host.Data = Data{}
 	}
@@ -397,8 +414,8 @@ type Component struct {
 
 func (component *Component) init(id string, host *Host) {
 	component.Id = id
-	component.Scope.setParent(&host.Scope)
 	component.Host = host
+	component.Scope.initialize(component)
 	if component.Data == nil {
 		component.Data = Data{}
 	}
@@ -677,4 +694,12 @@ func (m *Model) AcceptHostMetrics(host *Host, event *MetricsEvent) {
 	for _, handler := range m.MetricsHandlers {
 		handler.AcceptHostMetrics(host, event)
 	}
+}
+
+func GetEntityPath(entity Entity) []string {
+	parent := entity.GetParentEntity()
+	if parent != nil {
+		return append(GetEntityPath(parent), entity.GetId())
+	}
+	return []string{entity.GetId()}
 }

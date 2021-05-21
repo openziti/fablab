@@ -12,9 +12,8 @@ type awsCredentialsLoader struct {
 }
 
 func (l awsCredentialsLoader) Bootstrap(m *model.Model) error {
-	bindings := model.GetBindings()
-	if bindings.Has("credentials", "aws", "access_key") &&
-		bindings.Has("credentials", "aws", "secret_key") {
+	if m.GetScope().HasVariable("credentials", "aws", "access_key") &&
+		m.GetScope().HasVariable("credentials", "aws", "secret_key") {
 		return nil
 	}
 
@@ -23,8 +22,8 @@ func (l awsCredentialsLoader) Bootstrap(m *model.Model) error {
 		return errors.Errorf("couldn't load AWS credentials: %v", err)
 	}
 
-	bindings.Put(val.AccessKeyID, "credentials", "aws", "access_key")
-	bindings.Put(val.SecretAccessKey, "credentials", "aws", "secret_key")
+	m.PutVariable(val.AccessKeyID, "credentials", "aws", "access_key")
+	m.PutVariable(val.SecretAccessKey, "credentials", "aws", "secret_key")
 
 	return nil
 }

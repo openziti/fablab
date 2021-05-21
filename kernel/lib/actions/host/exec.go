@@ -31,7 +31,7 @@ func Exec(h *model.Host, cmds ...string) model.Action {
 }
 
 func (exec *exec) Execute(m *model.Model) error {
-	sshConfigFactory := lib.NewSshConfigFactoryImpl(m, exec.h.PublicIp)
+	sshConfigFactory := lib.NewSshConfigFactoryImpl(exec.h)
 
 	if o, err := lib.RemoteExecAll(sshConfigFactory, exec.cmds...); err != nil {
 		logrus.Errorf("output [%s]", o)

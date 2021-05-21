@@ -377,12 +377,12 @@ type SshConfigFactoryImpl struct {
 	authMethods     []ssh.AuthMethod
 }
 
-func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
-	user := m.Variables.Must("credentials", "ssh", "username").(string)
-	keyPath, _ := m.Variables.Must("credentials", "ssh", "key_path").(string)
+func NewSshConfigFactoryImpl(h *model.Host) *SshConfigFactoryImpl {
+	user := h.MustStringVariable("credentials", "ssh", "username")
+	keyPath := h.MustStringVariable("credentials", "ssh", "key_path")
 	factory := &SshConfigFactoryImpl{
 		user:    user,
-		host:    host,
+		host:    h.PublicIp,
 		port:    22,
 		keyPath: keyPath,
 	}

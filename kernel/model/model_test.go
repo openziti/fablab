@@ -24,23 +24,23 @@ import (
 func TestGetVariable(t *testing.T) {
 	m := &Model{
 		Scope: Scope{
-			Variables: Variables{
+			Defaults: Variables{
 				"a": Variables{
 					"b": Variables{
-						"c": &Variable{Default: "oh, wow!"},
+						"c": "oh, wow!",
 					},
 				},
 			},
 		},
 	}
 
-	value, found := m.Variables.Get("a", "b", "c")
+	value, found := m.Defaults.Get("a", "b", "c")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
-	value, found = m.Variables.Get("c")
+	value, found = m.Defaults.Get("c")
 	assert.False(t, found)
 
-	value, found = m.Variables.Get("d", "e", "f")
+	value, found = m.Defaults.Get("d", "e", "f")
 	assert.False(t, found)
 }
