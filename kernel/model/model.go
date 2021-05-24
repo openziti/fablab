@@ -26,11 +26,60 @@ import (
 )
 
 const (
-	EntityTypeModel     = "model"
-	EntityTypeRegion    = "region"
-	EntityTypeHost      = "host"
-	EntityTypeComponent = "component"
+	EntityTypeModel              = "model"
+	EntityTypeRegion             = "region"
+	EntityTypeHost               = "host"
+	EntityTypeComponent          = "component"
+	EntityTypeParent             = "parent"
+	EntityTypeSelfOrParent       = "selfOrParent"
+	EntityTypeSelfOrParentSymbol = "^"
+	EntityTypeChild              = "child"
+	EntityTypeSelfOrChild        = "selfOrChild"
+	EntityTypeAny                = "*"
 )
+
+func getTraversals(entityType string) (bool, bool, bool) {
+	if EntityTypeParent == entityType {
+		return true, false, false
+	}
+	if EntityTypeSelfOrParent == entityType || EntityTypeSelfOrParentSymbol == entityType {
+		return true, true, false
+	}
+	if EntityTypeChild == entityType {
+		return false, false, true
+	}
+	if EntityTypeSelfOrChild == entityType {
+		return false, true, true
+	}
+	if EntityTypeAny == entityType {
+		return true, true, true
+	}
+	return false, false, false
+}
+
+func matchHierarchical(entityType string, matcher EntityMatcher, entity Entity) bool {
+	checkParent, checkSelf, checkChildren := getTraversals(entityType)
+
+	if checkSelf && matcher(entity) {
+		return true
+	}
+
+	if parent := entity.GetParentEntity(); parent != nil && checkParent {
+		if parent.Matches(EntityTypeSelfOrParent, matcher) {
+			return true
+		}
+	}
+
+	if checkChildren {
+		for _, child := range entity.GetChildren() {
+			if child.Matches(EntityTypeSelfOrChild, matcher) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 type EntityVisitor func(Entity)
 
@@ -84,6 +133,10 @@ func (m *Model) GetScope() *Scope {
 }
 
 func (m *Model) GetParentEntity() Entity {
+	// if we just return m.Parent, and m.Parent is nil we'll return a non-nil interface with type=*Model and value = nil
+	if m.Parent == nil {
+		return nil
+	}
 	return m.Parent
 }
 
@@ -100,7 +153,7 @@ func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
 		}
 	}
 
-	return false
+	return matchHierarchical(entityType, matcher, m)
 }
 
 func (m *Model) GetChildren() []Entity {
@@ -124,16 +177,6 @@ func (m *Model) init(name string) {
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
-
-		// trim tag prefixes
-		m.Accept(func(e Entity) {
-			var tags Tags
-			for _, tag := range e.GetScope().Tags {
-				tag = strings.TrimPrefix(tag, InheritTagPrefix)
-				tags = append(tags, tag)
-			}
-			e.GetScope().Tags = tags
-		})
 	}
 }
 
@@ -215,7 +258,8 @@ func (region *Region) Matches(entityType string, matcher EntityMatcher) bool {
 			}
 		}
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, region)
 }
 
 func (region *Region) SelectHosts(hostSpec string) map[string]*Host {
@@ -319,9 +363,11 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType {
 		return host.Region.Matches(entityType, matcher)
 	}
+
 	if EntityTypeHost == entityType {
 		return matcher(host)
 	}
+
 	if EntityTypeComponent == entityType {
 		for _, child := range host.GetChildren() {
 			if child.Matches(entityType, matcher) {
@@ -329,7 +375,8 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 			}
 		}
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, host)
 }
 
 type Hosts map[string]*Host
@@ -405,10 +452,12 @@ func (component *Component) Matches(entityType string, matcher EntityMatcher) bo
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType || EntityTypeHost == entityType {
 		return component.Host.Matches(entityType, matcher)
 	}
+
 	if EntityTypeComponent == entityType {
 		return matcher(component)
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, component)
 }
 
 type Components map[string]*Component
