@@ -45,7 +45,7 @@ type streamSarMetrics struct {
 
 func (s *streamSarMetrics) Operate(model.Run) error {
 	go s.waitForClose()
-	ssh := lib.NewSshConfigFactoryImpl(s.host)
+	ssh := lib.NewSshConfigFactory(s.host)
 	go s.runSar(ssh)
 	return nil
 }
@@ -53,7 +53,7 @@ func (s *streamSarMetrics) Operate(model.Run) error {
 func (s *streamSarMetrics) waitForClose() {
 	<-s.closer
 	if s.closed.CompareAndSwap(false, true) {
-		ssh := lib.NewSshConfigFactoryImpl(s.host)
+		ssh := lib.NewSshConfigFactory(s.host)
 		if err := lib.RemoteKill(ssh, "sar"); err != nil {
 			logrus.Warnf("did not close sar, it may have already stopped normally (%v)", err)
 		}

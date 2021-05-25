@@ -26,19 +26,19 @@ func Express() model.InfrastructureStage {
 type awsKeyManager struct{}
 
 func (l awsKeyManager) Bootstrap(m *model.Model) error {
-	if !m.HasVariable("credentials", "aws", "ssh_key_name") {
+	if !m.HasVariable("credentials.aws.ssh_key_name") {
 		environment := m.MustStringVariable("environment")
 		instanceId := model.ActiveInstanceId()
 		keyName := fmt.Sprintf("%v-%v", environment, instanceId)
-		m.PutVariable(keyName, "credentials", "aws", "ssh_key_name")
+		m.PutVariable("credentials.aws.ssh_key_name", keyName)
 	}
 
-	if m.HasVariable("credentials", "ssh", "key_path") {
+	if m.HasVariable("credentials.ssh.key_path") {
 		return nil
 	}
 
 	keyPath := path.Join(model.ActiveInstancePath(), "ssh_private_key.pem")
-	m.PutVariable(keyPath, "credentials", "ssh", "key_path")
+	m.PutVariable("credentials.ssh.key_path", keyPath)
 
 	return nil
 }
@@ -46,24 +46,24 @@ func (l awsKeyManager) Bootstrap(m *model.Model) error {
 func (stage awsKeyManager) Express(run model.Run) error {
 	m := run.GetModel()
 
-	if managedKey, found := m.GetBoolVariable("credentials", "aws", "managed_key"); !found || !managedKey {
+	if managedKey, found := m.GetBoolVariable("credentials.aws.managed_key"); !found || !managedKey {
 		return nil
 	}
 	logrus.Info("beginning managed key setup")
-	keyName, found := m.GetStringVariable("credentials", "aws", "ssh_key_name")
+	keyName, found := m.GetStringVariable("credentials.aws.ssh_key_name")
 	if !found {
 		keyName = m.MustStringVariable("environment")
 	}
 
-	awsAccessKey := m.MustStringVariable("credentials", "aws", "access_key")
-	awsSecretKey := m.MustStringVariable("credentials", "aws", "secret_key")
+	awsAccessKey := m.MustStringVariable("credentials.aws.access_key")
+	awsSecretKey := m.MustStringVariable("credentials.aws.secret_key")
 
 	awsCreds := credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")
 
 	var privateKey []byte
 	var publicKey []byte
 
-	keyPath := m.MustStringVariable("credentials", "ssh", "key_path")
+	keyPath := m.MustStringVariable("credentials.ssh.key_path")
 	logrus.Infof("checking for  private key in %v", keyPath)
 	var err error
 	if privateKey, err = ioutil.ReadFile(keyPath); err == nil {
@@ -108,7 +108,7 @@ func (stage awsKeyManager) Express(run model.Run) error {
 			if err != nil {
 				return err
 			}
-			keyPath := m.MustStringVariable("credentials", "ssh", "key_path")
+			keyPath := m.MustStringVariable("credentials.ssh.key_path")
 			logrus.Infof("saving private key '%v' to %v", keyName, keyPath)
 			if err = ioutil.WriteFile(keyPath, privateKey, 0600); err != nil {
 				return err

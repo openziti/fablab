@@ -42,8 +42,8 @@ func (i *iperf) Operate(run model.Run) error {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
 
-		sshClientFactory := lib.NewSshConfigFactoryImpl(clientHost)
-		sshServerFactory := lib.NewSshConfigFactoryImpl(serverHost)
+		sshClientFactory := lib.NewSshConfigFactory(clientHost)
+		sshServerFactory := lib.NewSshConfigFactory(serverHost)
 
 		go i.runServer(sshServerFactory)
 

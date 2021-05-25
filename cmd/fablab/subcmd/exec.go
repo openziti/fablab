@@ -88,6 +88,8 @@ func execCmdBind(m *model.Model, binding string) error {
 	if err != nil {
 		return errors.Wrap(err, "missing host")
 	}
-	host.PutVariable(halves[1], path[2:]...)
+
+	key := strings.Join(path[1:], ".")
+	host.PutVariable(key, halves[1])
 	return nil
 }

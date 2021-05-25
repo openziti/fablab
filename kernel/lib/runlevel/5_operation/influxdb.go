@@ -37,10 +37,10 @@ type influxMetricsReporterStage struct {
 
 func (stage *influxMetricsReporterStage) Operate(run model.Run) error {
 	m := run.GetModel()
-	urlVar := m.GetRequiredStringVariable(stage, "metrics", "influxdb", "url")
-	db := m.GetRequiredStringVariable(stage, "metrics", "influxdb", "db")
-	username := m.GetRequiredStringVariable(stage, "credentials", "influxdb", "username")
-	password := m.GetRequiredStringVariable(stage, "credentials", "influxdb", "password")
+	urlVar := m.GetRequiredStringVariable(stage, "metrics.influxdb.url")
+	db := m.GetRequiredStringVariable(stage, "metrics.influxdb.db")
+	username := m.GetRequiredStringVariable(stage, "credentials.influxdb.username")
+	password := m.GetRequiredStringVariable(stage, "credentials.influxdb.password")
 
 	if stage.HasError() {
 		return stage.GetError()

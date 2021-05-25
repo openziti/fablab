@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/openziti/foundation/util/stringz"
 )
 
 func (m *Model) Dump() *Dump {
@@ -31,7 +32,7 @@ func dumpScope(s Scope) *ScopeDump {
 	dump := &ScopeDump{}
 	empty := true
 	if s.Defaults != nil {
-		variables := dumpVariables(s.Defaults, false)
+		variables := dumpVariables(s, s.Defaults, false)
 		dump.Variables = variables
 		empty = false
 	}
@@ -49,17 +50,21 @@ func dumpScope(s Scope) *ScopeDump {
 	return nil
 }
 
-func dumpVariables(vs Variables, secret bool) map[string]interface{} {
+func dumpVariables(s Scope, vs Variables, secret bool) map[string]interface{} {
 	if _, found := vs["__secret__"]; found {
 		secret = true
 	}
 
 	dump := make(map[string]interface{})
 	for k, v := range vs {
+		currentSecret := secret
+		if !secret && stringz.Contains(s.entity.GetModel().VarConfig.SecretsKeys, k) {
+			currentSecret = true
+		}
 		kk := fmt.Sprintf("%v", k)
 		if val, ok := v.(Variables); ok {
-			dump[kk] = dumpVariables(val, secret)
-		} else if secret {
+			dump[kk] = dumpVariables(s, val, currentSecret)
+		} else if currentSecret {
 			dump[kk] = "**secret**"
 		} else {
 			dump[kk] = fmt.Sprintf("%v", val)

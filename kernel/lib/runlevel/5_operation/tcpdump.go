@@ -41,7 +41,7 @@ func (t *tcpdump) Operate(run model.Run) error {
 		return err
 	}
 
-	ssh := lib.NewSshConfigFactoryImpl(host)
+	ssh := lib.NewSshConfigFactory(host)
 
 	if err := lib.RemoteKill(ssh, "tcpdump"); err != nil {
 		return fmt.Errorf("error killing tcpdump instances")

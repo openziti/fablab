@@ -38,7 +38,7 @@ func (self *retrieve) Operate(run model.Run) error {
 	hosts := m.SelectHosts(self.host)
 	if len(hosts) == 1 {
 		host := hosts[0]
-		ssh := lib.NewSshConfigFactoryImpl(host)
+		ssh := lib.NewSshConfigFactory(host)
 
 		if files, err := lib.RemoteFileList(ssh, self.path); err == nil {
 			paths := make([]string, 0)

@@ -68,17 +68,9 @@ type Config struct {
 
 func newConfig(h *model.Host) *Config {
 	config := &Config{
-		sshBin:           "ssh",
-		sshConfigFactory: lib.NewSshConfigFactoryImpl(h),
-		rsyncBin:         "rsync",
-	}
-
-	if rsyncBin, ok := h.GetStringVariable("distribution", "rsync_bin"); ok {
-		config.rsyncBin = rsyncBin
-	}
-
-	if sshBin, ok := h.GetStringVariable("distribution", "ssh_bin"); ok {
-		config.sshBin = sshBin
+		sshBin:           h.GetStringVariableOr("distribution.ssh_bin", "ssh"),
+		sshConfigFactory: lib.NewSshConfigFactory(h),
+		rsyncBin:         h.GetStringVariableOr("distribution.rsync_bin", "rsync"),
 	}
 
 	return config

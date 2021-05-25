@@ -65,7 +65,7 @@ func getFiles(_ *cobra.Command, args []string) {
 			logrus.Fatalf("your hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 		}
 
-		if err := lib.RetrieveRemoteFiles(lib.NewSshConfigFactoryImpl(hosts[0]), args[0], args[1:]...); err != nil {
+		if err := lib.RetrieveRemoteFiles(lib.NewSshConfigFactory(hosts[0]), args[0], args[1:]...); err != nil {
 			logrus.Fatalf("error executing remote shell (%v)", err)
 		}
 	}
