@@ -36,48 +36,18 @@ func TestVariableResolvingModelDefaults(t *testing.T) {
 
 	m.init("test")
 
-	val, found := m.GetVariable("a", "b")
+	val, found := m.GetVariable("a.b")
 
 	req := require.New(t)
 	req.True(found)
 	req.Equal(val, true)
 }
 
-func TestVariableResolvingModelDefaultsWithDefault(t *testing.T) {
-	m := &Model{
-		Scope: Scope{
-			Defaults: Variables{
-				"a": Variables{
-					"__default__": "hello",
-					"c":           "bye",
-				},
-			},
-		},
-	}
-
-	bindings = Variables{}
-
-	m.init("test")
-
-	req := require.New(t)
-
-	val, found := m.GetVariable("a", "b")
-	req.True(found)
-	req.Equal(val, "hello")
-
-	val, found = m.GetVariable("a", "foo")
-	req.True(found)
-	req.Equal(val, "hello")
-
-	val, found = m.GetVariable("a", "c")
-	req.True(found)
-	req.Equal(val, "bye")
-
-	val, found = m.GetVariable("b")
-	req.False(found)
-}
-
 func TestBindBindingsRequiredToModel(t *testing.T) {
+	defer func() {
+		bindings = Variables{}
+	}()
+
 	bValue := "b-value"
 
 	m := &Model{
@@ -99,7 +69,7 @@ func TestBindBindingsRequiredToModel(t *testing.T) {
 
 	m.init("test")
 
-	val, found := m.GetVariable("a", "b")
+	val, found := m.GetVariable("a.b")
 
 	req := require.New(t)
 	req.True(found)

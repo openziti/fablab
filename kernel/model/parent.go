@@ -118,7 +118,7 @@ func (s Scope) Merge(parent Scope) (Scope, error) {
 	}
 
 	merged.Tags = append(merged.Tags, s.Tags...)
-
+	merged.entity = s.entity
 	return merged, nil
 }
 

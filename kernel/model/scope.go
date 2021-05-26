@@ -37,6 +37,7 @@ type Scope struct {
 }
 
 func (scope *Scope) initialize(entity Entity, scoped bool) {
+	scope.Defaults.Canonicalize()
 	scope.entity = entity
 	sort.Strings(scope.Tags)
 
@@ -64,12 +65,12 @@ func (scope *Scope) WithTags(tags ...string) *Scope {
 }
 
 func (scope *Scope) HasVariable(name string) bool {
-	_, found := scope.VariableResolver.Resolve(scope.entity, name)
+	_, found := scope.GetVariable(name)
 	return found
 }
 
 func (scope *Scope) GetVariable(name string) (interface{}, bool) {
-	return scope.VariableResolver.Resolve(scope.entity, name)
+	return scope.VariableResolver.Resolve(scope.entity, name, false)
 }
 
 func (scope *Scope) PutVariable(name string, value interface{}) {
@@ -78,7 +79,7 @@ func (scope *Scope) PutVariable(name string, value interface{}) {
 }
 
 func (scope *Scope) GetStringVariable(name string) (string, bool) {
-	val, found := scope.VariableResolver.Resolve(scope.entity, name)
+	val, found := scope.GetVariable(name)
 	if !found {
 		return "", false
 	}
@@ -97,7 +98,7 @@ func (scope *Scope) GetStringVariableOr(name string, defaultValue string) string
 }
 
 func (scope *Scope) GetBoolVariable(name string) (bool, bool) {
-	val, found := scope.VariableResolver.Resolve(scope.entity, name)
+	val, found := scope.GetVariable(name)
 	if !found {
 		return false, false
 	}
@@ -151,6 +152,14 @@ type Tags []string
 
 type Variables map[string]interface{}
 
+func (v Variables) Canonicalize() {
+	for key, val := range v {
+		if m, ok := val.(map[string]interface{}); ok {
+			v[key] = Variables(m)
+		}
+	}
+}
+
 func (v Variables) Put(name []string, newValue interface{}) {
 	if len(name) < 1 {
 		return
@@ -197,6 +206,8 @@ func (v Variables) Get(name []string) (interface{}, bool) {
 				return nil, false
 			}
 			inputMap = lowerMap
+		} else {
+			return nil, false
 		}
 	}
 
@@ -251,7 +262,7 @@ func (m *Model) IterateScopes(f func(i Entity, path ...string)) {
 }
 
 type VariableResolver interface {
-	Resolve(entity Entity, name string) (interface{}, bool)
+	Resolve(entity Entity, name string, scoped bool) (interface{}, bool)
 }
 
 func NewScopedVariableResolver(resolver VariableResolver) *ScopedVariableResolver {
@@ -264,10 +275,16 @@ type ScopedVariableResolver struct {
 	resolver VariableResolver
 }
 
-func (self *ScopedVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self *ScopedVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	// If this is already scoped, short circuit
+	if scoped {
+		return nil, false
+	}
 	entityPath := GetScopedEntityPath(entity)
 	prefixedName := entity.GetModel().VarConfig.VariableNamePrefixMapper(entityPath, name)
-	return self.resolver.Resolve(entity, prefixedName)
+	val, found := self.resolver.Resolve(entity, prefixedName, true)
+	entity.GetModel().VarConfig.ResolverLogger("scoped", entity, name, val, found, "path=%+v, delegate=%v", entityPath, reflect.TypeOf(self.resolver))
+	return val, found
 }
 
 func NewCachingVariableResolver(resolver VariableResolver) *CachingVariableResolver {
@@ -282,52 +299,66 @@ type CachingVariableResolver struct {
 	resolver VariableResolver
 }
 
-func (self *CachingVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self *CachingVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
 	val, found := self.cache[name]
 	if found {
 		return val, found
 	}
-	val, found = self.resolver.Resolve(entity, name)
+	val, found = self.resolver.Resolve(entity, name, scoped)
 	if found {
 		self.cache[name] = val
 	}
 	return val, found
 }
 
-func NewMapVariableResolver(variables Variables) *MapVariableResolver {
+func NewMapVariableResolver(context string, variables Variables) *MapVariableResolver {
+	variables.Canonicalize()
 	return &MapVariableResolver{
+		context:   context,
 		variables: variables,
 	}
 }
 
 type MapVariableResolver struct {
+	context   string
 	variables Variables
 }
 
-func (self *MapVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self *MapVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
 	path := entity.GetModel().VarConfig.VariableNameParser(name)
-	return self.variables.Get(path)
+	val, found := self.variables.Get(path)
+	entity.GetModel().VarConfig.ResolverLogger("map", entity, name, val, found, self.context)
+	return val, found
 }
 
 type HierarchicalVariableResolver struct{}
 
-func (self HierarchicalVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self HierarchicalVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
 	path := entity.GetModel().VarConfig.VariableNameParser(name)
-	current := entity
-	for current != nil {
-		if val, found := current.GetScope().Defaults.Get(path); found {
+
+	if val, found := entity.GetScope().Defaults.Get(path); found {
+		entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, val, found, "level: %v", reflect.TypeOf(entity))
+		return val, true
+	}
+
+	if parent := entity.GetParentEntity(); parent != nil {
+		if val, found := entity.GetScope().VariableResolver.Resolve(parent, name, scoped); found {
+			entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, val, found, "level: %v", reflect.TypeOf(entity))
 			return val, true
 		}
-		current = current.GetParentEntity()
 	}
+
+	entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, nil, false)
 	return nil, false
 }
 
 type EnvVariableResolver struct{}
 
-func (self EnvVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self EnvVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
 	key := entity.GetModel().VarConfig.EnvVariableNameMapper(name)
-	return os.LookupEnv(key)
+	val, found := os.LookupEnv(key)
+	entity.GetModel().VarConfig.ResolverLogger("env", entity, name, val, found, "env.name=%v", key)
+	return val, found
 }
 
 type ChainedVariableResolver struct {
@@ -338,25 +369,29 @@ func (self *ChainedVariableResolver) AppendResolver(resolver VariableResolver) {
 	self.resolvers = append(self.resolvers, resolver)
 }
 
-func (self *ChainedVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self *ChainedVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
 	for _, resolver := range self.resolvers {
-		if val, found := resolver.Resolve(entity, name); found {
+		if val, found := resolver.Resolve(entity, name, scoped); found {
+			entity.GetModel().VarConfig.ResolverLogger("chained", entity, name, val, found, "source=%v", reflect.TypeOf(resolver))
 			return val, true
 		}
 	}
+	entity.GetModel().VarConfig.ResolverLogger("chained", entity, name, nil, false)
 	return nil, false
 }
 
 type CmdLineArgVariableResolver struct{}
 
-func (self CmdLineArgVariableResolver) Resolve(entity Entity, name string) (interface{}, bool) {
+func (self CmdLineArgVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
 	config := entity.GetModel().VarConfig
 	key := config.CommandLineVariableNameMapper(name)
 	for _, arg := range os.Args {
 		for _, prefix := range config.CommandLinePrefixes {
 			argPrefix := prefix + key + "="
 			if strings.HasPrefix(arg, argPrefix) {
-				return strings.TrimPrefix(arg, argPrefix), true
+				result := strings.TrimPrefix(arg, argPrefix)
+				entity.GetModel().VarConfig.ResolverLogger("cmd-line", entity, name, result, true, "prefix=", argPrefix)
+				return result, true
 			}
 		}
 	}

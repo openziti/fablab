@@ -17,6 +17,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -34,13 +35,16 @@ func TestGetVariable(t *testing.T) {
 		},
 	}
 
-	value, found := m.Defaults.Get("a", "b", "c")
+	m.init("test")
+
+	value, found := m.GetVariable("a.b.c")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
-	value, found = m.Defaults.Get("c")
+	value, found = m.GetVariable("c")
+	fmt.Printf("c='%v'\n", value)
 	assert.False(t, found)
 
-	value, found = m.Defaults.Get("d", "e", "f")
+	value, found = m.GetVariable("d.e.f")
 	assert.False(t, found)
 }

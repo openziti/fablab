@@ -111,6 +111,7 @@ type VarConfig struct {
 	DefaultScopedVariableResolver VariableResolver
 	SecretsKeys                   []string
 	VariableNamePrefixMapper      VariableNamePrefixMapper
+	ResolverLogger                func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{})
 }
 
 func (self *VarConfig) SetDefaults() {
@@ -140,8 +141,10 @@ func (self *VarConfig) SetDefaults() {
 		defaultResolverSet := &ChainedVariableResolver{}
 		defaultResolverSet.AppendResolver(CmdLineArgVariableResolver{})
 		defaultResolverSet.AppendResolver(EnvVariableResolver{})
-		defaultResolverSet.AppendResolver(NewMapVariableResolver(label.Bindings))
-		defaultResolverSet.AppendResolver(NewMapVariableResolver(bindings))
+		if label != nil {
+			defaultResolverSet.AppendResolver(NewMapVariableResolver("label", label.Bindings))
+		}
+		defaultResolverSet.AppendResolver(NewMapVariableResolver("bindings", bindings))
 		defaultResolverSet.AppendResolver(HierarchicalVariableResolver{})
 		self.DefaultVariableResolver = defaultResolverSet
 
@@ -149,7 +152,7 @@ func (self *VarConfig) SetDefaults() {
 		combinedResolvers.AppendResolver(NewScopedVariableResolver(defaultResolverSet))
 		combinedResolvers.AppendResolver(defaultResolverSet)
 
-		self.DefaultVariableResolver = combinedResolvers
+		self.DefaultScopedVariableResolver = combinedResolvers
 	}
 
 	if len(self.SecretsKeys) == 0 {
@@ -165,6 +168,10 @@ func (self *VarConfig) SetDefaults() {
 		self.VariableNamePrefixMapper = func(entityPath []string, name string) string {
 			return strings.Join(append(entityPath, name), ".")
 		}
+	}
+
+	if self.ResolverLogger == nil {
+		self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {}
 	}
 }
 
@@ -615,6 +622,12 @@ type OperatingStage interface {
 	Operate(run Run) error
 }
 
+type OperatingStageF func(run Run) error
+
+func (self OperatingStageF) Operate(run Run) error {
+	return self(run)
+}
+
 type DisposalStages []DisposalStage
 
 type DisposalStage interface {
@@ -661,6 +674,10 @@ func (m *Model) AddActivationActions(actions ...string) {
 
 func (m *Model) AddOperatingStage(stage OperatingStage) {
 	m.Operation = append(m.Operation, stage)
+}
+
+func (m *Model) AddOperatingStageF(stage OperatingStageF) {
+	m.AddOperatingStage(stage)
 }
 
 func (m *Model) AddOperatingStages(stages ...OperatingStage) {
