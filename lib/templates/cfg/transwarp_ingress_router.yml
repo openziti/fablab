@@ -7,47 +7,54 @@
 v: 3
 
 forwarder:
-  latencyProbeInterval: 1000
+  latencyProbeInterval:   1000
 
 identity:
-  cert:                 /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-client.cert
-  server_cert:          /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.cert
-  key:                  /home/{{$ssh_username}}/fablab/pki/intermediate/keys/{{$identity}}.key
-  ca:                   /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.chain.pem
+  cert:                   /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-client.cert
+  server_cert:            /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.cert
+  key:                    /home/{{$ssh_username}}/fablab/pki/intermediate/keys/{{$identity}}.key
+  ca:                     /home/{{$ssh_username}}/fablab/pki/intermediate/certs/{{$identity}}-server.chain.pem
 
 ctrl:
-  endpoint:             tls:{{$ctrl_ip}}:6262
-
-listeners:
-  - binding:            proxy
-    address:            tcp:0.0.0.0:1122
-    service:            ssh
-
-  - binding:            proxy
-    address:            tcp:0.0.0.0:4506
-    service:            nc4506
-
-  - binding:            proxy
-    address:            tcp:0.0.0.0:7001
-    service:            iperf
-
-  - binding:            proxy_udp
-    address:            udp:0.0.0.0:7001
-    service:            iperf_udp
-
-  - binding:            transport
-    address:            tls:0.0.0.0:7002
-
-dialers:
-  - binding:            transport
+  endpoint:               tls:{{$ctrl_ip}}:6262
 
 link:
   listeners:
-    - binding:          transport
-      bind:             {{$protocol}}:0.0.0.0:6000
-      advertise:        {{$protocol}}:{{$router_ip}}:6000
+    - binding:              transport
+      bind:                 {{$protocol}}:0.0.0.0:6000
+      advertise:            {{$protocol}}:{{$router_ip}}:6000
   dialers:
-    - binding:          transport
+    - binding:              transport
+      split:                false
+      options:
+        txPortalStartSize:  524288
+
+listeners:
+  - binding:              proxy
+    address:              tcp:0.0.0.0:1122
+    service:              ssh
+    options:
+      txPortalStartSize:  524288
+
+  - binding:              proxy
+    address:              tcp:0.0.0.0:4506
+    service:              nc4506
+
+  - binding:              proxy
+    address:              tcp:0.0.0.0:7001
+    service:              iperf
+
+  - binding:              proxy_udp
+    address:              udp:0.0.0.0:7001
+    service:              iperf_udp
+
+  - binding:              transport
+    address:              tls:0.0.0.0:7002
+
+dialers:
+  - binding:              transport
+    options:
+      txPortalStartSize:  524288
 
 transport:
   westworld3:
