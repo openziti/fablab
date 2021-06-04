@@ -81,7 +81,7 @@ func (label *Label) Get(name ...string) (interface{}, bool) {
 	for i := 0; i < (len(name) - 1); i++ {
 		key := name[i]
 		if value, found := inputMap[key]; found {
-			lowerMap, ok := value.(Bindings)
+			lowerMap, ok := value.(Variables)
 			if !ok {
 				return nil, false
 			}
@@ -158,7 +158,7 @@ func LoadLabel(path string) (*Label, error) {
 	if err != nil {
 		return nil, err
 	}
-	l := &Label{Bindings: make(Bindings)}
+	l := &Label{Bindings: Variables{}}
 	if err = yaml.Unmarshal(data, l); err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func labelPath(path string) string {
 type Label struct {
 	Model    string        `yaml:"model"`
 	State    InstanceState `yaml:"state"`
-	Bindings Bindings      `yaml:"bindings"`
+	Bindings Variables     `yaml:"bindings"`
 	path     string
 }
 

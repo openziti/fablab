@@ -15,7 +15,7 @@ func DistributeSshKey(hostSpec string) model.DistributionStage {
 
 func (self *distSshKey) Distribute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
-		ssh := lib.NewSshConfigFactoryImpl(run.GetModel(), host.PublicIp)
+		ssh := lib.NewSshConfigFactory(host)
 		keyPath := fmt.Sprintf("/home/%v/.ssh/id_rsa", ssh.User())
 
 		if _, err := lib.RemoteExecAll(ssh, fmt.Sprintf("rm -f %v", keyPath)); err == nil {

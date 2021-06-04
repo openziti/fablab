@@ -43,19 +43,17 @@ type streamSarMetrics struct {
 	closed              concurrenz.AtomicBoolean
 }
 
-func (s *streamSarMetrics) Operate(run model.Run) error {
-	m := run.GetModel()
-	go s.waitForClose(run)
-	ssh := lib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
+func (s *streamSarMetrics) Operate(model.Run) error {
+	go s.waitForClose()
+	ssh := lib.NewSshConfigFactory(s.host)
 	go s.runSar(ssh)
 	return nil
 }
 
-func (s *streamSarMetrics) waitForClose(run model.Run) {
+func (s *streamSarMetrics) waitForClose() {
 	<-s.closer
 	if s.closed.CompareAndSwap(false, true) {
-		m := run.GetModel()
-		ssh := lib.NewSshConfigFactoryImpl(m, s.host.PublicIp)
+		ssh := lib.NewSshConfigFactory(s.host)
 		if err := lib.RemoteKill(ssh, "sar"); err != nil {
 			logrus.Warnf("did not close sar, it may have already stopped normally (%v)", err)
 		}

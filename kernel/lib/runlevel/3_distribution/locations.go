@@ -32,7 +32,7 @@ func Locations(hostSpec string, paths ...string) model.DistributionStage {
 
 func (self *locations) Distribute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
-		ssh := lib.NewSshConfigFactoryImpl(run.GetModel(), host.PublicIp)
+		ssh := lib.NewSshConfigFactory(host)
 		var cmds []string
 		for _, path := range self.paths {
 			mkdir := fmt.Sprintf("mkdir -p %s", path)

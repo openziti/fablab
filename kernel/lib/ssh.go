@@ -36,8 +36,6 @@ import (
 	"sync"
 )
 
-var SshCommand string
-
 func LaunchService(factory SshConfigFactory, name, cfg string) error {
 	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
 	if value, err := RemoteExec(factory, serviceCmd); err == nil {
@@ -277,7 +275,7 @@ func SendFile(factory SshConfigFactory, localPath string, remotePath string) err
 	if err != nil {
 		return errors.Wrapf(err, "unable to open remote file %v", remotePath)
 	}
-	defer rmtFile.Close()
+	defer func() { _ = rmtFile.Close() }()
 
 	_, err = rmtFile.Write(localFile)
 
@@ -377,12 +375,12 @@ type SshConfigFactoryImpl struct {
 	authMethods     []ssh.AuthMethod
 }
 
-func NewSshConfigFactoryImpl(m *model.Model, host string) *SshConfigFactoryImpl {
-	user := m.Variables.Must("credentials", "ssh", "username").(string)
-	keyPath, _ := m.Variables.Must("credentials", "ssh", "key_path").(string)
+func NewSshConfigFactory(h *model.Host) *SshConfigFactoryImpl {
+	user := h.MustStringVariable("credentials.ssh.username")
+	keyPath := h.MustStringVariable("credentials.ssh.key_path")
 	factory := &SshConfigFactoryImpl{
 		user:    user,
-		host:    host,
+		host:    h.PublicIp,
 		port:    22,
 		keyPath: keyPath,
 	}

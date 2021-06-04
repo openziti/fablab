@@ -17,22 +17,37 @@
 package model
 
 import (
+	"fmt"
+	"github.com/openziti/foundation/util/errorz"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"os"
+	"reflect"
 	"sort"
+	"strings"
 )
 
 type Scope struct {
-	parent    *Scope
-	Variables Variables
-	Data      Data
-	Tags      Tags
-	bound     bool
+	entity           Entity
+	Defaults         Variables
+	VariableResolver VariableResolver
+	Data             Data
+	Tags             Tags
+	bound            bool
 }
 
-func (scope *Scope) setParent(parent *Scope) {
-	scope.parent = parent
+func (scope *Scope) initialize(entity Entity, scoped bool) {
+	scope.Defaults.Canonicalize()
+	scope.entity = entity
 	sort.Strings(scope.Tags)
+
+	if scope.VariableResolver == nil {
+		if scoped {
+			scope.VariableResolver = entity.GetModel().VarConfig.DefaultScopedVariableResolver
+		} else {
+			scope.VariableResolver = entity.GetModel().VarConfig.DefaultVariableResolver
+		}
+	}
 }
 
 func (scope *Scope) HasTag(tag string) bool {
@@ -49,26 +64,105 @@ func (scope *Scope) WithTags(tags ...string) *Scope {
 	return scope
 }
 
+func (scope *Scope) HasVariable(name string) bool {
+	_, found := scope.GetVariable(name)
+	return found
+}
+
+func (scope *Scope) GetVariable(name string) (interface{}, bool) {
+	return scope.VariableResolver.Resolve(scope.entity, name, false)
+}
+
+func (scope *Scope) PutVariable(name string, value interface{}) {
+	path := scope.entity.GetModel().VarConfig.VariableNameParser(name)
+	scope.Defaults.Put(path, value)
+}
+
+func (scope *Scope) GetStringVariable(name string) (string, bool) {
+	val, found := scope.GetVariable(name)
+	if !found {
+		return "", false
+	}
+	if strVal, ok := val.(string); ok {
+		return strVal, true
+	}
+	return fmt.Sprintf("%v", val), true
+}
+
+func (scope *Scope) GetStringVariableOr(name string, defaultValue string) string {
+	val, found := scope.GetStringVariable(name)
+	if found {
+		return val
+	}
+	return defaultValue
+}
+
+func (scope *Scope) GetBoolVariable(name string) (bool, bool) {
+	val, found := scope.GetVariable(name)
+	if !found {
+		return false, false
+	}
+	if boolVal, ok := val.(bool); ok {
+		return boolVal, true
+	}
+	return strings.EqualFold("true", fmt.Sprintf("%v", val)), true
+}
+
+func (scope *Scope) GetVariableOr(name string, defaultValue interface{}) interface{} {
+	val, found := scope.GetVariable(name)
+	if found {
+		return val
+	}
+	return defaultValue
+}
+
+func (scope *Scope) MustVariable(name string) interface{} {
+	val, found := scope.GetVariable(name)
+	if found {
+		return val
+	}
+	logrus.Fatalf("no value defined for variable %+v", name)
+	return nil
+}
+
+func (scope *Scope) MustStringVariable(name string) string {
+	value := scope.MustVariable(name)
+	result, ok := value.(string)
+	if !ok {
+		logrus.Fatalf("variable [%v] expected to have type string, but was %v", name, reflect.TypeOf(value))
+	}
+	return result
+}
+
+func (scope *Scope) GetRequiredStringVariable(holder errorz.ErrorHolder, name string) string {
+	value, found := scope.GetVariable(name)
+	if !found {
+		holder.SetError(errors.Errorf("missing variable [%s]", name))
+		return ""
+	}
+	result, ok := value.(string)
+	if !ok {
+		holder.SetError(errors.Errorf("variable [%v] expected to have type string, but was %v", name, reflect.TypeOf(value)))
+	}
+	return result
+}
+
 type Data map[string]interface{}
 type Tags []string
 
-type Variable struct {
-	Description    string
-	Default        interface{}
-	Required       bool
-	Scoped         bool
-	GlobalFallback bool
-	Sensitive      bool
-	Binder         func(v *Variable, i interface{}, path ...string)
-	Value          interface{}
-	bound          bool
+type Variables map[string]interface{}
+
+func (v Variables) Canonicalize() {
+	for key, val := range v {
+		if m, ok := val.(map[string]interface{}); ok {
+			v[key] = Variables(m)
+		}
+	}
 }
 
-type Variables map[interface{}]interface{}
-
-func (v Variables) Put(newValue interface{}, name ...string) error {
+func (v Variables) Put(name []string, newValue interface{}) {
 	if len(name) < 1 {
-		return errors.New("empty name")
+		return
 	}
 
 	inputMap := v
@@ -77,26 +171,28 @@ func (v Variables) Put(newValue interface{}, name ...string) error {
 		if value, found := inputMap[key]; found {
 			lowerMap, ok := value.(Variables)
 			if !ok {
-				return errors.Errorf("invalid path type [%s]", key)
+				logrus.Fatalf("path %v overrides a submap", name)
+			} else {
+				inputMap = lowerMap
 			}
+		} else {
+			lowerMap := Variables{}
+			inputMap[key] = lowerMap
 			inputMap = lowerMap
 		}
 	}
 
-	value, found := inputMap[name[len(name)-1]]
-	if found {
-		variable, ok := value.(*Variable)
-		if !ok {
-			return errors.Errorf("path not variable leaf")
+	key := name[len(name)-1]
+	if val, found := inputMap[key]; found {
+		if _, ok := val.(Variables); ok {
+			logrus.Fatalf("path %v overrides a submap", name)
 		}
-		variable.Value = newValue
-		variable.bound = true
 	}
 
-	return nil
+	inputMap[key] = newValue
 }
 
-func (v Variables) Get(name ...string) (interface{}, bool) {
+func (v Variables) Get(name []string) (interface{}, bool) {
 	if len(name) < 1 {
 		return nil, false
 	}
@@ -110,40 +206,49 @@ func (v Variables) Get(name ...string) (interface{}, bool) {
 				return nil, false
 			}
 			inputMap = lowerMap
+		} else {
+			return nil, false
 		}
 	}
 
 	value, found := inputMap[name[len(name)-1]]
 	if found {
-		variable, ok := value.(*Variable)
-		if !ok {
+		if _, ok := value.(Variables); ok {
 			return nil, false
 		}
-		if variable.Required {
-			if !variable.bound {
-				logrus.Fatalf("required variable %v missing", name)
-			}
-			return variable.Value, true
-		} else {
-			if variable.bound {
-				return variable.Value, true
-			} else {
-				return variable.Default, true
-			}
+	}
+	return value, found
+}
+
+func (v Variables) getPath(path ...string) []Variables {
+	result := []Variables{v}
+	current := v
+	for _, e := range path {
+		next, found := current[e]
+		if !found {
+			return result
+		}
+		current, ok := next.(Variables)
+		if !ok {
+			return result
+		}
+		result = append(result, current)
+	}
+	return result
+}
+
+func (v Variables) getRelated(name string, path ...string) (interface{}, bool) {
+	p := v.getPath(path...)
+	for i := len(p) - 1; i >= 0; i-- {
+		node := p[i]
+		if val, found := node[name]; found {
+			return val, true
 		}
 	}
 	return nil, false
 }
 
-func (v Variables) Must(name ...string) interface{} {
-	value, found := v.Get(name...)
-	if !found {
-		logrus.Fatalf("missing variable [%s]", name)
-	}
-	return value
-}
-
-func (m *Model) IterateScopes(f func(i interface{}, path ...string)) {
+func (m *Model) IterateScopes(f func(i Entity, path ...string)) {
 	f(m, []string{}...)
 	for regionId, r := range m.Regions {
 		f(r, []string{regionId}...)
@@ -154,4 +259,141 @@ func (m *Model) IterateScopes(f func(i interface{}, path ...string)) {
 			}
 		}
 	}
+}
+
+type VariableResolver interface {
+	Resolve(entity Entity, name string, scoped bool) (interface{}, bool)
+}
+
+func NewScopedVariableResolver(resolver VariableResolver) *ScopedVariableResolver {
+	return &ScopedVariableResolver{
+		resolver: resolver,
+	}
+}
+
+type ScopedVariableResolver struct {
+	resolver VariableResolver
+}
+
+func (self *ScopedVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	// If this is already scoped, short circuit
+	if scoped {
+		return nil, false
+	}
+	entityPath := GetScopedEntityPath(entity)
+	prefixedName := entity.GetModel().VarConfig.VariableNamePrefixMapper(entityPath, name)
+	val, found := self.resolver.Resolve(entity, prefixedName, true)
+	entity.GetModel().VarConfig.ResolverLogger("scoped", entity, name, val, found, "path=%+v, delegate=%v", entityPath, reflect.TypeOf(self.resolver))
+	return val, found
+}
+
+func NewCachingVariableResolver(resolver VariableResolver) *CachingVariableResolver {
+	return &CachingVariableResolver{
+		cache:    map[string]interface{}{},
+		resolver: resolver,
+	}
+}
+
+type CachingVariableResolver struct {
+	cache    map[string]interface{}
+	resolver VariableResolver
+}
+
+func (self *CachingVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	val, found := self.cache[name]
+	if found {
+		return val, found
+	}
+	val, found = self.resolver.Resolve(entity, name, scoped)
+	if found {
+		self.cache[name] = val
+	}
+	return val, found
+}
+
+func NewMapVariableResolver(context string, variables Variables) *MapVariableResolver {
+	variables.Canonicalize()
+	return &MapVariableResolver{
+		context:   context,
+		variables: variables,
+	}
+}
+
+type MapVariableResolver struct {
+	context   string
+	variables Variables
+}
+
+func (self *MapVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
+	path := entity.GetModel().VarConfig.VariableNameParser(name)
+	val, found := self.variables.Get(path)
+	entity.GetModel().VarConfig.ResolverLogger("map", entity, name, val, found, self.context)
+	return val, found
+}
+
+type HierarchicalVariableResolver struct{}
+
+func (self HierarchicalVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	path := entity.GetModel().VarConfig.VariableNameParser(name)
+
+	if val, found := entity.GetScope().Defaults.Get(path); found {
+		entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, val, found, "level: %v", reflect.TypeOf(entity))
+		return val, true
+	}
+
+	if parent := entity.GetParentEntity(); parent != nil {
+		if val, found := entity.GetScope().VariableResolver.Resolve(parent, name, scoped); found {
+			entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, val, found, "level: %v", reflect.TypeOf(entity))
+			return val, true
+		}
+	}
+
+	entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, nil, false)
+	return nil, false
+}
+
+type EnvVariableResolver struct{}
+
+func (self EnvVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
+	key := entity.GetModel().VarConfig.EnvVariableNameMapper(name)
+	val, found := os.LookupEnv(key)
+	entity.GetModel().VarConfig.ResolverLogger("env", entity, name, val, found, "env.name=%v", key)
+	return val, found
+}
+
+type ChainedVariableResolver struct {
+	resolvers []VariableResolver
+}
+
+func (self *ChainedVariableResolver) AppendResolver(resolver VariableResolver) {
+	self.resolvers = append(self.resolvers, resolver)
+}
+
+func (self *ChainedVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	for _, resolver := range self.resolvers {
+		if val, found := resolver.Resolve(entity, name, scoped); found {
+			entity.GetModel().VarConfig.ResolverLogger("chained", entity, name, val, found, "source=%v", reflect.TypeOf(resolver))
+			return val, true
+		}
+	}
+	entity.GetModel().VarConfig.ResolverLogger("chained", entity, name, nil, false)
+	return nil, false
+}
+
+type CmdLineArgVariableResolver struct{}
+
+func (self CmdLineArgVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
+	config := entity.GetModel().VarConfig
+	key := config.CommandLineVariableNameMapper(name)
+	for _, arg := range os.Args {
+		for _, prefix := range config.CommandLinePrefixes {
+			argPrefix := prefix + key + "="
+			if strings.HasPrefix(arg, argPrefix) {
+				result := strings.TrimPrefix(arg, argPrefix)
+				entity.GetModel().VarConfig.ResolverLogger("cmd-line", entity, name, result, true, "prefix=", argPrefix)
+				return result, true
+			}
+		}
+	}
+	return nil, false
 }

@@ -40,7 +40,7 @@ func (self *iperfClient) Operate(run model.Run) error {
 		return errors.Errorf("expected [1] iperf client host, found [%d]", len(hosts))
 	}
 
-	ssh := lib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp)
+	ssh := lib.NewSshConfigFactory(hosts[0])
 
 	cmd := fmt.Sprintf("iperf3 -c %s -p %d", self.address, self.port)
 	if err := lib.RemoteConsole(ssh, cmd); err != nil {

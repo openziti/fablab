@@ -16,13 +16,9 @@
 
 package model
 
-func GetBindings() Bindings {
-	return bindings
-}
-
 var modelRegistry map[string]*Model
 var label *Label
-var bindings Bindings
+var bindings Variables
 var bootstrapExtensions []BootstrapExtension
 var instanceId string
 var fablabRoot string

@@ -25,12 +25,14 @@ func TestParentBase(t *testing.T) {
 	m := &Model{
 		Parent: parentTestModel(),
 	}
+	m.init("test")
+
 	assert.Nil(t, m.Merge(m.Parent))
 
 	var found bool
 	var value interface{}
 
-	value, found = m.Variables.Get("a")
+	value, found = m.GetVariable("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
 
@@ -60,8 +62,8 @@ func TestParentMerge(t *testing.T) {
 	m := &Model{
 		Parent: parentTestModel(),
 		Scope: Scope{
-			Variables: Variables{
-				"b": &Variable{Default: "hello!"},
+			Defaults: Variables{
+				"b": "hello!",
 			},
 		},
 		Regions: Regions{
@@ -78,15 +80,16 @@ func TestParentMerge(t *testing.T) {
 			&factory{name: "merge"},
 		},
 	}
+	m.init("test")
 	assert.Nil(t, m.Merge(m.Parent))
 
 	var found bool
 	var value interface{}
 
-	value, found = m.Variables.Get("a")
+	value, found = m.GetVariable("a")
 	assert.True(t, found)
 	assert.Equal(t, "oh, wow!", value)
-	value, found = m.Variables.Get("b")
+	value, found = m.GetVariable("b")
 	assert.True(t, found)
 	assert.Equal(t, "hello!", value)
 
@@ -116,10 +119,10 @@ func TestParentMerge(t *testing.T) {
 }
 
 func parentTestModel() *Model {
-	return &Model{
+	result := &Model{
 		Scope: Scope{
-			Variables: Variables{
-				"a": &Variable{Default: "oh, wow!"},
+			Defaults: Variables{
+				"a": "oh, wow!",
 			},
 		},
 		Regions: Regions{
@@ -137,6 +140,8 @@ func parentTestModel() *Model {
 			&factory{name: "base"},
 		},
 	}
+	result.init("parent")
+	return result
 }
 
 type factory struct {

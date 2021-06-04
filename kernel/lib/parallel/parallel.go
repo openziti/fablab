@@ -2,7 +2,7 @@ package parallel
 
 import (
 	"context"
-	"github.com/openziti/fabric/controller/network"
+	"github.com/openziti/fablab/kernel/lib/util"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
 )
@@ -51,5 +51,5 @@ func Execute(tasks []Task, concurrency int64) error {
 		return errors[0]
 	}
 
-	return network.MultipleErrors(errors)
+	return util.MultipleErrors(errors)
 }

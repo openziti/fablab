@@ -43,8 +43,8 @@ func (i *iperfUdp) Operate(run model.Run) error {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
 
-		sshClientFactory := lib.NewSshConfigFactoryImpl(m, clientHost.PublicIp)
-		sshServerFactory := lib.NewSshConfigFactoryImpl(m, serverHost.PublicIp)
+		sshClientFactory := lib.NewSshConfigFactory(clientHost)
+		sshServerFactory := lib.NewSshConfigFactory(serverHost)
 
 		go i.runServer(sshServerFactory)
 
