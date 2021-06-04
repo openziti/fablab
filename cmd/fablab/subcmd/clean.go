@@ -38,24 +38,24 @@ func clean(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("error bootstrapping instance (%v)", err)
 	}
 
-	instanceIds, err := model.ListInstances()
-	if err != nil {
-		logrus.Fatalf("error listing instances (%v)", err)
-	}
+	cfg := model.GetConfig()
 
 	activeInstanceId := model.ActiveInstanceId()
-	for _, instanceId := range instanceIds {
-		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
+	for instanceId, instanceConfig := range cfg.Instances {
+		if l, err := instanceConfig.LoadLabel(); err == nil {
 			if l.State == model.Created || l.State == model.Disposed {
-				if err := model.RemoveInstance(instanceId); err != nil {
-					logrus.Fatalf("error removing instance [%s] (%v)", instanceId, err)
+				if err := instanceConfig.CleanupWorkingDir(); err != nil {
+					logrus.WithError(err).Fatalf("error removing instance [%s]", instanceId)
 				}
 				if instanceId == activeInstanceId {
-					if err := model.ClearActiveInstance(); err != nil {
-						logrus.Errorf("error clearing active instance (%v)", err)
-					}
+					cfg.Default = ""
 				}
-				logrus.Infof("removed instance [%s]", instanceId)
+				delete(cfg.Instances, instanceId)
+				if err := model.PersistConfig(cfg); err != nil {
+					logrus.WithError(err).Fatalf("error removing instance (%v)", err)
+				} else {
+					logrus.Infof("removed instance [%s]", instanceId)
+				}
 			}
 		} else {
 			logrus.Warnf("error loading label for instance [%s] (%v)", instanceId, err)

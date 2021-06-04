@@ -37,7 +37,7 @@ func (l awsKeyManager) Bootstrap(m *model.Model) error {
 		return nil
 	}
 
-	keyPath := path.Join(model.ActiveInstancePath(), "ssh_private_key.pem")
+	keyPath := path.Join(model.BuildPath(), "ssh_private_key.pem")
 	m.PutVariable("credentials.ssh.key_path", keyPath)
 
 	return nil
@@ -47,8 +47,15 @@ func (stage awsKeyManager) Express(run model.Run) error {
 	m := run.GetModel()
 
 	if managedKey, found := m.GetBoolVariable("credentials.aws.managed_key"); !found || !managedKey {
+		if !found {
+			logrus.Info("credentials.aws.managed_key setting not found. skipping managed key setup")
+		} else if !managedKey {
+			logrus.Info("credentials.aws.managed_key setting set to false. skipping managed key setup")
+		}
+
 		return nil
 	}
+
 	logrus.Info("beginning managed key setup")
 	keyName, found := m.GetStringVariable("credentials.aws.ssh_key_name")
 	if !found {

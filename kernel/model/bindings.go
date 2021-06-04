@@ -41,7 +41,6 @@ func loadBindings() error {
 	if err := yaml.Unmarshal(data, &bindings); err != nil {
 		return fmt.Errorf("error unmarshalling bindings [%s] (%w)", bindingsYml(), err)
 	}
-
 	return nil
 }
 

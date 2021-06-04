@@ -17,11 +17,13 @@
 package model
 
 import (
+	"embed"
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
+	"io/fs"
 	"strings"
 )
 
@@ -112,6 +114,8 @@ type VarConfig struct {
 	SecretsKeys                   []string
 	VariableNamePrefixMapper      VariableNamePrefixMapper
 	ResolverLogger                func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{})
+	BindingResolver               *MapVariableResolver
+	LabelResolver                 *MapVariableResolver
 }
 
 func (self *VarConfig) SetDefaults() {
@@ -137,14 +141,15 @@ func (self *VarConfig) SetDefaults() {
 		}
 	}
 
+	self.BindingResolver = NewMapVariableResolver("bindings", bindings)
+	self.LabelResolver = NewMapVariableResolver("label", nil)
+
 	if self.DefaultVariableResolver == nil {
 		defaultResolverSet := &ChainedVariableResolver{}
 		defaultResolverSet.AppendResolver(CmdLineArgVariableResolver{})
 		defaultResolverSet.AppendResolver(EnvVariableResolver{})
-		if label != nil {
-			defaultResolverSet.AppendResolver(NewMapVariableResolver("label", label.Bindings))
-		}
-		defaultResolverSet.AppendResolver(NewMapVariableResolver("bindings", bindings))
+		defaultResolverSet.AppendResolver(self.LabelResolver)
+		defaultResolverSet.AppendResolver(self.BindingResolver)
 		defaultResolverSet.AppendResolver(HierarchicalVariableResolver{})
 		self.DefaultVariableResolver = defaultResolverSet
 
@@ -171,13 +176,30 @@ func (self *VarConfig) SetDefaults() {
 	}
 
 	if self.ResolverLogger == nil {
-		self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {}
+		self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {
+		}
 	}
 }
 
+func (self *VarConfig) EnableDebugLogger() {
+	self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {
+		msg := ""
+		if len(msgAndArgs) > 0 {
+			msg = fmt.Sprintf(", ctx=%v", msgAndArgs[0])
+			if len(msg) > 1 {
+				msg = fmt.Sprintf(msg, msgAndArgs[1:]...)
+			}
+		}
+		fmt.Printf("%v: %v[id=%v] key=%v result=%v, found=%v%v\n", resolver, entity.GetType(), entity.GetId(), name, result, found, msg)
+	}
+}
+
+type Resource fs.FS
+
+type Resources map[string]Resource
+
 type Model struct {
-	name   string
-	Parent *Model
+	Id string
 
 	Scope
 	VarConfig           VarConfig
@@ -192,6 +214,7 @@ type Model struct {
 	Operation           OperatingStages
 	Disposal            DisposalStages
 	MetricsHandlers     []MetricsHandler
+	Resources           Resources
 
 	actions map[string]Action
 
@@ -203,7 +226,7 @@ func (m *Model) GetModel() *Model {
 }
 
 func (m *Model) GetId() string {
-	return m.name
+	return m.Id
 }
 
 func (m *Model) GetType() string {
@@ -215,16 +238,19 @@ func (m *Model) GetScope() *Scope {
 }
 
 func (m *Model) GetParentEntity() Entity {
-	// if we just return m.Parent, and m.Parent is nil we'll return a non-nil interface with type=*Model and value = nil
-	if m.Parent == nil {
-		return nil
+	return nil
+}
+
+func (m *Model) GetResource(name string) fs.FS {
+	if resource, found := m.Resources[name]; found {
+		return resource
 	}
-	return m.Parent
+	return embed.FS{}
 }
 
 func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType {
-		return matcher(m) || (m.Parent != nil && m.Parent.Matches(entityType, matcher))
+		return matcher(m)
 	}
 
 	if EntityTypeRegion == entityType || EntityTypeHost == entityType || EntityTypeComponent == entityType {
@@ -250,11 +276,10 @@ func (m *Model) GetChildren() []Entity {
 	return result
 }
 
-func (m *Model) init(name string) {
+func (m *Model) init() {
 	if m.initialized.CompareAndSwap(false, true) {
 		m.VarConfig.SetDefaults()
 
-		m.name = name
 		if m.Data == nil {
 			m.Data = Data{}
 		}
@@ -560,10 +585,10 @@ func (f ActionFunc) Execute(m *Model) error {
 	return f(m)
 }
 
-func NewRun(label *Label, model *Model) Run {
+func NewRun() Run {
 	return &runImpl{
-		label: label,
-		model: model,
+		label: GetLabel(),
+		model: GetModel(),
 		runId: fmt.Sprintf("%d", info.NowInMilliseconds()),
 	}
 }

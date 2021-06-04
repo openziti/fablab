@@ -37,7 +37,7 @@ func Export(path string, m *model.Model) error {
 	zip := zip.NewWriter(zipFile)
 	defer func() { _ = zip.Close() }()
 
-	root := model.ActiveInstancePath()
+	root := model.BuildPath()
 
 	paths := []string{
 		filepath.Join(root, "dumps"),

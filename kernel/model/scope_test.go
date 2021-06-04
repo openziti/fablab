@@ -41,7 +41,7 @@ func TestVariablesPut(t *testing.T) {
 
 func TestVariableResolver(t *testing.T) {
 	m := newTestModel()
-	m.init("test")
+	m.init()
 	region := m.Regions["region1"]
 	host := region.Hosts["host1"]
 	component := host.Components["component1"]
@@ -111,7 +111,7 @@ func TestVariableResolverBindingsOverride(t *testing.T) {
 		}
 		fmt.Printf("%v: %v[id=%v] key=%v result=%v, found=%v%v\n", resolver, entity.GetType(), entity.GetId(), name, result, found, msg)
 	}
-	m.init("test")
+	m.init()
 	region := m.Regions["region1"]
 	host := region.Hosts["host1"]
 	component := host.Components["component1"]
@@ -161,6 +161,7 @@ func TestVariableResolverBindingsOverride(t *testing.T) {
 
 func newTestModel() *Model {
 	return &Model{
+		Id: "test",
 		Scope: Scope{
 			Defaults: Variables{
 				"test": Variables{

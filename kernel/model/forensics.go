@@ -24,15 +24,15 @@ import (
 )
 
 func AllocateForensicScenario(run, scenario string) string {
-	return fmt.Sprintf("%s/forensics/%s/%s", ActiveInstancePath(), run, scenario)
+	return fmt.Sprintf("%s/forensics/%s/%s", BuildPath(), run, scenario)
 }
 
 func AllocateDump(run string) string {
-	return fmt.Sprintf("%s/dumps/%s.json", ActiveInstancePath(), run)
+	return fmt.Sprintf("%s/dumps/%s.json", BuildPath(), run)
 }
 
 func ListDumps() ([]string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(ActiveInstancePath(), "dumps"))
+	files, err := ioutil.ReadDir(filepath.Join(BuildPath(), "dumps"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to list dumps (%w)", err)
 	}
@@ -40,7 +40,7 @@ func ListDumps() ([]string, error) {
 	var dumps []string
 	for _, file := range files {
 		if file.Mode().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
-			dumps = append(dumps, filepath.Join(ActiveInstancePath(), "dumps", file.Name()))
+			dumps = append(dumps, filepath.Join(BuildPath(), "dumps", file.Name()))
 		}
 	}
 

@@ -39,39 +39,25 @@ func refresh(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	ctx := model.NewRun()
+
+	figlet.Figlet("configuration")
+
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building (%v)", err)
 	}
 
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
+	figlet.Figlet("distribution")
 
-		ctx := model.NewRun(l, m)
-
-		figlet.Figlet("configuration")
-
-		if err := m.Build(ctx); err != nil {
-			logrus.Fatalf("error building (%v)", err)
-		}
-
-		figlet.Figlet("distribution")
-
-		if err := m.Sync(ctx); err != nil {
-			logrus.Fatalf("error distributing (%v)", err)
-		}
-
-		figlet.Figlet("activation")
-
-		if err := m.Activate(ctx); err != nil {
-			logrus.Fatalf("error activating (%v)", err)
-		}
-
-		figlet.Figlet("FABUL0US!1!")
-	} else {
-		logrus.Fatalf("no label for run")
+	if err := ctx.GetModel().Sync(ctx); err != nil {
+		logrus.Fatalf("error distributing (%v)", err)
 	}
+
+	figlet.Figlet("activation")
+
+	if err := ctx.GetModel().Activate(ctx); err != nil {
+		logrus.Fatalf("error activating (%v)", err)
+	}
+
+	figlet.Figlet("FABUL0US!1!")
 }

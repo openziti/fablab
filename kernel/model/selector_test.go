@@ -7,6 +7,7 @@ import (
 
 func createTestModel() *Model {
 	return &Model{
+		Id:    "test",
 		Scope: Scope{Tags: Tags{"global"}},
 		Regions: Regions{
 			"initiator": {
@@ -84,7 +85,7 @@ func createTestModel() *Model {
 func TestModel_SelectRegions(t *testing.T) {
 	req := require.New(t)
 	model := createTestModel()
-	model.init("test")
+	model.init()
 
 	// test lookup by id
 	regions := model.SelectRegions("#initiator")
@@ -151,7 +152,7 @@ func TestModel_SelectRegions(t *testing.T) {
 func TestModel_SelectHosts(t *testing.T) {
 	req := require.New(t)
 	model := createTestModel()
-	model.init("test")
+	model.init()
 
 	// test lookup by id
 	hosts := model.SelectHosts("#ctrl")
@@ -222,7 +223,7 @@ func TestModel_SelectHosts(t *testing.T) {
 func TestModel_SelectComponents(t *testing.T) {
 	req := require.New(t)
 	model := createTestModel()
-	model.init("test")
+	model.init()
 
 	// test lookup by id
 	components := model.SelectComponents("#terminator")

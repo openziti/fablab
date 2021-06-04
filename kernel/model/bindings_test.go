@@ -23,6 +23,7 @@ import (
 
 func TestVariableResolvingModelDefaults(t *testing.T) {
 	m := &Model{
+		Id: "test",
 		Scope: Scope{
 			Defaults: Variables{
 				"a": Variables{
@@ -34,7 +35,7 @@ func TestVariableResolvingModelDefaults(t *testing.T) {
 
 	bindings = Variables{}
 
-	m.init("test")
+	m.init()
 
 	val, found := m.GetVariable("a.b")
 
@@ -51,6 +52,7 @@ func TestBindBindingsRequiredToModel(t *testing.T) {
 	bValue := "b-value"
 
 	m := &Model{
+		Id: "test",
 		Scope: Scope{
 			Defaults: Variables{
 				"a": Variables{
@@ -67,7 +69,7 @@ func TestBindBindingsRequiredToModel(t *testing.T) {
 		"c": "c-value",
 	}
 
-	m.init("test")
+	m.init()
 
 	val, found := m.GetVariable("a.b")
 

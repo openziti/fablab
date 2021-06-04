@@ -18,113 +18,88 @@ package model
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func NewNamedInstance(name string) error {
-	root := userInstanceRoot()
-	dir := filepath.Join(root, name)
+func NewInstance(id, workingDirectory string) (string, error) {
+	cfg := GetConfig()
 
-	if err := createUserInstanceRoot(); err != nil {
-		return fmt.Errorf("unable to create instance root [%s] (%w)", dir, err)
-	}
+	if id == "" {
+		id = model.Id
 
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return fmt.Errorf("unable to create instance root [%s] (%w)", dir, err)
-	}
-
-	return nil
-}
-
-func NewInstance() (string, error) {
-	if err := createUserInstanceRoot(); err != nil {
-		return "", fmt.Errorf("unable to create instance root (%w)", err)
-	}
-
-	root := userInstanceRoot()
-	dir, err := ioutil.TempDir(root, "")
-	if err != nil {
-		return "", fmt.Errorf("unable to allocate directory [%s] (%w)", root, err)
-	}
-	return filepath.Base(dir), nil
-}
-
-func ListInstances() ([]string, error) {
-	root := userInstanceRoot()
-
-	instances := make([]string, 0)
-	if _, err := os.Stat(root); err != nil {
-		if os.IsExist(err) {
-			return nil, fmt.Errorf("unable to stat instance root [%s] (%w)", root, err)
+		_, found := cfg.Instances[id]
+		idx := 2
+		for found {
+			id = fmt.Sprintf("%v-%v", model.Id, idx)
+			idx++
+			_, found = cfg.Instances[id]
 		}
 	}
-	ids, err := ioutil.ReadDir(root)
-	if err == nil {
-		for _, id := range ids {
-			if id.IsDir() {
-				instances = append(instances, id.Name())
-			}
-		}
-	} else {
-		logrus.Warnf("no instance root [%s]", root)
-	}
-	return instances, nil
-}
 
-func RemoveInstance(instanceId string) error {
-	path := instancePath(instanceId)
-	if err := os.RemoveAll(path); err != nil {
-		return fmt.Errorf("error remove instance [%s] (%w)", instanceId, err)
+	if _, found := cfg.Instances[id]; found {
+		return "", errors.Errorf("instance with id %v already exists", id)
 	}
-	return nil
-}
 
-func InitInstanceId(newInstanceId string) {
-	instanceId = newInstanceId
+	if workingDirectory == "" {
+		root := userInstanceRoot()
+		workingDirectory = filepath.Join(root, id)
+	}
+
+	if err := os.MkdirAll(workingDirectory, os.ModePerm); err != nil {
+		return "", errors.Wrapf(err, "unable to create instance directory [%v]", workingDirectory)
+	}
+
+	instanceConfig := &InstanceConfig{
+		Id:               id,
+		Model:            model.Id,
+		WorkingDirectory: workingDirectory,
+	}
+
+	cfg.Instances[id] = instanceConfig
+	cfg.Default = id
+	if err := PersistConfig(cfg); err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 func SetActiveInstance(newInstanceId string) error {
-	if _, err := LoadLabelForInstance(newInstanceId); err != nil {
-		return fmt.Errorf("invalid instance path [%s] (%w)", instancePath(newInstanceId), err)
+	cfg := GetConfig()
+	newInstanceConfig, found := cfg.Instances[newInstanceId]
+	if !found {
+		return errors.Errorf("invalid instance id [%s]", newInstanceId)
 	}
-	if err := ioutil.WriteFile(activeInstance(), []byte(newInstanceId), os.ModePerm); err != nil {
-		return fmt.Errorf("unable to store active instance [%s] (%w)", activeInstance(), err)
-	}
-	instanceId = newInstanceId
-	return nil
-}
+	instanceConfig = newInstanceConfig
 
-func ClearActiveInstance() error {
-	if err := ioutil.WriteFile(activeInstance(), []byte(""), os.ModePerm); err != nil {
-		return fmt.Errorf("unable to clear active instance [%s] (%w)", activeInstance(), err)
+	if _, err := instanceConfig.LoadLabel(); err != nil {
+		return errors.Wrapf(err, "invalid instance working directory [%v] for instance [%v]", instanceConfig.WorkingDirectory, instanceConfig.Id)
 	}
-	instanceId = ""
+
+	cfg.Default = newInstanceId
+	if err := PersistConfig(cfg); err != nil {
+		return errors.Wrapf(err, "unable to update active instance to [%s] in config file [%v]", newInstanceConfig, cfg.ConfigPath)
+	}
 	return nil
 }
 
 func ActiveInstancePath() string {
-	return filepath.Join(userInstanceRoot(), instanceId)
+	GetActiveInstanceConfig()
+	if instanceConfig != nil {
+		return instanceConfig.WorkingDirectory
+	}
+	return ""
 }
 
 func ActiveInstanceId() string {
-	return instanceId
+	GetConfig()
+	return config.GetSelectedInstanceId()
 }
 
 func BootstrapInstance() error {
-	var err error
-
-	// If we've already bootstrapped, don't change the current instance
-	if instanceId == "" {
-		if instanceId, err = loadActiveInstance(); err != nil {
-			return fmt.Errorf("unable to load active instance (%w)", err)
-		}
-	}
-
-	logrus.Debugf("bootstrapping instance %v", instanceId)
+	logrus.Debugf("bootstrapping instance %v", ActiveInstanceId())
 
 	if _, err := os.Stat(ActiveInstancePath()); err != nil {
 		if os.IsNotExist(err) {
@@ -136,42 +111,8 @@ func BootstrapInstance() error {
 	return nil
 }
 
-func loadActiveInstance() (string, error) {
-	var data []byte
-	var err error
-	data, err = ioutil.ReadFile(activeInstance())
-	if err != nil {
-		if os.IsNotExist(err) {
-			logrus.Warnf("no active instance [%s]", activeInstance())
-		} else {
-			return "", fmt.Errorf("error reading active instance [%s] (%w)", activeInstance(), err)
-		}
-	}
-
-	path := strings.Trim(string(data), " \t\r\n")
-	return path, nil
-}
-
 func instancePath(instanceId string) string {
 	return filepath.Join(userInstanceRoot(), instanceId)
-}
-
-func activeInstance() string {
-	return filepath.Join(configRoot(), "active-instance")
-}
-
-func createUserInstanceRoot() error {
-	root := userInstanceRoot()
-	if _, err := os.Stat(root); err != nil {
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(root, os.ModePerm); err != nil {
-				return fmt.Errorf("unable to create instance root [%s] (%w)", root, err)
-			}
-		} else {
-			return fmt.Errorf("unable to stat instance root [%s] (%w)", root, err)
-		}
-	}
-	return nil
 }
 
 func userInstanceRoot() string {

@@ -38,19 +38,8 @@ func sync(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-		ctx := model.NewRun(l, m)
-		if err := m.Sync(ctx); err != nil {
-			logrus.Fatalf("error synchronizing all hosts (%s)", err)
-		}
+	ctx := model.NewRun()
+	if err := ctx.GetModel().Sync(ctx); err != nil {
+		logrus.Fatalf("error synchronizing all hosts (%s)", err)
 	}
 }

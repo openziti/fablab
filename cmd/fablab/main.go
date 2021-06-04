@@ -23,8 +23,7 @@ import (
 )
 
 func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
+	pfxlog.GlobalInit(logrus.InfoLevel, pfxlog.DefaultOptions().SetTrimPrefix("github.com/openziti/"))
 }
 
 func main() {

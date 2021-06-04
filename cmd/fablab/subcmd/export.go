@@ -41,24 +41,11 @@ func export(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
+	m := model.GetModel()
 
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
+	zipName := fmt.Sprintf("%s-%d.zip", filepath.Base(model.BuildPath()), info.NowInMilliseconds())
 
-		zipName := fmt.Sprintf("%s-%d.zip", filepath.Base(model.ActiveInstancePath()), info.NowInMilliseconds())
-
-		if err := lib.Export(zipName, m); err != nil {
-			logrus.Fatalf("error exporting (%v)", err)
-		}
-
-	} else {
-		logrus.Fatalf("no label")
+	if err := lib.Export(zipName, m); err != nil {
+		logrus.Fatalf("error exporting (%v)", err)
 	}
 }

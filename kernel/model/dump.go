@@ -180,6 +180,6 @@ type ComponentDump struct {
 	ConfigSrc       string     `json:"config_src,omitempty"`
 	ConfigName      string     `json:"config_name,omitempty"`
 	BinaryName      string     `json:"binary_name,omitempty"`
-	PublicIdentity  string     `json:"public_identity,omitempty`
+	PublicIdentity  string     `json:"public_identity,omitempty"`
 	PrivateIdentity string     `json:"private_identity,omitempty"`
 }

@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/resources"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -33,18 +34,18 @@ func Static(configs []StaticConfig) model.ConfigurationStage {
 
 func (staticConfig *staticConfig) Configure(run model.Run) error {
 	m := run.GetModel()
+	configResource := run.GetModel().GetResource(resources.Configs)
 	for _, config := range staticConfig.configs {
 		logrus.Debugf("generating static configuration [%s] => [%s]", config.Src, config.Name)
 
-		tPath := filepath.Join(model.ConfigSrc(), config.Src)
-		tData, err := ioutil.ReadFile(tPath)
+		tData, err := fs.ReadFile(configResource, config.Src)
 		if err != nil {
-			return fmt.Errorf("error reading template [%s] (%w)", tPath, err)
+			return fmt.Errorf("error reading template [%s] (%w)", config.Src, err)
 		}
 
 		t, err := template.New("config").Funcs(lib.TemplateFuncMap(m)).Parse(string(tData))
 		if err != nil {
-			return fmt.Errorf("error parsing template [%s] (%w)", tPath, err)
+			return fmt.Errorf("error parsing template [%s] (%w)", config.Src, err)
 		}
 
 		outputPath := filepath.Join(model.ConfigBuild(), config.Name)
@@ -65,7 +66,7 @@ func (staticConfig *staticConfig) Configure(run model.Run) error {
 			return fmt.Errorf("error rendering template [%s] (%w)", outputPath, err)
 		}
 
-		logrus.Infof("[%s] => [%s]", tPath, outputPath)
+		logrus.Infof("[%s] => [%s]", config.Src, outputPath)
 	}
 
 	return nil

@@ -20,8 +20,10 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/resources"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,29 +33,37 @@ func Express() model.InfrastructureStage {
 	return &terraform{}
 }
 
+type terraform struct{}
+
 func (t *terraform) Express(run model.Run) error {
 	m := run.GetModel()
 	l := run.GetLabel()
 
 	if err := t.generate(m); err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 	if err := t.init(); err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 	if err := t.apply(); err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 	if err := t.bind(m, l); err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 	return nil
 }
 
 func (t *terraform) generate(m *model.Model) error {
-	visitor := &terraformVisitor{model: m}
-	if err := filepath.Walk(terraformSrc(), visitor.visit); err != nil {
-		return fmt.Errorf("error generating terraform (%w)", err)
+	terraformResource := m.GetResource(resources.Terraform)
+
+	visitor := &terraformVisitor{
+		model:    m,
+		resource: terraformResource,
+	}
+
+	if err := fs.WalkDir(terraformResource, ".", visitor.visit); err != nil {
+		return errors.Wrapf(err, "error generating terraform")
 	}
 	return nil
 }
@@ -99,50 +109,49 @@ func (t *terraform) bind(m *model.Model, l *model.Label) error {
 		}
 	}
 	if err := l.Save(); err != nil {
-		return fmt.Errorf("unable to save updated instance label [%s] (%w)", model.ActiveInstancePath(), err)
+		return fmt.Errorf("unable to save updated instance label [%s] (%w)", model.BuildPath(), err)
 	}
 	m.BindLabel(l)
 	return nil
 }
 
-type terraform struct {
-}
-
-func (t *terraformVisitor) visit(path string, fi os.FileInfo, err error) error {
+func (t *terraformVisitor) visit(path string, e fs.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
+
+	fi, err := e.Info()
+	if err != nil {
+		return err
+	}
+
 	if fi.Mode().IsRegular() {
 		logrus.Debugf("visiting [%s]", path)
 
-		rel, err := filepath.Rel(terraformSrc(), path)
-		if err != nil {
-			return fmt.Errorf("error relativizing path [%s] (%w)", path, err)
-		}
-
-		outputPath := filepath.Join(terraformRun(), rel)
+		outputPath := filepath.Join(terraformRun(), path)
 		if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 			return fmt.Errorf("error creating parent directories [%s] (%w)", outputPath, err)
 		}
 
-		err = lib.RenderTemplate(path, outputPath, t.model, struct {
+		err = lib.RenderTemplateFS(t.resource, path, outputPath, t.model, struct {
 			Model        *model.Model
 			TerraformLib string
 		}{
 			Model:        t.model,
-			TerraformLib: filepath.ToSlash(terraformLib()),
+			TerraformLib: terraformRun(),
 		})
 		if err != nil {
 			return errors.Wrap(err, "error rendering template")
 		}
 
-		logrus.Infof("=> [%s]", rel)
+		logrus.Infof("=> [%s]", path)
 	}
 	return nil
 }
 
 type terraformVisitor struct {
-	model *model.Model
+	model    *model.Model
+	resource fs.FS
 }
 
 func terraformOutput(name string) (string, error) {
@@ -154,14 +163,6 @@ func terraformOutput(name string) (string, error) {
 	return strings.Trim(prc.Output.String(), " \t\r\n\""), nil
 }
 
-func terraformSrc() string {
-	return filepath.Join(model.FablabRoot(), "lib/templates/tf")
-}
-
-func terraformLib() string {
-	return filepath.Join(model.FablabRoot(), "lib/tf")
-}
-
 func terraformRun() string {
-	return filepath.Join(model.ActiveInstancePath(), "tf")
+	return filepath.Join(model.BuildPath(), "tf")
 }
