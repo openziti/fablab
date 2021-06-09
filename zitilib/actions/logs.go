@@ -93,7 +93,11 @@ func (self *logs) forHostDir(localPath, remotePath string, ssh fablib.SshConfigF
 			}
 
 		} else {
-			paths = append(paths, filepath.Join(remotePath, fi.Name()))
+			if fi.Mode().IsRegular() {
+				paths = append(paths, filepath.Join(remotePath, fi.Name()))
+			} else {
+				logrus.Warnf("ignoring [%s] not regular file", filepath.Join(remotePath, fi.Name()))
+			}
 		}
 	}
 	if err := fablib.RetrieveRemoteFiles(ssh, localPath, paths...); err != nil {
