@@ -29,10 +29,11 @@ func NewActionsFactory() model.Factory {
 
 func (_ *actionsFactory) Build(m *model.Model) error {
 	m.Actions = model.ActionBinders{
-		"bootstrap": newBootstrapAction(),
-		"start":     newStartAction(),
-		"stop":      newStopAction(),
-		"logs":      func(_ *model.Model) model.Action { return zitilib_actions.Logs() },
+		"bootstrap":  newBootstrapAction(),
+		"controller": newControllerAction(),
+		"start":      newStartAction(),
+		"stop":       newStopAction(),
+		"logs":       func(_ *model.Model) model.Action { return zitilib_actions.Logs() },
 	}
 	return nil
 }

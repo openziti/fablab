@@ -55,7 +55,7 @@ func (self *stagesFactory) Build(m *model.Model) error {
 		zitilib_runlevel_1_configuration.IfNoPki(zitilib_runlevel_1_configuration.Fabric(), zitilib_runlevel_1_configuration.DotZiti()),
 		config.Component(),
 		&kit{},
-		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"ziti-controller", "ziti-router", "dilithium"}),
+		devkit.DevKit(zitilib_bootstrap.ZitiDistBinaries(), []string{"ziti", "ziti-controller", "ziti-router", "dilithium"}),
 	}
 
 	m.Distribution = model.DistributionStages{
