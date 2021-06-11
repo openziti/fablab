@@ -56,11 +56,11 @@ dialers:
     options:
       txPortalStartSize:  524288
 
-transport:
-  westworld3:
-    profile_version:    1
-    instrument:
-      name:             metrics
-      path:             logs
-      snapshot_ms:      250
-      enabled:          true
+#transport:
+#  westworld3:
+#    profile_version:    1
+#    instrument:
+#      name:             metrics
+#      path:             logs
+#      snapshot_ms:      250
+#      enabled:          true
