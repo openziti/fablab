@@ -44,9 +44,9 @@ listeners:
     address:              tcp:0.0.0.0:7001
     service:              iperf
 
-  - binding:              proxy_udp
-    address:              udp:0.0.0.0:7001
-    service:              iperf_udp
+#  - binding:              proxy_udp
+#    address:              udp:0.0.0.0:7001
+#    service:              iperf_udp
 
   - binding:              transport
     address:              tls:0.0.0.0:7002
