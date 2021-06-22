@@ -19,12 +19,12 @@ ctrl:
   endpoint:             tls:{{$ctrl_ip}}:6262
 
 link:
-  listeners:
-    - binding:              transport
-      bind:                 {{$protocol}}:0.0.0.0:6000
-      advertise:            {{$protocol}}:{{$router_ip}}:6000
-      options:
-        txPortalStartSize:  524288
+#  listeners:
+#    - binding:              transport
+#      bind:                 {{$protocol}}:0.0.0.0:6000
+#      advertise:            {{$protocol}}:{{$router_ip}}:6000
+#      options:
+#        txPortalStartSize:  524288
   dialers:
     - binding:              transport
       split:                false
