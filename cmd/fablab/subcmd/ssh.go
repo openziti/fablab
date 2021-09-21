@@ -39,28 +39,13 @@ func ssh(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	label := model.GetLabel()
-	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	m := model.GetModel()
+	hosts := m.SelectHosts(args[0])
+	if len(hosts) != 1 {
+		logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 	}
 
-	if label != nil {
-		m, found := model.GetModel(label.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", label.Model)
-		}
-
-		if !m.IsBound() {
-			logrus.Fatalf("model not bound")
-		}
-
-		hosts := m.SelectHosts(args[0])
-		if len(hosts) != 1 {
-			logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
-		}
-
-		if err := lib.RemoteShell(lib.NewSshConfigFactory(hosts[0])); err != nil {
-			logrus.Fatalf("error executing remote shell (%v)", err)
-		}
+	if err := lib.RemoteShell(lib.NewSshConfigFactory(hosts[0])); err != nil {
+		logrus.Fatalf("error executing remote shell (%v)", err)
 	}
 }

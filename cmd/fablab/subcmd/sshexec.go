@@ -57,67 +57,52 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	label := model.GetLabel()
-	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	m := model.GetModel()
+	logrus.Infof("executing %v with concurrency %v", args[1], cmd.concurrency)
+	var tmpl *template.Template
+	if len(args) == 3 {
+		var err error
+		tmpl, err = template.New("output-file-name").Parse(args[2])
+		if err != nil {
+			logrus.WithError(err).Fatalf("invalid file name template: %v", args[2])
+		}
 	}
 
-	if label != nil {
-		m, found := model.GetModel(label.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", label.Model)
-		}
-
-		if !m.IsBound() {
-			logrus.Fatalf("model not bound")
-		}
-
-		logrus.Infof("executing %v with concurrency %v", args[1], cmd.concurrency)
-		var tmpl *template.Template
-		if len(args) == 3 {
-			var err error
-			tmpl, err = template.New("output-file-name").Parse(args[2])
+	err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
+		var buf *bytes.Buffer
+		var out io.Writer
+		if tmpl != nil {
+			buf := &bytes.Buffer{}
+			if err := tmpl.Execute(buf, h); err != nil {
+				return err
+			}
+			fileName := buf.String()
+			file, err := os.Create(fileName)
 			if err != nil {
-				logrus.WithError(err).Fatalf("invalid file name template: %v", args[2])
+				return err
 			}
+			defer func() { _ = file.Close() }()
+			out = file
+			logrus.Infof("[%v] output -> %v", h.PublicIp, fileName)
+		} else {
+			buf = &bytes.Buffer{}
+			out = buf
 		}
-
-		err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
-			var buf *bytes.Buffer
-			var out io.Writer
-			if tmpl != nil {
-				buf := &bytes.Buffer{}
-				if err := tmpl.Execute(buf, h); err != nil {
-					return err
-				}
-				fileName := buf.String()
-				file, err := os.Create(fileName)
-				if err != nil {
-					return err
-				}
-				defer func() { _ = file.Close() }()
-				out = file
-				logrus.Infof("[%v] output -> %v", h.PublicIp, fileName)
-			} else {
-				buf = &bytes.Buffer{}
-				out = buf
-			}
-			sshConfigFactory := lib.NewSshConfigFactory(h)
-			err := lib.RemoteExecAllTo(sshConfigFactory, out, args[1])
-			if err != nil {
-				if buf != nil {
-					logrus.Errorf("output [%s]", buf.String())
-				}
-				return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)
-			}
-			if buf != nil {
-				logrus.Infof("[%v] output:\n%s", h.PublicIp, buf.String())
-			}
-			return nil
-		})
-
+		sshConfigFactory := lib.NewSshConfigFactory(h)
+		err := lib.RemoteExecAllTo(sshConfigFactory, out, args[1])
 		if err != nil {
-			logrus.Fatalf("error executing remote shell (%v)", err)
+			if buf != nil {
+				logrus.Errorf("output [%s]", buf.String())
+			}
+			return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)
 		}
+		if buf != nil {
+			logrus.Infof("[%v] output:\n%s", h.PublicIp, buf.String())
+		}
+		return nil
+	})
+
+	if err != nil {
+		logrus.Fatalf("error executing remote shell (%v)", err)
 	}
 }

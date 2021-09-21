@@ -39,50 +39,35 @@ func up(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	ctx := model.NewRun()
+
+	figlet.Figlet("infrastructure")
+
+	if err := ctx.GetModel().Express(ctx); err != nil {
+		logrus.Fatalf("error expressing (%v)", err)
 	}
 
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-
-		ctx := model.NewRun(l, m)
-
-		figlet.Figlet("infrastructure")
-
-		if err := m.Express(ctx); err != nil {
-			logrus.Fatalf("error expressing (%v)", err)
-		}
-
-		if err := model.Bootstrap(); err != nil {
-			logrus.Fatalf("error re-bootstrapping (%v)", err)
-		}
-
-		figlet.Figlet("configuration")
-
-		if err := m.Build(ctx); err != nil {
-			logrus.Fatalf("error building (%v)", err)
-		}
-
-		figlet.Figlet("distribution")
-
-		if err := m.Sync(ctx); err != nil {
-			logrus.Fatalf("error distributing (%v)", err)
-		}
-
-		figlet.Figlet("activation")
-
-		if err := m.Activate(ctx); err != nil {
-			logrus.Fatalf("error activating (%v)", err)
-		}
-
-		figlet.Figlet("FABUL0US!1!")
-
-	} else {
-		logrus.Fatalf("no label for run")
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("error re-bootstrapping (%v)", err)
 	}
+
+	figlet.Figlet("configuration")
+
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building (%v)", err)
+	}
+
+	figlet.Figlet("distribution")
+
+	if err := ctx.GetModel().Sync(ctx); err != nil {
+		logrus.Fatalf("error distributing (%v)", err)
+	}
+
+	figlet.Figlet("activation")
+
+	if err := ctx.GetModel().Activate(ctx); err != nil {
+		logrus.Fatalf("error activating (%v)", err)
+	}
+
+	figlet.Figlet("FABUL0US!1!")
 }

@@ -17,38 +17,33 @@
 package model
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 )
 
-func FablabRoot() string {
-	return fablabRoot
-}
-
-func ScriptSrc() string {
-	return filepath.Join(fablabRoot, "lib/templates/bin")
-}
-
 func ScriptBuild() string {
-	return filepath.Join(ActiveInstancePath(), "bin")
-}
-
-func ConfigSrc() string {
-	return filepath.Join(fablabRoot, "lib/templates/cfg")
+	return MakeBuildPath("bin")
 }
 
 func ConfigBuild() string {
-	return filepath.Join(ActiveInstancePath(), "cfg")
+	return MakeBuildPath("cfg")
 }
 
 func KitBuild() string {
-	return filepath.Join(ActiveInstancePath(), "kit")
+	return MakeBuildPath("kit")
 }
 
 func PkiBuild() string {
-	return filepath.Join(ActiveInstancePath(), "pki")
+	return MakeBuildPath("pki")
+}
+
+func MakeBuildPath(path string) string {
+	return filepath.Join(BuildPath(), path)
+}
+
+func BuildPath() string {
+	return instanceConfig.WorkingDirectory
 }
 
 func configRoot() string {
@@ -57,21 +52,4 @@ func configRoot() string {
 		logrus.Fatalf("unable to get user home directory (%v)", err)
 	}
 	return filepath.Join(home, ".fablab")
-}
-
-func bootstrapPaths() error {
-	fablabRoot = os.Getenv("FABLAB_ROOT")
-	if fablabRoot == "" {
-		return fmt.Errorf("please set 'FABLAB_ROOT'")
-	}
-	if fi, err := os.Stat(fablabRoot); err == nil {
-		if !fi.IsDir() {
-			return fmt.Errorf("invalid 'FABLAB_ROOT' (!directory)")
-		}
-		logrus.Debugf("FABLAB_ROOT = [%s]", fablabRoot)
-	} else {
-		return fmt.Errorf("non-existent 'FABLAB_ROOT'")
-	}
-
-	return nil
 }

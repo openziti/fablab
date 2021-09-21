@@ -35,22 +35,11 @@ var activateCmd = &cobra.Command{
 
 func activate(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%s)", err)
+		logrus.WithError(err).Fatal("unable to bootstrap")
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-		ctx := model.NewRun(l, m)
-		if err := m.Activate(ctx); err != nil {
-			logrus.Fatalf("error synchronizing all hosts (%v)", err)
-		}
+	ctx := model.NewRun()
+	if err := ctx.GetModel().Activate(ctx); err != nil {
+		logrus.Fatalf("error synchronizing all hosts (%v)", err)
 	}
 }

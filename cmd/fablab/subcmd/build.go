@@ -35,25 +35,11 @@ var buildCmd = &cobra.Command{
 
 func build(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%v)", err)
+		logrus.WithError(err).Fatal("unable to bootstrap")
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-		ctx := model.NewRun(l, m)
-		if err := m.Build(ctx); err != nil {
-			logrus.Fatalf("error building configuration (%v)", err)
-		}
-
-	} else {
-		logrus.Fatalf("no label for run")
+	ctx := model.NewRun()
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building configuration (%v)", err)
 	}
 }

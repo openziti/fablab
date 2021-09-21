@@ -41,19 +41,7 @@ func ip(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
-	label := model.GetLabel()
-	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	m, found := model.GetModel(label.Model)
-	if !found {
-		logrus.Fatalf("no such model [%s]", label.Model)
-	}
-
-	if !m.IsBound() {
-		logrus.Fatalf("model not bound")
-	}
+	m := model.GetModel()
 
 	hosts := m.SelectHosts(args[0])
 	for _, host := range hosts {

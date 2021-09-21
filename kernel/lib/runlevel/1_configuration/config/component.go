@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/openziti/fablab/resources"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 )
@@ -59,9 +60,9 @@ func (componentConfig *componentConfig) generateComponentForHost(regionId, hostI
 func (componentConfig *componentConfig) generateScriptForComponent(regionId, hostId, componentId string, m *model.Model, h *model.Host, c *model.Component) error {
 	logrus.Debugf("generating script for component [%s/%s/%s]", regionId, hostId, componentId)
 
-	src := filepath.Join(model.ScriptSrc(), c.ScriptSrc)
+	scriptResources := m.GetResource(resources.Scripts)
 	dst := filepath.Join(model.ScriptBuild(), c.ScriptName)
-	err := lib.RenderTemplate(src, dst, m, &templateModel{
+	err := lib.RenderTemplateFS(scriptResources, c.ScriptSrc, dst, m, &templateModel{
 		RegionId:  regionId,
 		HostId:    hostId,
 		Host:      h,
@@ -80,9 +81,9 @@ func (componentConfig *componentConfig) generateScriptForComponent(regionId, hos
 func (componentConfig *componentConfig) generateConfigForComponent(regionId, hostId, componentId string, m *model.Model, h *model.Host, c *model.Component) error {
 	logrus.Debugf("generating configuration for component [%s/%s/%s]", regionId, hostId, componentId)
 
-	src := filepath.Join(model.ConfigSrc(), c.ConfigSrc)
+	configResources := m.GetResource(resources.Configs)
 	dst := filepath.Join(model.ConfigBuild(), c.ConfigName)
-	err := lib.RenderTemplate(src, dst, m, &templateModel{
+	err := lib.RenderTemplateFS(configResources, c.ConfigSrc, dst, m, &templateModel{
 		RegionId:  regionId,
 		HostId:    hostId,
 		Host:      h,

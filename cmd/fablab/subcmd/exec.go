@@ -42,36 +42,26 @@ func exec(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	label := model.GetLabel()
-	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	m := model.GetModel()
+
+	if !m.IsBound() {
+		logrus.Fatalf("model not bound")
 	}
 
-	if label != nil {
-		m, found := model.GetModel(label.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", label.Model)
+	for _, binding := range execCmdBindings {
+		if err := execCmdBind(m, binding); err != nil {
+			logrus.Fatalf("error binding [%s] (%v)", binding, err)
 		}
+	}
 
-		if !m.IsBound() {
-			logrus.Fatalf("model not bound")
-		}
+	action := args[0]
+	p, found := m.GetAction(action)
+	if !found {
+		logrus.Fatalf("no such action [%s]", action)
+	}
 
-		for _, binding := range execCmdBindings {
-			if err := execCmdBind(m, binding); err != nil {
-				logrus.Fatalf("error binding [%s] (%v)", binding, err)
-			}
-		}
-
-		action := args[0]
-		p, found := m.GetAction(action)
-		if !found {
-			logrus.Fatalf("no such action [%s]", action)
-		}
-
-		if err := p.Execute(m); err != nil {
-			logrus.Fatalf("action failed [%s] (%s)", action, err)
-		}
+	if err := p.Execute(m); err != nil {
+		logrus.Fatalf("action failed [%s] (%s)", action, err)
 	}
 }
 

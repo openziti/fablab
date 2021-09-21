@@ -37,6 +37,9 @@ type Scope struct {
 }
 
 func (scope *Scope) initialize(entity Entity, scoped bool) {
+	if scope.Defaults == nil {
+		scope.Defaults = Variables{}
+	}
 	scope.Defaults.Canonicalize()
 	scope.entity = entity
 	sort.Strings(scope.Tags)
@@ -121,7 +124,7 @@ func (scope *Scope) MustVariable(name string) interface{} {
 	if found {
 		return val
 	}
-	logrus.Fatalf("no value defined for variable %+v", name)
+	logrus.Panicf("no value defined for variable %+v", name)
 	return nil
 }
 
@@ -155,7 +158,14 @@ type Variables map[string]interface{}
 func (v Variables) Canonicalize() {
 	for key, val := range v {
 		if m, ok := val.(map[string]interface{}); ok {
-			v[key] = Variables(m)
+			subMap := Variables(m)
+			subMap.Canonicalize()
+			v[key] = subMap
+		}
+		if m, ok := val.(map[interface{}]interface{}); ok {
+			subMap := Variables(toMapOfStringInterface(m))
+			subMap.Canonicalize()
+			v[key] = subMap
 		}
 	}
 }
@@ -324,6 +334,11 @@ type MapVariableResolver struct {
 	variables Variables
 }
 
+func (self *MapVariableResolver) UpdateVariables(variables Variables) {
+	variables.Canonicalize()
+	self.variables = variables
+}
+
 func (self *MapVariableResolver) Resolve(entity Entity, name string, _ bool) (interface{}, bool) {
 	path := entity.GetModel().VarConfig.VariableNameParser(name)
 	val, found := self.variables.Get(path)
@@ -334,6 +349,11 @@ func (self *MapVariableResolver) Resolve(entity Entity, name string, _ bool) (in
 type HierarchicalVariableResolver struct{}
 
 func (self HierarchicalVariableResolver) Resolve(entity Entity, name string, scoped bool) (interface{}, bool) {
+	if val, found := entity.GetScope().Defaults[name]; found {
+		entity.GetModel().VarConfig.ResolverLogger("hierarchical", entity, name, val, found, "level: %v", reflect.TypeOf(entity))
+		return val, true
+	}
+
 	path := entity.GetModel().VarConfig.VariableNameParser(name)
 
 	if val, found := entity.GetScope().Defaults.Get(path); found {
@@ -396,4 +416,16 @@ func (self CmdLineArgVariableResolver) Resolve(entity Entity, name string, _ boo
 		}
 	}
 	return nil, false
+}
+
+func toMapOfStringInterface(m map[interface{}]interface{}) map[string]interface{} {
+	result := map[string]interface{}{}
+	for k, v := range m {
+		if s, ok := k.(string); ok {
+			result[s] = v
+		} else {
+			result[fmt.Sprintf("%v", k)] = v
+		}
+	}
+	return result
 }

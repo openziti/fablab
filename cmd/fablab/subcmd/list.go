@@ -1,38 +1,26 @@
-/*
-	Copyright 2019 NetFoundry, Inc.
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-	https://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-*/
-
 package subcmd
 
 import (
 	"fmt"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sort"
+	"strings"
 )
 
 func init() {
 	listCmd.AddCommand(listInstancesCmd)
-	listCmd.AddCommand(listModelsCmd)
+	listCmd.AddCommand(listHostsCmd)
+	listCmd.AddCommand(listComponentsCmd)
 	RootCmd.AddCommand(listCmd)
 }
 
 var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Short:   "list objects",
+	Short:   "list model entities",
 }
 
 var listInstancesCmd = &cobra.Command{
@@ -48,10 +36,15 @@ func listInstances(_ *cobra.Command, _ []string) {
 	}
 
 	activeInstanceId := model.ActiveInstanceId()
-	instanceIds, err := model.ListInstances()
-	if err != nil {
-		logrus.Fatalf("unable to list instances (%v)", err)
+
+	cfg := model.GetConfig()
+
+	var instanceIds []string
+	for k := range cfg.Instances {
+		instanceIds = append(instanceIds, k)
 	}
+
+	sort.Strings(instanceIds)
 
 	fmt.Println()
 	fmt.Printf("[%d] instances:\n\n", len(instanceIds))
@@ -60,7 +53,8 @@ func listInstances(_ *cobra.Command, _ []string) {
 		if instanceId == activeInstanceId {
 			idLabel += "*"
 		}
-		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
+		instanceConfig := cfg.Instances[instanceId]
+		if l, err := instanceConfig.LoadLabel(); err == nil {
 			fmt.Printf("%-12s %-24s [%s]\n", idLabel, l.Model, l.State)
 		} else {
 			fmt.Printf("%-12s %s\n", idLabel, err)
@@ -71,18 +65,78 @@ func listInstances(_ *cobra.Command, _ []string) {
 	}
 }
 
-var listModelsCmd = &cobra.Command{
-	Use:   "models",
-	Short: "list available models",
-	Args:  cobra.ExactArgs(0),
-	Run:   listModels,
+var listHostsCmd = &cobra.Command{
+	Use:   "hosts <spec?>",
+	Short: "list hosts",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   listHosts,
 }
 
-func listModels(_ *cobra.Command, _ []string) {
-	models := model.ListModels()
-	fmt.Printf("\nfound [%d] models:\n\n", len(models))
-	for _, modelName := range models {
-		fmt.Printf("\t" + modelName + "\n")
+var listComponentsCmd = &cobra.Command{
+	Use:     "components <spec?>",
+	Aliases: []string{"comp"},
+	Short:   "list components",
+	Args:    cobra.MaximumNArgs(1),
+	Run:     listComponents,
+}
+
+func listHosts(cmd *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
-	fmt.Println()
+
+	m := model.GetModel()
+
+	hostSpec := "*"
+
+	if len(args) > 0 {
+		hostSpec = args[0]
+	}
+
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{"#", "ID", "Public IP", "Private IP", "Components", "Region", "Tags"})
+
+	count := 0
+	for _, host := range m.SelectHosts(hostSpec) {
+		var components []string
+		for component := range host.Components {
+			components = append(components, component)
+		}
+		t.AppendRow(table.Row{count + 1, host.GetId(), host.PublicIp, host.PrivateIp,
+			strings.Join(components, ","), host.GetRegion().Region,
+			strings.Join(host.Tags, ",")})
+		count++
+	}
+
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
+		panic(err)
+	}
+}
+
+func listComponents(cmd *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	m := model.GetModel()
+	componentSpec := "*"
+
+	if len(args) > 0 {
+		componentSpec = args[0]
+	}
+
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{"#", "ID", "Host", "Region", "Tags"})
+
+	count := 0
+	for _, c := range m.SelectComponents(componentSpec) {
+		t.AppendRow(table.Row{count + 1, c.GetId(), c.GetHost().GetId(), c.GetRegion().GetId(), strings.Join(c.Tags, ",")})
+		count++
+	}
+
+	if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
+		panic(err)
+	}
 }

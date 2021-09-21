@@ -38,24 +38,8 @@ func express(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-
-		ctx := model.NewRun(l, m)
-
-		if err := m.Express(ctx); err != nil {
-			logrus.Fatalf("error expressing infrastructure (%v)", err)
-		}
-
-	} else {
-		logrus.Fatalf("no label for run")
+	ctx := model.NewRun()
+	if err := ctx.GetModel().Express(ctx); err != nil {
+		logrus.Fatalf("error expressing infrastructure (%v)", err)
 	}
 }

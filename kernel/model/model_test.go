@@ -24,6 +24,7 @@ import (
 
 func TestGetVariable(t *testing.T) {
 	m := &Model{
+		Id: "test",
 		Scope: Scope{
 			Defaults: Variables{
 				"a": Variables{
@@ -35,7 +36,7 @@ func TestGetVariable(t *testing.T) {
 		},
 	}
 
-	m.init("test")
+	m.init()
 
 	value, found := m.GetVariable("a.b.c")
 	assert.True(t, found)

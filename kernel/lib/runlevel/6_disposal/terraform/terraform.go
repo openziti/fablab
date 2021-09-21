@@ -41,5 +41,5 @@ type terraform struct {
 }
 
 func terraformRun() string {
-	return filepath.Join(model.ActiveInstancePath(), "tf")
+	return filepath.Join(model.BuildPath(), "tf")
 }

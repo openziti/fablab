@@ -41,26 +41,12 @@ func dump(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
-
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-
-		if data, err := json.MarshalIndent(m.Dump(), "", "  "); err == nil {
-			fmt.Println()
-			fmt.Println(string(data))
-		} else {
-			logrus.Fatalf("error marshaling model dump (%v)", err)
-		}
-
+	m := model.GetModel()
+	if data, err := json.MarshalIndent(m.Dump(), "", "  "); err == nil {
+		fmt.Println()
+		fmt.Println(string(data))
 	} else {
-		logrus.Fatalf("no label for run")
+		logrus.Fatalf("error marshaling model dump (%v)", err)
 	}
 }
 
@@ -76,31 +62,24 @@ func dumpHosts(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	} else {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
+	m := model.GetModel()
 
-		hostSpec := "*"
+	hostSpec := "*"
 
-		if len(args) > 0 {
-			hostSpec = args[0]
-		}
-
-		hosts := m.SelectHosts(hostSpec)
-		var hostDumps []*model.HostDump
-		for _, host := range hosts {
-			hostDumps = append(hostDumps, model.DumpHost(host))
-		}
-		if data, err := json.MarshalIndent(hostDumps, "", "  "); err == nil {
-			fmt.Println()
-			fmt.Println(string(data))
-		} else {
-			logrus.Fatalf("error marshaling hosts dump (%v)", err)
-		}
+	if len(args) > 0 {
+		hostSpec = args[0]
 	}
+
+	hosts := m.SelectHosts(hostSpec)
+	var hostDumps []*model.HostDump
+	for _, host := range hosts {
+		hostDumps = append(hostDumps, model.DumpHost(host))
+	}
+	if data, err := json.MarshalIndent(hostDumps, "", "  "); err == nil {
+		fmt.Println()
+		fmt.Println(string(data))
+	} else {
+		logrus.Fatalf("error marshaling hosts dump (%v)", err)
+	}
+
 }
