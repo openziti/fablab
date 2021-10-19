@@ -18,74 +18,61 @@ package subcmd
 
 import (
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	createCmd.Flags().StringVarP(&createName, "name", "n", "", "name for the new instance")
-	createCmd.Flags().StringToStringVarP(&createBindings, "label", "l", nil, "label bindings to include in the model")
-	RootCmd.AddCommand(createCmd)
+	createCmd := NewCreateCommand()
+
+	createCmd.Flags().StringVarP(&createCmd.Name, "name", "n", "", "name for the new instance")
+	createCmd.Flags().StringVarP(&createCmd.WorkingDir, "directory", "d", "", "working directory for the new instance")
+	createCmd.Flags().StringToStringVarP(&createCmd.Bindings, "label", "l", nil, "label bindings to include in the model")
+	createCmd.Flags()
+
+	RootCmd.AddCommand(createCmd.Command)
 }
 
-var createCmd = &cobra.Command{
-	Use:   "create <model>",
-	Short: "create a fablab instance from a model",
-	Args:  cobra.ExactArgs(1),
-	Run:   create,
+func NewCreateCommand() *CreateCommand {
+	result := &CreateCommand{
+		Command: &cobra.Command{
+			Use:   "create <model>",
+			Short: "create a fablab instance from a model",
+			Args:  cobra.MaximumNArgs(1),
+		},
+	}
+
+	result.Command.RunE = result.create
+
+	return result
 }
-var createName string
-var createBindings map[string]string
 
-func create(_ *cobra.Command, args []string) {
-	var instanceId string
-	modelName := args[0]
+type CreateCommand struct {
+	*cobra.Command
+	Name       string
+	WorkingDir string
+	Bindings   map[string]string
+}
 
-	if err := model.ValidateModelName(modelName); err != nil {
-		logrus.Fatalf("unable to create instance (%v)", err)
-	}
-	if createName != "" {
-		if err := model.NewNamedInstance(createName); err == nil {
-			instanceId = createName
-		} else {
-			logrus.Fatalf("error creating named instance [%s] (%v)", createName, err)
-		}
-	} else {
-		if id, err := model.NewInstance(); err == nil {
-			instanceId = id
-		} else {
-			logrus.Fatalf("error creating instance (%v)", err)
-		}
-	}
-	logrus.Infof("allocated new instance [%s]", instanceId)
-
-	if err := model.CreateLabel(instanceId, modelName); err != nil {
-		logrus.Fatalf("unable to create instance label [%s] (%v)", instanceId, err)
-	}
-	if createBindings != nil {
-		logrus.Infof("setting label bindings = [%v]", createBindings)
-		if l, err := model.LoadLabelForInstance(instanceId); err == nil {
-			if l.Bindings == nil {
-				l.Bindings = make(model.Bindings)
-			}
-			for k, v := range createBindings {
-				l.Bindings[k] = v
-			}
-			if err := l.Save(); err != nil {
-				logrus.Fatalf("error saving label bindings (%v)", err)
-			}
-		} else {
-			logrus.Fatalf("error loading label (%v)", err)
-		}
+func (self *CreateCommand) create(*cobra.Command, []string) error {
+	if model.GetModel() == nil {
+		return errors.New("no model configured, exiting")
 	}
 
-	_, found := model.GetModel(modelName)
-	if !found {
-		logrus.Fatalf("no model [%s]", modelName)
+	if model.GetModel().GetId() == "" {
+		return errors.New("no model id provided, exiting")
 	}
-	logrus.Infof("using model [%s]", modelName)
 
-	if err := model.SetActiveInstance(instanceId); err != nil {
-		logrus.Fatalf("unable to set active instance (%v)", err)
+	instanceId, err := model.NewInstance(self.Name, self.WorkingDir)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create instance of model %v, exiting", model.GetModel().Id)
 	}
+
+	logrus.Infof("allocated new instance [%v] for model %v", instanceId, model.GetModel().GetId())
+
+	if err := model.CreateLabel(instanceId, self.Bindings); err != nil {
+		return errors.Wrapf(err, "unable to create instance label [%s]", instanceId)
+	}
+	return nil
 }

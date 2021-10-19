@@ -28,36 +28,41 @@ func AddBootstrapExtension(ext BootstrapExtension) {
 
 func Bootstrap() error {
 	var err error
-	var m *Model
+	if model == nil {
+		return errors.New("no model initialized, exiting")
+	}
+	if model.Id == "" {
+		return errors.New("model id not set, exiting")
+	}
+
+	model.init()
+
+	if err = BootstrapInstance(); err != nil {
+		return errors.Wrap(err, "unable to bootstrap instance config")
+	}
+
 	if err = BootstrapBindings(); err != nil {
 		return errors.Wrap(err, "unable to bootstrap config")
 	}
-	if err = BootstrapInstance(); err != nil {
-		return errors.Wrap(err, "unable to bootstrap active instance")
-	}
-	if instanceId != "" {
-		for _, ext := range bootstrapExtensions {
-			if err := ext.Bootstrap(m); err != nil {
-				return errors.Wrap(err, "unable to bootstrap extension")
-			}
-		}
-		if err = bootstrapPaths(); err != nil {
-			return errors.Wrap(err, "unable to bootstrap paths")
-		}
-		if err = bootstrapLabel(); err != nil {
-			return errors.Wrap(err, "unable to bootstrap label (%w)")
-		}
-		if m, err = bootstrapModel(); err != nil {
-			return errors.Wrap(err, "unable to bootstrap binding (%w)")
-		}
-		for _, ext := range m.BootstrapExtensions {
-			if err := ext.Bootstrap(m); err != nil {
-				return errors.Wrap(err, "unable to bootstrap model-specific extension")
-			}
-		}
+	model.VarConfig.BindingResolver.UpdateVariables(bindings)
 
-	} else {
-		logrus.Warnf("no active instance")
+	for _, ext := range bootstrapExtensions {
+		if err := ext.Bootstrap(model); err != nil {
+			return errors.Wrap(err, "unable to bootstrap extension")
+		}
+	}
+	if err = bootstrapLabel(); err != nil {
+		return errors.Wrap(err, "unable to bootstrap label (%w)")
+	}
+	model.VarConfig.LabelResolver.UpdateVariables(label.Bindings)
+
+	if err = bootstrapModel(); err != nil {
+		return errors.Wrap(err, "unable to bootstrap binding (%w)")
+	}
+	for _, ext := range model.BootstrapExtensions {
+		if err := ext.Bootstrap(model); err != nil {
+			return errors.Wrap(err, "unable to bootstrap model-specific extension")
+		}
 	}
 	return nil
 }
@@ -74,41 +79,31 @@ type BootstrapExtension interface {
 	Bootstrap(m *Model) error
 }
 
-func bootstrapModel() (*Model, error) {
+func bootstrapModel() error {
 	l := GetLabel()
 	if l != nil {
-		m, found := GetModel(l.Model)
-		if !found {
-			return nil, errors.Errorf("no such model [%s]", l.Model)
+		if l.Model != model.GetId() {
+			return errors.Errorf("running model '%v' doesn't match project workspace model '%v'", model.GetId(), l.Model)
 		}
 
-		if m.Parent != nil {
-			if err := m.Merge(m.Parent); err != nil {
-				return nil, errors.Wrap(err, "error merging parent")
+		model.BindLabel(l)
+
+		for _, factory := range model.Factories {
+			if err := factory.Build(model); err != nil {
+				return errors.Wrapf(err, "error executing factory [%s]", reflect.TypeOf(factory))
 			}
 		}
 
-		m.BindLabel(l)
-		if err := m.BindBindings(bindings); err != nil {
-			return nil, errors.Wrap(err, "error bootstrapping model")
-		}
-
-		for _, factory := range m.Factories {
-			if err := factory.Build(m); err != nil {
-				return nil, errors.Wrapf(err, "error executing factory [%s]", reflect.TypeOf(factory))
-			}
-		}
-
-		m.actions = make(map[string]Action)
-		for name, binder := range m.Actions {
-			m.actions[name] = binder(m)
+		model.actions = make(map[string]Action)
+		for name, binder := range model.Actions {
+			model.actions[name] = binder(model)
 			logrus.Debugf("bound action [%s]", name)
 		}
 
-		return m, nil
+		return nil
 
 	} else {
 		logrus.Warn("no run label found")
 	}
-	return nil, nil
+	return nil
 }

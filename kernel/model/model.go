@@ -17,20 +17,71 @@
 package model
 
 import (
+	"embed"
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib/figlet"
+	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
+	"io/fs"
 	"strings"
 )
 
 const (
-	EntityTypeModel     = "model"
-	EntityTypeRegion    = "region"
-	EntityTypeHost      = "host"
-	EntityTypeComponent = "component"
+	EntityTypeModel              = "model"
+	EntityTypeRegion             = "region"
+	EntityTypeHost               = "host"
+	EntityTypeComponent          = "component"
+	EntityTypeParent             = "parent"
+	EntityTypeSelfOrParent       = "selfOrParent"
+	EntityTypeSelfOrParentSymbol = "^"
+	EntityTypeChild              = "child"
+	EntityTypeSelfOrChild        = "selfOrChild"
+	EntityTypeAny                = "*"
 )
+
+func getTraversals(entityType string) (bool, bool, bool) {
+	if EntityTypeParent == entityType {
+		return true, false, false
+	}
+	if EntityTypeSelfOrParent == entityType || EntityTypeSelfOrParentSymbol == entityType {
+		return true, true, false
+	}
+	if EntityTypeChild == entityType {
+		return false, false, true
+	}
+	if EntityTypeSelfOrChild == entityType {
+		return false, true, true
+	}
+	if EntityTypeAny == entityType {
+		return true, true, true
+	}
+	return false, false, false
+}
+
+func matchHierarchical(entityType string, matcher EntityMatcher, entity Entity) bool {
+	checkParent, checkSelf, checkChildren := getTraversals(entityType)
+
+	if checkSelf && matcher(entity) {
+		return true
+	}
+
+	if parent := entity.GetParentEntity(); parent != nil && checkParent {
+		if parent.Matches(EntityTypeSelfOrParent, matcher) {
+			return true
+		}
+	}
+
+	if checkChildren {
+		for _, child := range entity.GetChildren() {
+			if child.Matches(EntityTypeSelfOrChild, matcher) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 type EntityVisitor func(Entity)
 
@@ -43,13 +94,115 @@ type Entity interface {
 	Accept(EntityVisitor)
 	GetChildren() []Entity
 	Matches(entityType string, matcher EntityMatcher) bool
+
+	GetVariable(name string) (interface{}, bool)
+	GetVariableOr(name string, defaultValue interface{}) interface{}
+	MustVariable(name string) interface{}
 }
 
+type VariableNamePrefixMapper func(entityPath []string, name string) string
+type VariableNameMapper func(string) string
+type VariableNameParser func(string) []string
+
+type VarConfig struct {
+	VariableNameParser            VariableNameParser
+	CommandLineVariableNameMapper VariableNameMapper
+	CommandLinePrefixes           []string
+	EnvVariableNameMapper         VariableNameMapper
+	DefaultVariableResolver       VariableResolver
+	DefaultScopedVariableResolver VariableResolver
+	SecretsKeys                   []string
+	VariableNamePrefixMapper      VariableNamePrefixMapper
+	ResolverLogger                func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{})
+	BindingResolver               *MapVariableResolver
+	LabelResolver                 *MapVariableResolver
+}
+
+func (self *VarConfig) SetDefaults() {
+	if self.VariableNameParser == nil {
+		self.VariableNameParser = func(name string) []string {
+			return strings.Split(name, ".")
+		}
+	}
+
+	if self.CommandLineVariableNameMapper == nil {
+		self.CommandLineVariableNameMapper = func(s string) string {
+			return s
+		}
+	}
+
+	if len(self.CommandLinePrefixes) == 0 {
+		self.CommandLinePrefixes = []string{"-V"}
+	}
+
+	if self.EnvVariableNameMapper == nil {
+		self.EnvVariableNameMapper = func(s string) string {
+			return strings.ToUpper(strings.ReplaceAll(s, ".", "_"))
+		}
+	}
+
+	self.BindingResolver = NewMapVariableResolver("bindings", bindings)
+	self.LabelResolver = NewMapVariableResolver("label", nil)
+
+	if self.DefaultVariableResolver == nil {
+		defaultResolverSet := &ChainedVariableResolver{}
+		defaultResolverSet.AppendResolver(CmdLineArgVariableResolver{})
+		defaultResolverSet.AppendResolver(EnvVariableResolver{})
+		defaultResolverSet.AppendResolver(self.LabelResolver)
+		defaultResolverSet.AppendResolver(self.BindingResolver)
+		defaultResolverSet.AppendResolver(HierarchicalVariableResolver{})
+		self.DefaultVariableResolver = defaultResolverSet
+
+		combinedResolvers := &ChainedVariableResolver{}
+		combinedResolvers.AppendResolver(NewScopedVariableResolver(defaultResolverSet))
+		combinedResolvers.AppendResolver(defaultResolverSet)
+
+		self.DefaultScopedVariableResolver = combinedResolvers
+	}
+
+	if len(self.SecretsKeys) == 0 {
+		self.SecretsKeys = []string{
+			"key", "keys",
+			"credential", "credentials",
+			"password", "passwords",
+			"secret", "secrets",
+		}
+	}
+
+	if self.VariableNamePrefixMapper == nil {
+		self.VariableNamePrefixMapper = func(entityPath []string, name string) string {
+			return strings.Join(append(entityPath, name), ".")
+		}
+	}
+
+	if self.ResolverLogger == nil {
+		self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {
+		}
+	}
+}
+
+func (self *VarConfig) EnableDebugLogger() {
+	self.ResolverLogger = func(resolver string, entity Entity, name string, result interface{}, found bool, msgAndArgs ...interface{}) {
+		msg := ""
+		if len(msgAndArgs) > 0 {
+			msg = fmt.Sprintf(", ctx=%v", msgAndArgs[0])
+			if len(msg) > 1 {
+				msg = fmt.Sprintf(msg, msgAndArgs[1:]...)
+			}
+		}
+		fmt.Printf("%v: %v[id=%v] key=%v result=%v, found=%v%v\n", resolver, entity.GetType(), entity.GetId(), name, result, found, msg)
+	}
+}
+
+type Resource fs.FS
+
+type Resources map[string]Resource
+
 type Model struct {
-	name   string
-	Parent *Model
+	Id string
 
 	Scope
+	VarConfig           VarConfig
 	Regions             Regions
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
@@ -61,6 +214,7 @@ type Model struct {
 	Operation           OperatingStages
 	Disposal            DisposalStages
 	MetricsHandlers     []MetricsHandler
+	Resources           Resources
 
 	actions map[string]Action
 
@@ -72,7 +226,7 @@ func (m *Model) GetModel() *Model {
 }
 
 func (m *Model) GetId() string {
-	return m.name
+	return m.Id
 }
 
 func (m *Model) GetType() string {
@@ -84,12 +238,19 @@ func (m *Model) GetScope() *Scope {
 }
 
 func (m *Model) GetParentEntity() Entity {
-	return m.Parent
+	return nil
+}
+
+func (m *Model) GetResource(name string) fs.FS {
+	if resource, found := m.Resources[name]; found {
+		return resource
+	}
+	return embed.FS{}
 }
 
 func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType {
-		return matcher(m) || (m.Parent != nil && m.Parent.Matches(entityType, matcher))
+		return matcher(m)
 	}
 
 	if EntityTypeRegion == entityType || EntityTypeHost == entityType || EntityTypeComponent == entityType {
@@ -100,7 +261,7 @@ func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
 		}
 	}
 
-	return false
+	return matchHierarchical(entityType, matcher, m)
 }
 
 func (m *Model) GetChildren() []Entity {
@@ -115,25 +276,17 @@ func (m *Model) GetChildren() []Entity {
 	return result
 }
 
-func (m *Model) init(name string) {
+func (m *Model) init() {
 	if m.initialized.CompareAndSwap(false, true) {
-		m.name = name
+		m.VarConfig.SetDefaults()
+
 		if m.Data == nil {
 			m.Data = Data{}
 		}
+		m.Scope.initialize(m, false)
 		for id, region := range m.Regions {
 			region.init(id, m)
 		}
-
-		// trim tag prefixes
-		m.Accept(func(e Entity) {
-			var tags Tags
-			for _, tag := range e.GetScope().Tags {
-				tag = strings.TrimPrefix(tag, InheritTagPrefix)
-				tags = append(tags, tag)
-			}
-			e.GetScope().Tags = tags
-		})
 	}
 }
 
@@ -159,7 +312,7 @@ type Region struct {
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
-	region.Scope.setParent(&model.Scope)
+	region.Scope.initialize(region, true)
 	if region.Data == nil {
 		region.Data = Data{}
 	}
@@ -215,7 +368,8 @@ func (region *Region) Matches(entityType string, matcher EntityMatcher) bool {
 			}
 		}
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, region)
 }
 
 func (region *Region) SelectHosts(hostSpec string) map[string]*Host {
@@ -259,7 +413,7 @@ func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
 	host.Region = region
-	host.Scope.setParent(&region.Scope)
+	host.Scope.initialize(host, true)
 	if host.Data == nil {
 		host.Data = Data{}
 	}
@@ -319,9 +473,11 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType {
 		return host.Region.Matches(entityType, matcher)
 	}
+
 	if EntityTypeHost == entityType {
 		return matcher(host)
 	}
+
 	if EntityTypeComponent == entityType {
 		for _, child := range host.GetChildren() {
 			if child.Matches(entityType, matcher) {
@@ -329,7 +485,8 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 			}
 		}
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, host)
 }
 
 type Hosts map[string]*Host
@@ -350,8 +507,8 @@ type Component struct {
 
 func (component *Component) init(id string, host *Host) {
 	component.Id = id
-	component.Scope.setParent(&host.Scope)
 	component.Host = host
+	component.Scope.initialize(component, true)
 	if component.Data == nil {
 		component.Data = Data{}
 	}
@@ -405,10 +562,12 @@ func (component *Component) Matches(entityType string, matcher EntityMatcher) bo
 	if EntityTypeModel == entityType || EntityTypeRegion == entityType || EntityTypeHost == entityType {
 		return component.Host.Matches(entityType, matcher)
 	}
+
 	if EntityTypeComponent == entityType {
 		return matcher(component)
 	}
-	return false
+
+	return matchHierarchical(entityType, matcher, component)
 }
 
 type Components map[string]*Component
@@ -426,10 +585,10 @@ func (f ActionFunc) Execute(m *Model) error {
 	return f(m)
 }
 
-func NewRun(label *Label, model *Model) Run {
+func NewRun() Run {
 	return &runImpl{
-		label: label,
-		model: model,
+		label: GetLabel(),
+		model: GetModel(),
 		runId: fmt.Sprintf("%d", info.NowInMilliseconds()),
 	}
 }
@@ -488,6 +647,12 @@ type OperatingStage interface {
 	Operate(run Run) error
 }
 
+type OperatingStageF func(run Run) error
+
+func (self OperatingStageF) Operate(run Run) error {
+	return self(run)
+}
+
 type DisposalStages []DisposalStage
 
 type DisposalStage interface {
@@ -534,6 +699,10 @@ func (m *Model) AddActivationActions(actions ...string) {
 
 func (m *Model) AddOperatingStage(stage OperatingStage) {
 	m.Operation = append(m.Operation, stage)
+}
+
+func (m *Model) AddOperatingStageF(stage OperatingStageF) {
+	m.AddOperatingStage(stage)
 }
 
 func (m *Model) AddOperatingStages(stages ...OperatingStage) {
@@ -628,4 +797,15 @@ func (m *Model) AcceptHostMetrics(host *Host, event *MetricsEvent) {
 	for _, handler := range m.MetricsHandlers {
 		handler.AcceptHostMetrics(host, event)
 	}
+}
+
+func GetScopedEntityPath(entity Entity) []string {
+	parent := entity.GetParentEntity()
+	if parent != nil {
+		// dont' want to include the model in the path
+		if _, isModel := parent.(*Model); !isModel {
+			return append(GetScopedEntityPath(parent), entity.GetId())
+		}
+	}
+	return []string{entity.GetId()}
 }

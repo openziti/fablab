@@ -59,44 +59,6 @@ func GetLabel() *Label {
 	return label
 }
 
-func (label *Label) Has(name ...string) bool {
-	_, found := label.Get(name...)
-	return found
-}
-
-func (label *Label) Must(name ...string) interface{} {
-	value, found := label.Get(name...)
-	if !found {
-		logrus.Fatalf("label binding [%v] not found", name)
-	}
-	return value
-}
-
-func (label *Label) Get(name ...string) (interface{}, bool) {
-	if len(name) < 1 {
-		return nil, false
-	}
-
-	inputMap := label.Bindings
-	for i := 0; i < (len(name) - 1); i++ {
-		key := name[i]
-		if value, found := inputMap[key]; found {
-			lowerMap, ok := value.(Bindings)
-			if !ok {
-				return nil, false
-			}
-			inputMap = lowerMap
-		} else {
-			return nil, false
-		}
-	}
-
-	if value, found := inputMap[name[len(name)-1]]; found {
-		return value, true
-	}
-	return nil, false
-}
-
 func (label *Label) Save() error {
 	return label.SaveAtPath(label.path)
 }
@@ -113,7 +75,7 @@ func (label *Label) SaveAtPath(path string) error {
 		return fmt.Errorf("unable to create label directory [%s] (%s)", labelDir, err)
 	}
 
-	if err = ioutil.WriteFile(labelPath(path), data, os.ModePerm); err != nil {
+	if err = ioutil.WriteFile(labelPath(path), data, 0600); err != nil {
 		return err
 	}
 
@@ -124,33 +86,26 @@ func (label *Label) GetFilePath(fileName string) string {
 	return filepath.Join(label.path, fileName)
 }
 
-func CreateLabel(instanceId, modelName string) error {
+func CreateLabel(instanceId string, bindings map[string]string) error {
 	if err := assertNoLabel(instanceId); err != nil {
 		return fmt.Errorf("error with instance path [%s] (%s)", instanceId, err)
 	}
-	if _, found := GetModel(modelName); !found {
-		return fmt.Errorf("no such model [%s]", modelName)
-	}
+
 	l := &Label{
-		Model: modelName,
-		State: Created,
+		InstanceId: instanceId,
+		Model:      GetModel().GetId(),
+		State:      Created,
+		Bindings:   map[string]interface{}{},
 	}
+
+	for k, v := range bindings {
+		l.Bindings[k] = v
+	}
+
 	if err := l.SaveAtPath(instancePath(instanceId)); err != nil {
 		return fmt.Errorf("error writing run label [%s] (%s)", instancePath(instanceId), err)
 	}
 	return nil
-}
-
-func ValidateModelName(modelName string) error {
-	if _, found := GetModel(modelName); !found {
-		return fmt.Errorf("no such model [%s]", modelName)
-	}
-	return nil
-}
-
-func LoadLabelForInstance(instanceId string) (*Label, error) {
-	labelPath := instancePath(instanceId)
-	return LoadLabel(labelPath)
 }
 
 func LoadLabel(path string) (*Label, error) {
@@ -158,7 +113,7 @@ func LoadLabel(path string) (*Label, error) {
 	if err != nil {
 		return nil, err
 	}
-	l := &Label{Bindings: make(Bindings)}
+	l := &Label{Bindings: Variables{}}
 	if err = yaml.Unmarshal(data, l); err != nil {
 		return nil, err
 	}
@@ -202,10 +157,11 @@ func labelPath(path string) string {
 }
 
 type Label struct {
-	Model    string        `yaml:"model"`
-	State    InstanceState `yaml:"state"`
-	Bindings Bindings      `yaml:"bindings"`
-	path     string
+	InstanceId string        `yaml:"id"`
+	Model      string        `yaml:"model"`
+	State      InstanceState `yaml:"state"`
+	Bindings   Variables     `yaml:"bindings"`
+	path       string
 }
 
 type InstanceState int
@@ -214,7 +170,6 @@ const (
 	Created InstanceState = iota
 	Expressed
 	Configured
-	Kitted
 	Distributed
 	Activated
 	Operating
@@ -226,7 +181,6 @@ func (instanceState InstanceState) String() string {
 		"Created",
 		"Expressed",
 		"Configured",
-		"Kitted",
 		"Distributed",
 		"Activated",
 		"Operating",

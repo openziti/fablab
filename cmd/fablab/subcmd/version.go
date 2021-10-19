@@ -18,7 +18,7 @@ package subcmd
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/fablib/figlet"
+	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/spf13/cobra"
 )

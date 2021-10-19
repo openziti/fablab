@@ -1,5 +1,0 @@
-default:
-  endpoint:   tls:{{ publicIp "component.ctrl" }}:10000
-  cert:       {{ .RunPath }}/pki/intermediate/certs/dotziti-client.cert
-  key:        {{ .RunPath }}/pki/intermediate/keys/dotziti.key
-  caCert:     {{ .RunPath }}/pki/intermediate/certs/dotziti-server.chain.pem

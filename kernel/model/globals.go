@@ -16,13 +16,22 @@
 
 package model
 
-func GetBindings() Bindings {
-	return bindings
+import "github.com/sirupsen/logrus"
+
+var model *Model
+var label *Label
+var bindings Variables
+var bootstrapExtensions []BootstrapExtension
+var config *FablabConfig
+var instanceConfig *InstanceConfig
+
+func InitModel(m *Model) {
+	if model != nil {
+		logrus.Fatal("model already initialized, can only initialize once")
+	}
+	model = m
 }
 
-var modelRegistry map[string]*Model
-var label *Label
-var bindings Bindings
-var bootstrapExtensions []BootstrapExtension
-var instanceId string
-var fablabRoot string
+func GetModel() *Model {
+	return model
+}

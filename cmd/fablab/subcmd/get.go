@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/fablib"
+	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -45,28 +45,13 @@ func getFiles(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	label := model.GetLabel()
-	if label == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
+	m := model.GetModel()
+	hosts := m.SelectHosts(args[0])
+	if len(hosts) != 1 {
+		logrus.Fatalf("your hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 	}
 
-	if label != nil {
-		m, found := model.GetModel(label.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", label.Model)
-		}
-
-		if !m.IsBound() {
-			logrus.Fatalf("model not bound")
-		}
-
-		hosts := m.SelectHosts(args[0])
-		if len(hosts) != 1 {
-			logrus.Fatalf("your hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
-		}
-
-		if err := fablib.RetrieveRemoteFiles(fablib.NewSshConfigFactoryImpl(m, hosts[0].PublicIp), args[0], args[1:]...); err != nil {
-			logrus.Fatalf("error executing remote shell (%v)", err)
-		}
+	if err := lib.RetrieveRemoteFiles(lib.NewSshConfigFactory(hosts[0]), args[0], args[1:]...); err != nil {
+		logrus.Fatalf("error executing remote shell (%v)", err)
 	}
 }

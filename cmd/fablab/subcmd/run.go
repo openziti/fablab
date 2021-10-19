@@ -38,21 +38,9 @@ func run(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	l := model.GetLabel()
-	if l == nil {
-		logrus.Fatalf("no label for instance [%s]", model.ActiveInstancePath())
-	}
+	ctx := model.NewRun()
 
-	if l != nil {
-		m, found := model.GetModel(l.Model)
-		if !found {
-			logrus.Fatalf("no such model [%s]", l.Model)
-		}
-
-		ctx := model.NewRun(l, m)
-
-		if err := m.Operate(ctx); err != nil {
-			logrus.Fatalf("error operating model (%v)", err)
-		}
+	if err := ctx.GetModel().Operate(ctx); err != nil {
+		logrus.Fatalf("error operating model (%v)", err)
 	}
 }

@@ -17,7 +17,7 @@
 package model
 
 import (
-	"github.com/openziti/fablab/kernel/fablib/timeutil"
+	"github.com/openziti/fablab/kernel/lib/timeutil"
 )
 
 type HostSummary struct {

@@ -18,7 +18,7 @@ package model
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/openziti/foundation/util/stringz"
 )
 
 func (m *Model) Dump() *Dump {
@@ -31,8 +31,8 @@ func (m *Model) Dump() *Dump {
 func dumpScope(s Scope) *ScopeDump {
 	dump := &ScopeDump{}
 	empty := true
-	if s.Variables != nil {
-		variables := dumpVariables(s.Variables)
+	if s.Defaults != nil {
+		variables := dumpVariables(s, s.Defaults, false)
 		dump.Variables = variables
 		empty = false
 	}
@@ -50,40 +50,25 @@ func dumpScope(s Scope) *ScopeDump {
 	return nil
 }
 
-func dumpVariables(vs Variables) map[string]interface{} {
+func dumpVariables(s Scope, vs Variables, secret bool) map[string]interface{} {
+	if _, found := vs["__secret__"]; found {
+		secret = true
+	}
+
 	dump := make(map[string]interface{})
 	for k, v := range vs {
-		kk := fmt.Sprintf("%v", k)
-		if vvs, ok := v.(Variables); ok {
-			dump[kk] = dumpVariables(vvs)
-
-		} else if vv, ok := v.(*Variable); ok {
-			dump[kk] = dumpVariable(vv)
-
-		} else {
-			dump[kk] = reflect.TypeOf(v).String()
+		currentSecret := secret
+		if !secret && stringz.Contains(s.entity.GetModel().VarConfig.SecretsKeys, k) {
+			currentSecret = true
 		}
-	}
-	return dump
-}
-
-func dumpVariable(v *Variable) *VariableDump {
-	dump := &VariableDump{
-		Description:    v.Description,
-		Required:       v.Required,
-		Scoped:         v.Scoped,
-		GlobalFallback: v.GlobalFallback,
-		Sensitive:      v.Sensitive,
-		Bound:          v.bound,
-	}
-	if v.Default != nil {
-		dump.Default = fmt.Sprintf("%v", v.Default)
-	}
-	if v.Binder != nil {
-		dump.Binder = fmt.Sprintf("%p", v.Binder)
-	}
-	if v.Value != nil && !v.Sensitive {
-		dump.Value = fmt.Sprintf("%v", v.Value)
+		kk := fmt.Sprintf("%v", k)
+		if val, ok := v.(Variables); ok {
+			dump[kk] = dumpVariables(s, val, currentSecret)
+		} else if currentSecret {
+			dump[kk] = "**secret**"
+		} else {
+			dump[kk] = fmt.Sprintf("%v", val)
+		}
 	}
 	return dump
 }
@@ -122,6 +107,7 @@ func DumpHost(h *Host) *HostDump {
 		InstanceResourceType: h.InstanceResourceType,
 		SpotPrice:            h.SpotPrice,
 		SpotType:             h.SpotType,
+		Components:           dumpComponents(h.Components),
 	}
 }
 
@@ -194,6 +180,6 @@ type ComponentDump struct {
 	ConfigSrc       string     `json:"config_src,omitempty"`
 	ConfigName      string     `json:"config_name,omitempty"`
 	BinaryName      string     `json:"binary_name,omitempty"`
-	PublicIdentity  string     `json:"public_identity,omitempty`
+	PublicIdentity  string     `json:"public_identity,omitempty"`
 	PrivateIdentity string     `json:"private_identity,omitempty"`
 }

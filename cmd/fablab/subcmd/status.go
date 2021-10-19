@@ -39,11 +39,6 @@ func status(_ *cobra.Command, _ []string) {
 		logrus.Fatal("unable to bootstrap (%w)", err)
 	}
 
-	fmt.Println()
-	if model.ActiveInstanceId() != "" {
-		fmt.Printf("%-20s %s\n", "Active Instance", model.ActiveInstanceId())
-	}
-
 	l := model.GetLabel()
 	if l == nil {
 		fmt.Printf("%-20s no label\n", "Label")

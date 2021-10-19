@@ -19,28 +19,11 @@ package main
 import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/cmd/fablab/subcmd"
-	"github.com/openziti/fablab/kernel/model"
-	"github.com/openziti/fablab/zitilib"
-	_ "github.com/openziti/fablab/zitilib"
-	_ "github.com/openziti/fablab/zitilib/models/characterization"
-	_ "github.com/openziti/fablab/zitilib/models/development/dilithium"
-	_ "github.com/openziti/fablab/zitilib/models/edge"
-	_ "github.com/openziti/fablab/zitilib/models/examples"
-	_ "github.com/openziti/fablab/zitilib/models/transwarp"
-	"github.com/openziti/foundation/transport"
-	"github.com/openziti/foundation/transport/quic"
-	"github.com/openziti/foundation/transport/tcp"
-	"github.com/openziti/foundation/transport/tls"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
-	pfxlog.Global(logrus.InfoLevel)
-	pfxlog.SetPrefix("github.com/openziti/")
-	transport.AddAddressParser(quic.AddressParser{})
-	transport.AddAddressParser(tls.AddressParser{})
-	transport.AddAddressParser(tcp.AddressParser{})
-	model.AddBootstrapExtension(&zitilib.Bootstrap{})
+	pfxlog.GlobalInit(logrus.InfoLevel, pfxlog.DefaultOptions().SetTrimPrefix("github.com/openziti/"))
 }
 
 func main() {
