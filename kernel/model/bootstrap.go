@@ -86,6 +86,12 @@ func bootstrapModel() error {
 			return errors.Errorf("running model '%v' doesn't match project workspace model '%v'", model.GetId(), l.Model)
 		}
 
+		for _, factory := range model.StructureFactories {
+			if err := factory.Build(model); err != nil {
+				return errors.Wrapf(err, "error executing factory [%s]", reflect.TypeOf(factory))
+			}
+		}
+
 		model.BindLabel(l)
 
 		for _, factory := range model.Factories {

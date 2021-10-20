@@ -204,6 +204,7 @@ type Model struct {
 	Scope
 	VarConfig           VarConfig
 	Regions             Regions
+	StructureFactories  []Factory // Factories that change the model structure, eg: add/remove hosts
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
@@ -309,6 +310,21 @@ type Region struct {
 	Index  int
 }
 
+func (region *Region) CloneRegion(index int) *Region {
+	result := &Region{
+		Scope:  *region.CloneScope(),
+		Model:  region.Model,
+		Region: region.Region,
+		Site:   region.Site,
+		Hosts:  Hosts{},
+		Index:  index,
+	}
+	for key, host := range region.Hosts {
+		result.Hosts[key] = host.CloneHost(0)
+	}
+	return result
+}
+
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
@@ -409,6 +425,28 @@ type Host struct {
 	Index                int
 }
 
+func (host *Host) CloneHost(index int) *Host {
+	result := &Host{
+		Scope:                *host.CloneScope(),
+		Id:                   host.Id,
+		Region:               host.Region,
+		PublicIp:             host.PublicIp,
+		PrivateIp:            host.PrivateIp,
+		InstanceType:         host.InstanceType,
+		InstanceResourceType: host.InstanceResourceType,
+		SpotPrice:            host.SpotPrice,
+		SpotType:             host.SpotType,
+		Components:           Components{},
+		Index:                index,
+	}
+
+	for key, component := range host.Components {
+		result.Components[key] = component.CloneComponent(0)
+	}
+
+	return result
+}
+
 func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
@@ -503,6 +541,23 @@ type Component struct {
 	PublicIdentity  string
 	PrivateIdentity string
 	Index           int
+}
+
+func (component *Component) CloneComponent(index int) *Component {
+	result := &Component{
+		Scope:           *component.CloneScope(),
+		Id:              component.Id,
+		Host:            component.Host,
+		ScriptSrc:       component.ScriptSrc,
+		ScriptName:      component.ScriptName,
+		ConfigSrc:       component.ConfigSrc,
+		ConfigName:      component.ConfigName,
+		BinaryName:      component.BinaryName,
+		PublicIdentity:  component.PublicIdentity,
+		PrivateIdentity: component.PrivateIdentity,
+		Index:           index,
+	}
+	return result
 }
 
 func (component *Component) init(id string, host *Host) {
