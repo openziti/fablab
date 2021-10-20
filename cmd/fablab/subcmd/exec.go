@@ -30,9 +30,9 @@ func init() {
 }
 
 var execCmd = &cobra.Command{
-	Use:   "exec <action>",
-	Short: "execute an action",
-	Args:  cobra.ExactArgs(1),
+	Use:   "exec <action> [<actions>...]",
+	Short: "execute one or more actions",
+	Args:  cobra.MinimumNArgs(1),
 	Run:   exec,
 }
 var execCmdBindings []string
@@ -54,14 +54,20 @@ func exec(_ *cobra.Command, args []string) {
 		}
 	}
 
-	action := args[0]
-	p, found := m.GetAction(action)
-	if !found {
-		logrus.Fatalf("no such action [%s]", action)
+	var actions []model.Action
+
+	for _, name := range args {
+		action, found := m.GetAction(name)
+		if !found {
+			logrus.Fatalf("no such action [%s]", name)
+		}
+		actions = append(actions, action)
 	}
 
-	if err := p.Execute(m); err != nil {
-		logrus.Fatalf("action failed [%s] (%s)", action, err)
+	for _, action := range actions {
+		if err := action.Execute(m); err != nil {
+			logrus.WithError(err).Fatalf("action failed [%s]", action)
+		}
 	}
 }
 
