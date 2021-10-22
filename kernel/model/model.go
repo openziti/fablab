@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/fs"
 	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -220,6 +221,10 @@ type Model struct {
 	actions map[string]Action
 
 	initialized concurrenz.AtomicBoolean
+
+	regionIdx    uint32
+	hostIdx      uint32
+	componentIdx uint32
 }
 
 func (m *Model) GetModel() *Model {
@@ -247,6 +252,18 @@ func (m *Model) GetResource(name string) fs.FS {
 		return resource
 	}
 	return embed.FS{}
+}
+
+func (m *Model) GetNextRegionIndex() uint32 {
+	return atomic.AddUint32(&m.regionIdx, 1) - 1
+}
+
+func (m *Model) GetNextHostIndex() uint32 {
+	return atomic.AddUint32(&m.hostIdx, 1) - 1
+}
+
+func (m *Model) GetNextComponentIndex() uint32 {
+	return atomic.AddUint32(&m.componentIdx, 1) - 1
 }
 
 func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
@@ -302,22 +319,24 @@ type Regions map[string]*Region
 
 type Region struct {
 	Scope
-	Model  *Model
-	Id     string
-	Region string
-	Site   string
-	Hosts  Hosts
-	Index  int
+	Model      *Model
+	Id         string
+	Region     string
+	Site       string
+	Hosts      Hosts
+	Index      uint32
+	ScaleIndex uint32
 }
 
-func (region *Region) CloneRegion(index int) *Region {
+func (region *Region) CloneRegion(scaleIndex uint32) *Region {
 	result := &Region{
-		Scope:  *region.CloneScope(),
-		Model:  region.Model,
-		Region: region.Region,
-		Site:   region.Site,
-		Hosts:  Hosts{},
-		Index:  index,
+		Scope:      *region.CloneScope(),
+		Model:      region.Model,
+		Region:     region.Region,
+		Site:       region.Site,
+		Hosts:      Hosts{},
+		Index:      region.Model.GetNextRegionIndex(),
+		ScaleIndex: scaleIndex,
 	}
 	for key, host := range region.Hosts {
 		result.Hosts[key] = host.CloneHost(0)
@@ -328,10 +347,12 @@ func (region *Region) CloneRegion(index int) *Region {
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
+	region.Index = model.GetNextRegionIndex()
 	region.Scope.initialize(region, true)
 	if region.Data == nil {
 		region.Data = Data{}
 	}
+
 	for hostId, host := range region.Hosts {
 		host.init(hostId, region)
 	}
@@ -422,10 +443,11 @@ type Host struct {
 	SpotPrice            string
 	SpotType             string
 	Components           Components
-	Index                int
+	Index                uint32
+	ScaleIndex           uint32
 }
 
-func (host *Host) CloneHost(index int) *Host {
+func (host *Host) CloneHost(scaleIndex uint32) *Host {
 	result := &Host{
 		Scope:                *host.CloneScope(),
 		Id:                   host.Id,
@@ -437,7 +459,8 @@ func (host *Host) CloneHost(index int) *Host {
 		SpotPrice:            host.SpotPrice,
 		SpotType:             host.SpotType,
 		Components:           Components{},
-		Index:                index,
+		Index:                host.Region.Model.GetNextHostIndex(),
+		ScaleIndex:           scaleIndex,
 	}
 
 	for key, component := range host.Components {
@@ -451,6 +474,7 @@ func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
 	host.Region = region
+	host.Index = region.Model.GetNextHostIndex()
 	host.Scope.initialize(host, true)
 	if host.Data == nil {
 		host.Data = Data{}
@@ -540,10 +564,11 @@ type Component struct {
 	BinaryName      string
 	PublicIdentity  string
 	PrivateIdentity string
-	Index           int
+	Index           uint32
+	ScaleIndex      uint32
 }
 
-func (component *Component) CloneComponent(index int) *Component {
+func (component *Component) CloneComponent(scaleIndex uint32) *Component {
 	result := &Component{
 		Scope:           *component.CloneScope(),
 		Id:              component.Id,
@@ -555,7 +580,8 @@ func (component *Component) CloneComponent(index int) *Component {
 		BinaryName:      component.BinaryName,
 		PublicIdentity:  component.PublicIdentity,
 		PrivateIdentity: component.PrivateIdentity,
-		Index:           index,
+		Index:           component.GetModel().GetNextComponentIndex(),
+		ScaleIndex:      scaleIndex,
 	}
 	return result
 }
@@ -563,6 +589,7 @@ func (component *Component) CloneComponent(index int) *Component {
 func (component *Component) init(id string, host *Host) {
 	component.Id = id
 	component.Host = host
+	component.Index = host.GetModel().GetNextComponentIndex()
 	component.Scope.initialize(component, true)
 	if component.Data == nil {
 		component.Data = Data{}

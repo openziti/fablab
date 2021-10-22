@@ -6,17 +6,32 @@ import (
 
 type ScaleStrategy interface {
 	IsScaled(entity Entity) bool
-	GetEntityCount(entity Entity) int
+	GetEntityCount(entity Entity) uint32
 }
 
-func NewScaleFactory(strategy ScaleStrategy) *ScaleFactory {
+type ScaleEntityFactory interface {
+	CreateScaledRegion(source *Region, scaleIndex uint32) (*Region, error)
+	CreateScaledHost(source *Host, scaleEndex uint32) (*Host, error)
+	CreateScaledComponent(source *Component, scaleIndex uint32) (*Component, error)
+}
+
+func NewScaleFactory(strategy ScaleStrategy, factory ScaleEntityFactory) *ScaleFactory {
 	return &ScaleFactory{
-		Strategy: strategy,
+		Strategy:      strategy,
+		EntityFactory: factory,
+	}
+}
+
+func NewScaleFactoryWithDefaultEntityFactory(strategy ScaleStrategy) *ScaleFactory {
+	return &ScaleFactory{
+		Strategy:      strategy,
+		EntityFactory: DefaultScaleEntityFactory{},
 	}
 }
 
 type ScaleFactory struct {
-	Strategy ScaleStrategy
+	Strategy      ScaleStrategy
+	EntityFactory ScaleEntityFactory
 }
 
 func (factory *ScaleFactory) Build(m *Model) error {
@@ -43,23 +58,17 @@ func (factory *ScaleFactory) ProcessRegions(m *Model) error {
 
 	for _, region := range scaledRegions {
 		scaleFactor := factory.Strategy.GetEntityCount(region)
-		for idx := 0; idx < scaleFactor; idx++ {
-			cloned := region.CloneRegion(idx)
-
-			templater := &Templater{data: cloned}
-			newKey := templater.TemplatizeString(region.Id)
-			cloned.init(newKey, m)
-			templater.TemplatizeRegion(cloned)
-
-			if _, found := m.Regions[newKey]; found {
-				return errors.Errorf("region with id %v already exists. Either set scale to 1 instead of %v or templatize id", newKey, scaleFactor)
+		for idx := uint32(0); idx < scaleFactor; idx++ {
+			cloned, err := factory.EntityFactory.CreateScaledRegion(region, idx)
+			if err != nil {
+				return err
 			}
 
-			m.Regions[newKey] = cloned
-
-			if templater.HasError() {
-				return templater.GetError()
+			if _, found := m.Regions[cloned.Id]; found {
+				return errors.Errorf("region with id %v already exists. Either set scale to 1 instead of %v or change the id", cloned.Id, scaleFactor)
 			}
+
+			m.Regions[cloned.Id] = cloned
 		}
 	}
 
@@ -80,23 +89,17 @@ func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 
 	for _, host := range scaledHosts {
 		scaleFactor := factory.Strategy.GetEntityCount(host)
-		for idx := 0; idx < scaleFactor; idx++ {
-			cloned := host.CloneHost(idx)
-
-			templater := &Templater{data: cloned}
-			newKey := templater.TemplatizeString(host.Id)
-			cloned.init(newKey, host.Region)
-			templater.TemplatizeHost(cloned)
-
-			if _, found := host.Region.Hosts[newKey]; found {
-				return errors.Errorf("host with id %v > %v already exists. Either set scale to 1 instead of %v or templatize id",
-					host.Region.Id, newKey, scaleFactor)
+		for idx := uint32(0); idx < scaleFactor; idx++ {
+			cloned, err := factory.EntityFactory.CreateScaledHost(host, idx)
+			if err != nil {
+				return err
 			}
-			host.Region.Hosts[newKey] = cloned
 
-			if templater.HasError() {
-				return templater.GetError()
+			if _, found := host.Region.Hosts[cloned.Id]; found {
+				return errors.Errorf("host with id %v > %v already exists. Either set scale to 1 instead of %v or change the id",
+					host.Region.Id, cloned.Id, scaleFactor)
 			}
+			host.Region.Hosts[cloned.Id] = cloned
 		}
 	}
 
@@ -119,25 +122,66 @@ func (factory *ScaleFactory) ProcessComponents(m *Model) error {
 
 	for _, component := range scaledComponents {
 		scaleFactor := factory.Strategy.GetEntityCount(component)
-		for idx := 0; idx < scaleFactor; idx++ {
-			cloned := component.CloneComponent(idx)
-
-			templater := &Templater{data: cloned}
-			newKey := templater.TemplatizeString(component.Id)
-			cloned.init(newKey, component.Host)
-			templater.TemplatizeComponent(cloned)
-
-			if _, found := component.Host.Components[newKey]; found {
-				return errors.Errorf("component with id %v > %v > %v already exists. Either set scale to 1 instead of %v or templatize id",
-					component.Host.Region.Id, component.Host.Id, newKey, scaleFactor)
+		for idx := uint32(0); idx < scaleFactor; idx++ {
+			cloned, err := factory.EntityFactory.CreateScaledComponent(component, idx)
+			if err != nil {
+				return err
 			}
-			component.Host.Components[newKey] = cloned
 
-			if templater.HasError() {
-				return templater.GetError()
+			if _, found := component.Host.Components[cloned.Id]; found {
+				return errors.Errorf("component with id %v > %v > %v already exists. Either set scale to 1 instead of %v or change the id",
+					component.Host.Region.Id, component.Host.Id, cloned.Id, scaleFactor)
 			}
+			component.Host.Components[cloned.Id] = cloned
 		}
 	}
 
 	return nil
+}
+
+type DefaultScaleEntityFactory struct{}
+
+func (self DefaultScaleEntityFactory) CreateScaledRegion(source *Region, scaleIndex uint32) (*Region, error) {
+	cloned := source.CloneRegion(scaleIndex)
+
+	templater := &Templater{data: cloned}
+	newKey := templater.TemplatizeString(source.Id)
+	cloned.init(newKey, source.GetModel())
+	templater.TemplatizeRegion(cloned)
+
+	if templater.HasError() {
+		return nil, templater.GetError()
+	}
+
+	return cloned, nil
+}
+
+func (self DefaultScaleEntityFactory) CreateScaledHost(source *Host, scaleIndex uint32) (*Host, error) {
+	cloned := source.CloneHost(scaleIndex)
+
+	templater := &Templater{data: cloned}
+	newKey := templater.TemplatizeString(source.Id)
+	cloned.init(newKey, source.GetRegion())
+	templater.TemplatizeHost(cloned)
+
+	if templater.HasError() {
+		return nil, templater.GetError()
+	}
+
+	return cloned, nil
+}
+
+func (self DefaultScaleEntityFactory) CreateScaledComponent(source *Component, scaleIndex uint32) (*Component, error) {
+	cloned := source.CloneComponent(scaleIndex)
+
+	templater := &Templater{data: cloned}
+	newKey := templater.TemplatizeString(source.Id)
+	cloned.init(newKey, source.GetHost())
+	templater.TemplatizeComponent(cloned)
+
+	if templater.HasError() {
+		return nil, templater.GetError()
+	}
+
+	return cloned, nil
 }
