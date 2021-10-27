@@ -49,12 +49,12 @@ func (factory *ScaleFactory) Build(m *Model) error {
 func (factory *ScaleFactory) ProcessRegions(m *Model) error {
 	var scaledRegions []*Region
 
-	for key, region := range m.Regions {
+	m.RangeSortedRegions(func(id string, region *Region) {
 		if factory.Strategy.IsScaled(region) {
-			delete(m.Regions, key)
+			m.RemoveRegion(region)
 			scaledRegions = append(scaledRegions, region)
 		}
-	}
+	})
 
 	for _, region := range scaledRegions {
 		scaleFactor := factory.Strategy.GetEntityCount(region)
@@ -78,14 +78,14 @@ func (factory *ScaleFactory) ProcessRegions(m *Model) error {
 func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 	var scaledHosts []*Host
 
-	for _, region := range m.Regions {
-		for key, host := range region.Hosts {
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.RangeSortedHosts(func(id string, host *Host) {
 			if factory.Strategy.IsScaled(host) {
-				delete(region.Hosts, key)
+				region.RemoveHost(host)
 				scaledHosts = append(scaledHosts, host)
 			}
-		}
-	}
+		})
+	})
 
 	for _, host := range scaledHosts {
 		scaleFactor := factory.Strategy.GetEntityCount(host)
@@ -109,16 +109,16 @@ func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 func (factory *ScaleFactory) ProcessComponents(m *Model) error {
 	var scaledComponents []*Component
 
-	for _, region := range m.Regions {
-		for _, host := range region.Hosts {
-			for key, component := range host.Components {
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.RangeSortedHosts(func(id string, host *Host) {
+			host.RangeSortedComponents(func(id string, component *Component) {
 				if factory.Strategy.IsScaled(component) {
-					delete(host.Components, key)
+					host.RemoveComponent(component)
 					scaledComponents = append(scaledComponents, component)
 				}
-			}
-		}
-	}
+			})
+		})
+	})
 
 	for _, component := range scaledComponents {
 		scaleFactor := factory.Strategy.GetEntityCount(component)

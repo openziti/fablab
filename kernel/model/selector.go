@@ -40,11 +40,11 @@ func (m *Model) GetAction(name string) (Action, bool) {
 func (m *Model) SelectRegions(spec string) []*Region {
 	matcher := compileSelector(spec)
 	var regions []*Region
-	for _, region := range m.Regions {
+	m.RangeSortedRegions(func(id string, region *Region) {
 		if matcher(region) {
 			regions = append(regions, region)
 		}
-	}
+	})
 	return regions
 }
 
@@ -68,13 +68,13 @@ func (m *Model) MustSelectRegion(spec string) *Region {
 func (m *Model) SelectHosts(spec string) []*Host {
 	matcher := compileSelector(spec)
 	var hosts []*Host
-	for _, region := range m.Regions {
-		for _, host := range region.Hosts {
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.RangeSortedHosts(func(id string, host *Host) {
 			if matcher(host) {
 				hosts = append(hosts, host)
 			}
-		}
-	}
+		})
+	})
 	return hosts
 }
 
@@ -106,15 +106,15 @@ func (m *Model) MustSelectHost(spec string) *Host {
 func (m *Model) SelectComponents(spec string) []*Component {
 	matcher := compileSelector(spec)
 	var components []*Component
-	for _, region := range m.Regions {
-		for _, host := range region.Hosts {
-			for _, component := range host.Components {
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.RangeSortedHosts(func(id string, host *Host) {
+			host.RangeSortedComponents(func(id string, component *Component) {
 				if matcher(component) {
 					components = append(components, component)
 				}
-			}
-		}
-	}
+			})
+		})
+	})
 	return components
 }
 

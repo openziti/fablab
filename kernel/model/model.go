@@ -24,8 +24,8 @@ import (
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/fs"
+	"sort"
 	"strings"
-	"sync/atomic"
 )
 
 const (
@@ -222,9 +222,9 @@ type Model struct {
 
 	initialized concurrenz.AtomicBoolean
 
-	regionIdx    uint32
-	hostIdx      uint32
-	componentIdx uint32
+	regionIds    IdPool
+	hostIds      IdPool
+	componentIds IdPool
 }
 
 func (m *Model) GetModel() *Model {
@@ -255,15 +255,15 @@ func (m *Model) GetResource(name string) fs.FS {
 }
 
 func (m *Model) GetNextRegionIndex() uint32 {
-	return atomic.AddUint32(&m.regionIdx, 1) - 1
+	return m.regionIds.GetNextId()
 }
 
 func (m *Model) GetNextHostIndex() uint32 {
-	return atomic.AddUint32(&m.hostIdx, 1) - 1
+	return m.hostIds.GetNextId()
 }
 
 func (m *Model) GetNextComponentIndex() uint32 {
-	return atomic.AddUint32(&m.componentIdx, 1) - 1
+	return m.componentIds.GetNextId()
 }
 
 func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
@@ -302,9 +302,9 @@ func (m *Model) init() {
 			m.Data = Data{}
 		}
 		m.Scope.initialize(m, false)
-		for id, region := range m.Regions {
+		m.RangeSortedRegions(func(id string, region *Region) {
 			region.init(id, m)
-		}
+		})
 	}
 }
 
@@ -312,6 +312,22 @@ func (m *Model) Accept(visitor EntityVisitor) {
 	visitor(m)
 	for _, region := range m.Regions {
 		region.Accept(visitor)
+	}
+}
+
+func (m *Model) RemoveRegion(region *Region) {
+	delete(m.Regions, region.Id)
+	m.regionIds.ReturnId(region.Index)
+}
+
+func (m *Model) RangeSortedRegions(f func(id string, region *Region)) {
+	var keys []string
+	for k := range m.Regions {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, m.Regions[k])
 	}
 }
 
@@ -353,9 +369,9 @@ func (region *Region) init(id string, model *Model) {
 		region.Data = Data{}
 	}
 
-	for hostId, host := range region.Hosts {
-		host.init(hostId, region)
-	}
+	region.RangeSortedHosts(func(id string, host *Host) {
+		host.init(id, region)
+	})
 }
 
 func (region *Region) GetId() string {
@@ -432,6 +448,22 @@ func (region *Region) Accept(visitor EntityVisitor) {
 	}
 }
 
+func (region *Region) RemoveHost(host *Host) {
+	delete(region.Hosts, host.Id)
+	region.Model.hostIds.ReturnId(host.Index)
+}
+
+func (region *Region) RangeSortedHosts(f func(id string, host *Host)) {
+	var keys []string
+	for k := range region.Hosts {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, region.Hosts[k])
+	}
+}
+
 type Host struct {
 	Scope
 	Id                   string
@@ -474,14 +506,17 @@ func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
 	host.Region = region
-	host.Index = region.Model.GetNextHostIndex()
+	if host.Index == 0 {
+		host.Index = region.Model.GetNextHostIndex()
+	}
 	host.Scope.initialize(host, true)
 	if host.Data == nil {
 		host.Data = Data{}
 	}
-	for componentId, component := range host.Components {
-		component.init(componentId, host)
-	}
+
+	host.RangeSortedComponents(func(id string, component *Component) {
+		component.init(id, host)
+	})
 }
 
 func (host *Host) GetId() string {
@@ -549,6 +584,22 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 	}
 
 	return matchHierarchical(entityType, matcher, host)
+}
+
+func (host *Host) RemoveComponent(component *Component) {
+	delete(host.Components, component.Id)
+	host.GetModel().componentIds.ReturnId(component.Index)
+}
+
+func (host *Host) RangeSortedComponents(f func(id string, component *Component)) {
+	var keys []string
+	for k := range host.Components {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, host.Components[k])
+	}
 }
 
 type Hosts map[string]*Host
