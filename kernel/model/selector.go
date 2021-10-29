@@ -20,6 +20,7 @@ import (
 	"github.com/openziti/fablab/kernel/lib/parallel"
 	"github.com/openziti/foundation/util/stringz"
 	"github.com/pkg/errors"
+	"sort"
 	"strings"
 )
 
@@ -35,6 +36,15 @@ func (m *Model) IsBound() bool {
 func (m *Model) GetAction(name string) (Action, bool) {
 	action, found := m.actions[name]
 	return action, found
+}
+
+func (m *Model) GetActions() []string {
+	var result []string
+	for name := range m.actions {
+		result = append(result, name)
+	}
+	sort.Strings(result)
+	return result
 }
 
 func (m *Model) SelectRegions(spec string) []*Region {

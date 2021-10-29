@@ -46,11 +46,7 @@ func up(_ *cobra.Command, _ []string) {
 	if err := ctx.GetModel().Express(ctx); err != nil {
 		logrus.Fatalf("error expressing (%v)", err)
 	}
-
-	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("error re-bootstrapping (%v)", err)
-	}
-
+	
 	figlet.Figlet("configuration")
 
 	if err := ctx.GetModel().Build(ctx); err != nil {
