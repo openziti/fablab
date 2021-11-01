@@ -24,6 +24,7 @@ import (
 	"github.com/openziti/foundation/util/info"
 	"github.com/sirupsen/logrus"
 	"io/fs"
+	"sort"
 	"strings"
 )
 
@@ -204,6 +205,7 @@ type Model struct {
 	Scope
 	VarConfig           VarConfig
 	Regions             Regions
+	StructureFactories  []Factory // Factories that change the model structure, eg: add/remove hosts
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
@@ -219,6 +221,10 @@ type Model struct {
 	actions map[string]Action
 
 	initialized concurrenz.AtomicBoolean
+
+	regionIds    IdPool
+	hostIds      IdPool
+	componentIds IdPool
 }
 
 func (m *Model) GetModel() *Model {
@@ -246,6 +252,18 @@ func (m *Model) GetResource(name string) fs.FS {
 		return resource
 	}
 	return embed.FS{}
+}
+
+func (m *Model) GetNextRegionIndex() uint32 {
+	return m.regionIds.GetNextId()
+}
+
+func (m *Model) GetNextHostIndex() uint32 {
+	return m.hostIds.GetNextId()
+}
+
+func (m *Model) GetNextComponentIndex() uint32 {
+	return m.componentIds.GetNextId()
 }
 
 func (m *Model) Matches(entityType string, matcher EntityMatcher) bool {
@@ -284,9 +302,9 @@ func (m *Model) init() {
 			m.Data = Data{}
 		}
 		m.Scope.initialize(m, false)
-		for id, region := range m.Regions {
+		m.RangeSortedRegions(func(id string, region *Region) {
 			region.init(id, m)
-		}
+		})
 	}
 }
 
@@ -297,28 +315,63 @@ func (m *Model) Accept(visitor EntityVisitor) {
 	}
 }
 
+func (m *Model) RemoveRegion(region *Region) {
+	delete(m.Regions, region.Id)
+	m.regionIds.ReturnId(region.Index)
+}
+
+func (m *Model) RangeSortedRegions(f func(id string, region *Region)) {
+	var keys []string
+	for k := range m.Regions {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, m.Regions[k])
+	}
+}
+
 type Regions map[string]*Region
 
 type Region struct {
 	Scope
-	Model  *Model
-	Id     string
-	Region string
-	Site   string
-	Hosts  Hosts
-	Index  int
+	Model      *Model
+	Id         string
+	Region     string
+	Site       string
+	Hosts      Hosts
+	Index      uint32
+	ScaleIndex uint32
+}
+
+func (region *Region) CloneRegion(scaleIndex uint32) *Region {
+	result := &Region{
+		Scope:      *region.CloneScope(),
+		Model:      region.Model,
+		Region:     region.Region,
+		Site:       region.Site,
+		Hosts:      Hosts{},
+		Index:      region.Model.GetNextRegionIndex(),
+		ScaleIndex: scaleIndex,
+	}
+	for key, host := range region.Hosts {
+		result.Hosts[key] = host.CloneHost(0)
+	}
+	return result
 }
 
 func (region *Region) init(id string, model *Model) {
 	region.Id = id
 	region.Model = model
+	region.Index = model.GetNextRegionIndex()
 	region.Scope.initialize(region, true)
 	if region.Data == nil {
 		region.Data = Data{}
 	}
-	for hostId, host := range region.Hosts {
-		host.init(hostId, region)
-	}
+
+	region.RangeSortedHosts(func(id string, host *Host) {
+		host.init(id, region)
+	})
 }
 
 func (region *Region) GetId() string {
@@ -395,6 +448,22 @@ func (region *Region) Accept(visitor EntityVisitor) {
 	}
 }
 
+func (region *Region) RemoveHost(host *Host) {
+	delete(region.Hosts, host.Id)
+	region.Model.hostIds.ReturnId(host.Index)
+}
+
+func (region *Region) RangeSortedHosts(f func(id string, host *Host)) {
+	var keys []string
+	for k := range region.Hosts {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, region.Hosts[k])
+	}
+}
+
 type Host struct {
 	Scope
 	Id                   string
@@ -406,20 +475,48 @@ type Host struct {
 	SpotPrice            string
 	SpotType             string
 	Components           Components
-	Index                int
+	Index                uint32
+	ScaleIndex           uint32
+}
+
+func (host *Host) CloneHost(scaleIndex uint32) *Host {
+	result := &Host{
+		Scope:                *host.CloneScope(),
+		Id:                   host.Id,
+		Region:               host.Region,
+		PublicIp:             host.PublicIp,
+		PrivateIp:            host.PrivateIp,
+		InstanceType:         host.InstanceType,
+		InstanceResourceType: host.InstanceResourceType,
+		SpotPrice:            host.SpotPrice,
+		SpotType:             host.SpotType,
+		Components:           Components{},
+		Index:                host.Region.Model.GetNextHostIndex(),
+		ScaleIndex:           scaleIndex,
+	}
+
+	for key, component := range host.Components {
+		result.Components[key] = component.CloneComponent(0)
+	}
+
+	return result
 }
 
 func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
 	host.Id = id
 	host.Region = region
+	if host.Index == 0 {
+		host.Index = region.Model.GetNextHostIndex()
+	}
 	host.Scope.initialize(host, true)
 	if host.Data == nil {
 		host.Data = Data{}
 	}
-	for componentId, component := range host.Components {
-		component.init(componentId, host)
-	}
+
+	host.RangeSortedComponents(func(id string, component *Component) {
+		component.init(id, host)
+	})
 }
 
 func (host *Host) GetId() string {
@@ -489,6 +586,22 @@ func (host *Host) Matches(entityType string, matcher EntityMatcher) bool {
 	return matchHierarchical(entityType, matcher, host)
 }
 
+func (host *Host) RemoveComponent(component *Component) {
+	delete(host.Components, component.Id)
+	host.GetModel().componentIds.ReturnId(component.Index)
+}
+
+func (host *Host) RangeSortedComponents(f func(id string, component *Component)) {
+	var keys []string
+	for k := range host.Components {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		f(k, host.Components[k])
+	}
+}
+
 type Hosts map[string]*Host
 
 type Component struct {
@@ -502,12 +615,32 @@ type Component struct {
 	BinaryName      string
 	PublicIdentity  string
 	PrivateIdentity string
-	Index           int
+	Index           uint32
+	ScaleIndex      uint32
+}
+
+func (component *Component) CloneComponent(scaleIndex uint32) *Component {
+	result := &Component{
+		Scope:           *component.CloneScope(),
+		Id:              component.Id,
+		Host:            component.Host,
+		ScriptSrc:       component.ScriptSrc,
+		ScriptName:      component.ScriptName,
+		ConfigSrc:       component.ConfigSrc,
+		ConfigName:      component.ConfigName,
+		BinaryName:      component.BinaryName,
+		PublicIdentity:  component.PublicIdentity,
+		PrivateIdentity: component.PrivateIdentity,
+		Index:           component.GetModel().GetNextComponentIndex(),
+		ScaleIndex:      scaleIndex,
+	}
+	return result
 }
 
 func (component *Component) init(id string, host *Host) {
 	component.Id = id
 	component.Host = host
+	component.Index = host.GetModel().GetNextComponentIndex()
 	component.Scope.initialize(component, true)
 	if component.Data == nil {
 		component.Data = Data{}

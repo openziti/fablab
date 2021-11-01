@@ -53,6 +53,25 @@ func (scope *Scope) initialize(entity Entity, scoped bool) {
 	}
 }
 
+func (scope *Scope) CloneScope() *Scope {
+	result := &Scope{
+		bound: scope.bound,
+		Data:  Data{},
+	}
+
+	result.Defaults = scope.Defaults.Clone()
+
+	for k, v := range scope.Data {
+		result.Data[k] = v
+	}
+
+	for _, tag := range scope.Tags {
+		result.Tags = append(result.Tags, tag)
+	}
+
+	return result
+}
+
 func (scope *Scope) HasTag(tag string) bool {
 	for _, hostTag := range scope.Tags {
 		if hostTag == tag {
@@ -228,6 +247,32 @@ func (v Variables) Get(name []string) (interface{}, bool) {
 		}
 	}
 	return value, found
+}
+
+func (v Variables) Clone() Variables {
+	result := Variables{}
+	for key, val := range v {
+		switch tv := val.(type) {
+		case Variables:
+			result[key] = tv.Clone()
+		default:
+			result[key] = val
+		}
+	}
+	return result
+}
+
+func (v Variables) ForEach(f func(k string, v interface{}) (bool, interface{})) {
+	for k, val := range v {
+		switch tv := val.(type) {
+		case Variables:
+			tv.ForEach(f)
+		default:
+			if replaceVal, replacement := f(k, val); replaceVal {
+				v[k] = replacement
+			}
+		}
+	}
 }
 
 func (v Variables) getPath(path ...string) []Variables {
