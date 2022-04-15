@@ -235,6 +235,9 @@ func specToMatcher(spec string) EntityMatcher {
 		} else if idx := strings.Index(spec, SelectorTagPrefix); idx > 0 {
 			entityType = spec[0:idx]
 			spec = spec[idx:]
+		} else {
+			entityId = spec
+			spec = ""
 		}
 	}
 
@@ -271,7 +274,7 @@ func specToMatcher(spec string) EntityMatcher {
 
 	if matcher == nil {
 		return func(e Entity) bool {
-			return true
+			return false
 		}
 	}
 

@@ -617,6 +617,7 @@ type Component struct {
 	PrivateIdentity string
 	Index           uint32
 	ScaleIndex      uint32
+	RunWithSudo     bool
 }
 
 func (component *Component) CloneComponent(scaleIndex uint32) *Component {
@@ -632,6 +633,7 @@ func (component *Component) CloneComponent(scaleIndex uint32) *Component {
 		PublicIdentity:  component.PublicIdentity,
 		PrivateIdentity: component.PrivateIdentity,
 		Index:           component.GetModel().GetNextComponentIndex(),
+		RunWithSudo:     component.RunWithSudo,
 		ScaleIndex:      scaleIndex,
 	}
 	return result
@@ -653,6 +655,10 @@ func (component *Component) GetId() string {
 
 func (component *Component) GetPath() string {
 	return fmt.Sprintf("%v > %v", component.Host.GetPath(), component.Id)
+}
+
+func (component *Component) GetPathId() string {
+	return component.GetRegion().Id + "." + component.Host.Id + "." + component.Id
 }
 
 func (component *Component) GetType() string {
@@ -707,6 +713,12 @@ type Components map[string]*Component
 
 type ActionBinder func(m *Model) Action
 type ActionBinders map[string]ActionBinder
+
+func Bind(action Action) ActionBinder {
+	return func(m *Model) Action {
+		return action
+	}
+}
 
 type Action interface {
 	Execute(m *Model) error

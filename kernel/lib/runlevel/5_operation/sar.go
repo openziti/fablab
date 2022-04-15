@@ -19,6 +19,7 @@ package operation
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
@@ -54,28 +55,29 @@ func (s *sarCloser) Operate(model.Run) error {
 }
 
 func (s *sar) runSar(ssh lib.SshConfigFactory) {
+	log := pfxlog.Logger().WithField("ip", ssh.Address())
 	defer func() {
 		close(s.joiner)
-		logrus.Debugf("joiner closed")
+		log.Debugf("joiner closed")
 	}()
 
 	sar := fmt.Sprintf("sar -u -r -q %d", s.intervalSeconds)
 	output, err := lib.RemoteExec(ssh, sar)
 	if err != nil {
-		logrus.Warnf("sar exited (%v)", err)
+		log.Warnf("sar exited (%v)", err)
 	}
 
 	summary, err := lib.SummarizeSar([]byte(output))
 	if err != nil {
-		logrus.Errorf("sar summary failed (%v) [%s]", err, output)
+		log.WithError(err).Errorf("sar summary failed [%s]", output)
 		return
 	}
 	j, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
-		logrus.Errorf("error marshaling summary (%v)", err)
+		log.WithError(err).Error("error marshaling summary")
 		return
 	}
-	logrus.Debugf("summary = %s", j)
+	log.Debugf("summary = %s", j)
 
 	if s.host.Data == nil {
 		s.host.Data = make(model.Data)
@@ -87,7 +89,7 @@ func (s *sar) runSar(ssh lib.SshConfigFactory) {
 	}
 	v.(model.Data)[s.scenario] = summary
 
-	logrus.Infof("sar data added to host")
+	logrus.Info("sar data added to host")
 }
 
 type sar struct {

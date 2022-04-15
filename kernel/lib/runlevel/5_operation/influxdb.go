@@ -147,6 +147,10 @@ func AsBatch(hostEvent *hostMetricsEvent) (*influxdb.BatchPoints, error) {
 	tags["source"] = hostEvent.host.GetId()
 	tags["publicIp"] = hostEvent.host.PublicIp
 
+	for k, v := range hostEvent.event.Tags {
+		tags[k] = v
+	}
+
 	event.Metrics.VisitUngroupedMetrics(func(name string, val interface{}) {
 		pts = append(pts, influxdb.Point{
 			Measurement: name,

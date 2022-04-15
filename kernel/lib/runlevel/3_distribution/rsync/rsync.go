@@ -44,6 +44,20 @@ type rsyncStage struct {
 	concurrency int
 }
 
+type stagedRsyncStage struct {
+	concurrency int
+}
+
+func (rsync *stagedRsyncStage) Distribute(run model.Run) error {
+	//var counter int32
+	run.GetModel().RangeSortedRegions(func(id string, region *model.Region) {
+		region.RangeSortedHosts(func(id string, host *model.Host) {
+
+		})
+	})
+	return nil
+}
+
 func synchronizeHost(config *Config) error {
 	if output, err := lib.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
 		if output != "" {
