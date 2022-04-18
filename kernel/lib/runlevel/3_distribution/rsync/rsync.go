@@ -17,11 +17,15 @@
 package rsync
 
 import (
+	"context"
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"strings"
+	"sync"
 )
 
 func Rsync(concurrency int) model.DistributionStage {
@@ -44,18 +48,164 @@ type rsyncStage struct {
 	concurrency int
 }
 
-type stagedRsyncStage struct {
-	concurrency int
+func RsyncStaged() model.DistributionStage {
+	return &stagedRsyncStage{}
 }
 
+type stagedRsyncStage struct {
+}
+
+// rsync to first host
+// rsync from first host to next host in region
+
 func (rsync *stagedRsyncStage) Distribute(run model.Run) error {
-	//var counter int32
+	group, ctx := errgroup.WithContext(context.Background())
+	hosts := map[string]*model.Host{}
+
 	run.GetModel().RangeSortedRegions(func(id string, region *model.Region) {
 		region.RangeSortedHosts(func(id string, host *model.Host) {
-
+			hosts[host.GetPath()] = host
 		})
 	})
-	return nil
+
+	localSyncer := &localRsyncer{
+		rsyncContext: &rsyncContext{
+			hosts: hosts,
+			group: group,
+			ctx:   ctx,
+		},
+		regions: map[string]struct{}{},
+	}
+
+	group.Go(localSyncer.run)
+
+	return group.Wait()
+}
+
+type rsyncContext struct {
+	hosts map[string]*model.Host
+	sync.Mutex
+	group   *errgroup.Group
+	ctx     context.Context
+	syncing int
+}
+
+func (self *rsyncContext) GetNextHostPreferringRegion(regionId string) (*model.Host, int, int) {
+	self.Lock()
+	defer self.Unlock()
+
+	var next *model.Host
+	for _, host := range self.hosts {
+		next = host
+		if host.Region.Id == regionId {
+			break
+		}
+	}
+	if next != nil {
+		delete(self.hosts, next.GetPath())
+		self.syncing++
+	}
+	return next, len(self.hosts), self.syncing
+}
+
+func (self *rsyncContext) GetNextHostPreferringNotRegions(regionIds map[string]struct{}) (*model.Host, int, int) {
+	self.Lock()
+	defer self.Unlock()
+
+	var next *model.Host
+	for _, host := range self.hosts {
+		next = host
+		if _, found := regionIds[host.Region.Id]; !found {
+			break
+		}
+	}
+	if next != nil {
+		delete(self.hosts, next.GetPath())
+		self.syncing++
+	}
+	return next, len(self.hosts), self.syncing
+}
+
+func (self *rsyncContext) markDone() (int, int) {
+	self.Lock()
+	defer self.Unlock()
+	self.syncing--
+	return len(self.hosts), self.syncing
+}
+
+type localRsyncer struct {
+	*rsyncContext
+	regions map[string]struct{}
+}
+
+func (self *localRsyncer) run() error {
+	for {
+		host, left, current := self.GetNextHostPreferringNotRegions(self.regions)
+		if host == nil {
+			return nil
+		}
+		logrus.Infof("syncing local -> %v. Left: %v, current: %v", host.PublicIp, left, current)
+		config := newConfig(host)
+		if err := synchronizeHost(config); err != nil {
+			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
+		}
+		left, current = self.markDone()
+		logrus.Infof("finished syncing local -> %v. Left: %v, current: %v", host.PublicIp, left, current)
+
+		if err := self.ctx.Err(); err != nil {
+			logrus.WithError(err).Info("exiting sync early as group context is failed")
+			return err
+		}
+
+		remoteSyncer := &remoteRsyncer{
+			host:         host,
+			rsyncContext: self.rsyncContext,
+		}
+
+		self.group.Go(remoteSyncer.run)
+	}
+}
+
+type remoteRsyncer struct {
+	host *model.Host
+	*rsyncContext
+}
+
+func (self *remoteRsyncer) run() error {
+	didAltRegion := false
+	for {
+		// only do one remote region, otherwise let remote region handle itself
+		if didAltRegion {
+			return nil
+		}
+		host, left, current := self.rsyncContext.GetNextHostPreferringRegion(self.host.Region.Id)
+		if host == nil {
+			return nil
+		}
+		logrus.Infof("syncing %v -> %v. Left: %v, current: %v", self.host.PublicIp, host.PublicIp, left, current)
+		if host.Region.Id != self.host.Region.Id {
+			didAltRegion = true
+		}
+		srcConfig := newConfig(self.host)
+		dstConfig := newConfig(host)
+		if err := synchronizeHostToHost(srcConfig, dstConfig); err != nil {
+			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
+		}
+		left, current = self.markDone()
+		logrus.Infof("finished syncing %v -> %v. Left: %v, current: %v", self.host.PublicIp, host.PublicIp, left, current)
+
+		if err := self.ctx.Err(); err != nil {
+			logrus.WithError(err).Info("exiting sync early as group context is failed")
+			return err
+		}
+
+		remoteSyncer := &remoteRsyncer{
+			host:         host,
+			rsyncContext: self.rsyncContext,
+		}
+
+		self.group.Go(remoteSyncer.run)
+	}
 }
 
 func synchronizeHost(config *Config) error {
@@ -72,6 +222,24 @@ func synchronizeHost(config *Config) error {
 	}
 
 	return nil
+}
+
+func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
+	if output, err := lib.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
+		if output != "" {
+			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
+		}
+	} else {
+		return err
+	}
+
+	dst := fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/", dstConfig.sshConfigFactory.Hostname())
+	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' /home/ubuntu/fablab/* %v", dst)
+	output, err := lib.RemoteExec(srcConfig.sshConfigFactory, cmd)
+	if err == nil && output != "" {
+		logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
+	}
+	return err
 }
 
 type Config struct {
