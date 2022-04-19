@@ -73,11 +73,24 @@ func (scope *Scope) CloneScope() *Scope {
 }
 
 func (scope *Scope) HasTag(tag string) bool {
-	for _, hostTag := range scope.Tags {
-		if hostTag == tag {
+	for _, t := range scope.Tags {
+		if t == tag {
 			return true
 		}
 	}
+	return false
+}
+
+func (scope *Scope) HasLocalOrAncestralTag(tag string) bool {
+	if scope.HasTag(tag) {
+		return true
+	}
+
+	parent := scope.entity.GetParentEntity()
+	if parent != nil {
+		return parent.GetScope().HasLocalOrAncestralTag(tag)
+	}
+
 	return false
 }
 

@@ -18,6 +18,7 @@ package operation
 
 import (
 	"fmt"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/foundation/util/concurrenz"
@@ -74,15 +75,16 @@ func (s *streamSarMetrics) runSar(ssh lib.SshConfigFactory) {
 }
 
 func (s *streamSarMetrics) reportMetrics(ssh lib.SshConfigFactory) error {
+	log := pfxlog.Logger().WithField("addr", ssh.Address())
 	sar := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.reportIntervalCount)
 	output, err := lib.RemoteExec(ssh, sar)
 	if err != nil {
-		logrus.Warnf("sar exited (%v)", err)
+		log.WithError(err).Warn("sar exited")
 	}
 
 	summary, err := lib.SummarizeSar([]byte(output))
 	if err != nil {
-		logrus.Errorf("sar summary failed (%v) [%s]", err, output)
+		log.WithError(err).Errorf("sar summary failed [%s]", output)
 		return err
 	}
 
@@ -92,6 +94,6 @@ func (s *streamSarMetrics) reportMetrics(ssh lib.SshConfigFactory) error {
 		m.AcceptHostMetrics(s.host, event)
 	}
 
-	logrus.Infof("%v sar metrics events reported", len(events))
+	log.Infof("%v sar metrics events reported", len(events))
 	return nil
 }

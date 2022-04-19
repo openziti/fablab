@@ -21,8 +21,8 @@ func createTestModel() *Model {
 							"ctrl": {
 								Scope:          Scope{Tags: Tags{"ctrl"}},
 								BinaryName:     "ziti-controller",
-								ConfigSrc:      "ctrl_edge.yml",
-								ConfigName:     "ctrl_edge.yml",
+								ConfigSrc:      "ctrl.yml",
+								ConfigName:     "ctrl.yml",
 								PublicIdentity: "ctrl",
 							},
 						},
@@ -87,8 +87,14 @@ func TestModel_SelectRegions(t *testing.T) {
 	model := createTestModel()
 	model.init()
 
+	// test lookup without prefix. Should be like lookup by id
+	regions := model.SelectRegions("initiator")
+	req.Equal(1, len(regions))
+	req.Equal("initiator", regions[0].GetId())
+	req.Equal("us-east-1", regions[0].Region)
+
 	// test lookup by id
-	regions := model.SelectRegions("#initiator")
+	regions = model.SelectRegions("#initiator")
 	req.Equal(1, len(regions))
 	req.Equal("initiator", regions[0].GetId())
 	req.Equal("us-east-1", regions[0].Region)

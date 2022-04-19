@@ -11,7 +11,7 @@ type ScaleStrategy interface {
 
 type ScaleEntityFactory interface {
 	CreateScaledRegion(source *Region, scaleIndex uint32) (*Region, error)
-	CreateScaledHost(source *Host, scaleEndex uint32) (*Host, error)
+	CreateScaledHost(source *Host, scaleIndex uint32) (*Host, error)
 	CreateScaledComponent(source *Component, scaleIndex uint32) (*Component, error)
 }
 
@@ -23,10 +23,7 @@ func NewScaleFactory(strategy ScaleStrategy, factory ScaleEntityFactory) *ScaleF
 }
 
 func NewScaleFactoryWithDefaultEntityFactory(strategy ScaleStrategy) *ScaleFactory {
-	return &ScaleFactory{
-		Strategy:      strategy,
-		EntityFactory: DefaultScaleEntityFactory{},
-	}
+	return NewScaleFactory(strategy, DefaultScaleEntityFactory{})
 }
 
 type ScaleFactory struct {
@@ -35,6 +32,10 @@ type ScaleFactory struct {
 }
 
 func (factory *ScaleFactory) Build(m *Model) error {
+	defer m.Accept(func(entity Entity) {
+		delete(entity.GetScope().Defaults, "__scaled__")
+	})
+
 	if err := factory.ProcessRegions(m); err != nil {
 		return err
 	}
@@ -69,10 +70,20 @@ func (factory *ScaleFactory) ProcessRegions(m *Model) error {
 			}
 
 			m.Regions[cloned.Id] = cloned
+			factory.markScaled(cloned)
 		}
 	}
 
 	return nil
+}
+
+func (factory *ScaleFactory) isParentScaled(entity Entity) bool {
+	_, found := entity.GetParentEntity().GetScope().Defaults["__scaled__"]
+	return found
+}
+
+func (factory *ScaleFactory) markScaled(entity Entity) {
+	entity.GetScope().Defaults["__scaled__"] = struct{}{}
 }
 
 func (factory *ScaleFactory) ProcessHosts(m *Model) error {
@@ -80,7 +91,7 @@ func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 
 	m.RangeSortedRegions(func(id string, region *Region) {
 		region.RangeSortedHosts(func(id string, host *Host) {
-			if factory.Strategy.IsScaled(host) {
+			if factory.isParentScaled(host) || factory.Strategy.IsScaled(host) {
 				region.RemoveHost(host)
 				scaledHosts = append(scaledHosts, host)
 			}
@@ -88,7 +99,10 @@ func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 	})
 
 	for _, host := range scaledHosts {
-		scaleFactor := factory.Strategy.GetEntityCount(host)
+		var scaleFactor uint32 = 1
+		if factory.Strategy.IsScaled(host) {
+			scaleFactor = factory.Strategy.GetEntityCount(host)
+		}
 		for idx := uint32(0); idx < scaleFactor; idx++ {
 			cloned, err := factory.EntityFactory.CreateScaledHost(host, idx)
 			if err != nil {
@@ -100,6 +114,7 @@ func (factory *ScaleFactory) ProcessHosts(m *Model) error {
 					host.Region.Id, cloned.Id, scaleFactor)
 			}
 			host.Region.Hosts[cloned.Id] = cloned
+			factory.markScaled(cloned)
 		}
 	}
 
@@ -112,7 +127,7 @@ func (factory *ScaleFactory) ProcessComponents(m *Model) error {
 	m.RangeSortedRegions(func(id string, region *Region) {
 		region.RangeSortedHosts(func(id string, host *Host) {
 			host.RangeSortedComponents(func(id string, component *Component) {
-				if factory.Strategy.IsScaled(component) {
+				if factory.isParentScaled(component) || factory.Strategy.IsScaled(component) {
 					host.RemoveComponent(component)
 					scaledComponents = append(scaledComponents, component)
 				}
@@ -121,7 +136,10 @@ func (factory *ScaleFactory) ProcessComponents(m *Model) error {
 	})
 
 	for _, component := range scaledComponents {
-		scaleFactor := factory.Strategy.GetEntityCount(component)
+		var scaleFactor uint32 = 1
+		if factory.Strategy.IsScaled(component) {
+			scaleFactor = factory.Strategy.GetEntityCount(component)
+		}
 		for idx := uint32(0); idx < scaleFactor; idx++ {
 			cloned, err := factory.EntityFactory.CreateScaledComponent(component, idx)
 			if err != nil {
@@ -133,6 +151,7 @@ func (factory *ScaleFactory) ProcessComponents(m *Model) error {
 					component.Host.Region.Id, component.Host.Id, cloned.Id, scaleFactor)
 			}
 			component.Host.Components[cloned.Id] = cloned
+			factory.markScaled(cloned)
 		}
 	}
 

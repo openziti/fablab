@@ -14,6 +14,7 @@ func init() {
 	listCmd.AddCommand(listInstancesCmd)
 	listCmd.AddCommand(listHostsCmd)
 	listCmd.AddCommand(listComponentsCmd)
+	listCmd.AddCommand(listActionsCmd)
 	RootCmd.AddCommand(listCmd)
 }
 
@@ -28,6 +29,28 @@ var listInstancesCmd = &cobra.Command{
 	Short: "list instances",
 	Args:  cobra.ExactArgs(0),
 	Run:   listInstances,
+}
+
+var listHostsCmd = &cobra.Command{
+	Use:   "hosts <spec?>",
+	Short: "list hosts",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   listHosts,
+}
+
+var listComponentsCmd = &cobra.Command{
+	Use:     "components <spec?>",
+	Aliases: []string{"comp"},
+	Short:   "list components",
+	Args:    cobra.MaximumNArgs(1),
+	Run:     listComponents,
+}
+
+var listActionsCmd = &cobra.Command{
+	Use:   "actions",
+	Short: "list actions",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   listActions,
 }
 
 func listInstances(_ *cobra.Command, _ []string) {
@@ -63,21 +86,6 @@ func listInstances(_ *cobra.Command, _ []string) {
 	if len(instanceIds) > 0 {
 		fmt.Println()
 	}
-}
-
-var listHostsCmd = &cobra.Command{
-	Use:   "hosts <spec?>",
-	Short: "list hosts",
-	Args:  cobra.MaximumNArgs(1),
-	Run:   listHosts,
-}
-
-var listComponentsCmd = &cobra.Command{
-	Use:     "components <spec?>",
-	Aliases: []string{"comp"},
-	Short:   "list components",
-	Args:    cobra.MaximumNArgs(1),
-	Run:     listComponents,
 }
 
 func listHosts(cmd *cobra.Command, args []string) {
@@ -138,5 +146,17 @@ func listComponents(cmd *cobra.Command, args []string) {
 
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), t.Render()); err != nil {
 		panic(err)
+	}
+}
+
+func listActions(cmd *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	m := model.GetModel()
+
+	for _, action := range m.GetActions() {
+		fmt.Println(action)
 	}
 }

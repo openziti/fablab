@@ -37,7 +37,7 @@ func (start *start) Execute(m *model.Model) error {
 	return m.ForEachComponent(start.componentSpec, start.concurrency, func(c *model.Component) error {
 		sshConfigFactory := lib.NewSshConfigFactory(c.GetHost())
 
-		if err := lib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName); err != nil {
+		if err := lib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName, c.RunWithSudo); err != nil {
 			return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
 		}
 		return nil

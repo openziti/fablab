@@ -92,6 +92,9 @@ func loadConfig() (*FablabConfig, error) {
 		return nil, errors.Wrapf(err, "error while parsing YAML config file %v", configFile)
 	}
 
+	if config.Instances == nil {
+		config.Instances = map[string]*InstanceConfig{}
+	}
 	return config, nil
 }
 

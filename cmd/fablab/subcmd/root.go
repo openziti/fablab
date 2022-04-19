@@ -30,6 +30,9 @@ func Execute() error {
 }
 
 func init() {
+	options := pfxlog.DefaultOptions().SetTrimPrefix("github.com/openziti/").NoColor()
+	pfxlog.GlobalInit(logrus.InfoLevel, options)
+
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose logging")
 	RootCmd.PersistentFlags().StringVarP(&model.CliInstanceId, "instance", "i", "", "specify the instance to use")
 	RootCmd.PersistentFlags().StringVar(&logFormatter, "log-formatter", "", "Specify log formatter [json|pfxlog|text]")

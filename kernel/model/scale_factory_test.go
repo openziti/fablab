@@ -14,7 +14,7 @@ func (t testScaleStrategy) IsScaled(entity Entity) bool {
 	return entity.GetScope().HasTag("scaled")
 }
 
-func (t testScaleStrategy) GetEntityCount(entity Entity) int {
+func (t testScaleStrategy) GetEntityCount(entity Entity) uint32 {
 	if strings.HasPrefix(entity.GetId(), "dropped") {
 		return 0
 	}

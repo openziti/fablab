@@ -81,6 +81,29 @@ func (stage awsKeyManager) Express(run model.Run) error {
 		}
 	} else {
 		logrus.Infof("failed to load private key from %v (%v), generating new key", keyPath, err)
+
+		for _, region := range m.Regions {
+			awsConfig := &aws.Config{
+				Credentials: awsCreds,
+				Region:      &region.Region,
+			}
+			awsSession, err := session.NewSession(awsConfig)
+			if err != nil {
+				return err
+			}
+			ec2Client := ec2.New(awsSession)
+
+			_, err = ec2Client.DescribeKeyPairs(&ec2.DescribeKeyPairsInput{
+				KeyNames: []*string{&keyName},
+			})
+
+			if err == nil {
+				logrus.Infof("removing key %v from region %v, as we don't have the private key anymore", keyPath, region.Region)
+				if _, err = ec2Client.DeleteKeyPair(&ec2.DeleteKeyPairInput{KeyName: &keyName}); err != nil {
+					return errors.Wrapf(err, "failed to remove private key %v from region %v", keyName, region.Region)
+				}
+			}
+		}
 	}
 
 	for _, region := range m.Regions {

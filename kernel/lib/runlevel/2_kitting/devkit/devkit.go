@@ -25,7 +25,16 @@ import (
 	"path/filepath"
 )
 
+type devKit struct {
+	root     func() string
+	binaries []string
+}
+
 func DevKit(root string, binaries []string) model.ConfigurationStage {
+	return &devKit{root: func() string { return root }, binaries: binaries}
+}
+
+func DevKitF(root func() string, binaries []string) model.ConfigurationStage {
 	return &devKit{root: root, binaries: binaries}
 }
 
@@ -54,7 +63,7 @@ func (devKit *devKit) Configure(model.Run) error {
 		return fmt.Errorf("error creating kit bin directory (%s)", err)
 	}
 	for _, binary := range devKit.binaries {
-		srcPath := filepath.Join(devKit.root, binary)
+		srcPath := filepath.Join(devKit.root(), binary)
 		dstPath := filepath.Join(model.KitBuild(), "bin", binary)
 		if _, err := lib.CopyFile(srcPath, dstPath); err == nil {
 			logrus.Infof("[%s] => [%s]", srcPath, dstPath)
@@ -66,9 +75,4 @@ func (devKit *devKit) Configure(model.Run) error {
 		}
 	}
 	return nil
-}
-
-type devKit struct {
-	root     string
-	binaries []string
 }

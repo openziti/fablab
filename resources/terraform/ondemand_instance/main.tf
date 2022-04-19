@@ -89,6 +89,7 @@ resource "aws_instance" "fablab" {
       "sudo apt upgrade -y",
       "sudo apt install -y iperf3 tcpdump sysstat",
       "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
+      "sudo sed -i 's/ENABLED=\"false\"/ENABLED=\"true\"/g' /etc/default/sysstat",
       "sudo shutdown -r +1"
     ]
   }

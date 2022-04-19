@@ -45,6 +45,7 @@ func (s MetricSet) VisitGroupedMetrics(f func(name string, group MetricSet)) {
 type MetricsEvent struct {
 	Timestamp time.Time
 	Metrics   MetricSet
+	Tags      map[string]string
 }
 
 type MetricsHandler interface {

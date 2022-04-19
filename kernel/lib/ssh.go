@@ -36,8 +36,13 @@ import (
 	"sync"
 )
 
-func LaunchService(factory SshConfigFactory, name, cfg string) error {
-	serviceCmd := fmt.Sprintf("nohup /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &", factory.User(), name, factory.User(), cfg, name)
+func LaunchService(factory SshConfigFactory, name, cfg string, sudo bool) error {
+	sudoCmd := ""
+	if sudo {
+		sudoCmd = " sudo "
+	}
+	serviceCmd := fmt.Sprintf("nohup%v /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &",
+		sudoCmd, factory.User(), name, factory.User(), cfg, name)
 	if value, err := RemoteExec(factory, serviceCmd); err == nil {
 		if len(value) > 0 {
 			logrus.Infof("output [%s]", strings.Trim(value, " \t\r\n"))
