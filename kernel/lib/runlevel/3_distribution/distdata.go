@@ -9,12 +9,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, callbacks map[string]func(*model.Host) string) model.DistributionStage {
+func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os.FileMode, callbacks map[string]func(*model.Host) string) model.DistributionStage {
 	return &distDataWithReplaceCallbacks{
 		hostSpec:  hostSpec,
 		data:      data,
 		dest:      dest,
 		callbacks: callbacks,
+		filemode:  filemode,
 	}
 }
 
@@ -33,7 +34,7 @@ func (df *distDataWithReplaceCallbacks) Distribute(run model.Run) error {
 			return err
 		}
 
-		if err := lib.Chmod(ssh, df.dest, os.FileMode(0644)); err != nil {
+		if err := lib.Chmod(ssh, df.dest, df.filemode); err != nil {
 			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
 			return err
 		}
@@ -49,6 +50,7 @@ type distDataWithReplaceCallbacks struct {
 	data      string
 	dest      string
 	callbacks map[string]func(*model.Host) string
+	filemode  os.Filemode
 }
 
 func DistributeData(hostSpec string, data []byte, dest string) model.DistributionStage {
