@@ -50,7 +50,7 @@ type distDataWithReplaceCallbacks struct {
 	data      string
 	dest      string
 	callbacks map[string]func(*model.Host) string
-	filemode  os.Filemode
+	filemode  os.FileMode
 }
 
 func DistributeData(hostSpec string, data []byte, dest string) model.DistributionStage {
