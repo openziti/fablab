@@ -20,6 +20,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/foundation/util/info"
 	"github.com/pkg/errors"
@@ -27,13 +36,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"sync"
 )
 
 func LaunchService(factory SshConfigFactory, name, cfg string, sudo bool) error {
@@ -254,13 +256,7 @@ func RemoteFileList(factory SshConfigFactory, path string) ([]os.FileInfo, error
 	return files, nil
 }
 
-func SendFile(factory SshConfigFactory, localPath string, remotePath string) error {
-	localFile, err := ioutil.ReadFile(localPath)
-
-	if err != nil {
-		return errors.Wrapf(err, "unable to read local file %v", localFile)
-	}
-
+func Chmod(factory SshConfigFactory, remotePath string, mode os.FileMode) error {
 	config := factory.Config()
 
 	conn, err := ssh.Dial("tcp", factory.Address(), config)
@@ -275,6 +271,41 @@ func SendFile(factory SshConfigFactory, localPath string, remotePath string) err
 	}
 	defer func() { _ = client.Close() }()
 
+	rmtFile, err := client.OpenFile(remotePath, os.O_WRONLY)
+
+	if err != nil {
+		return errors.Wrapf(err, "unable to open remote file %v", remotePath)
+	}
+	defer func() { _ = rmtFile.Close() }()
+
+	if err := rmtFile.Chmod(mode); err != nil {
+		return errors.Wrapf(err, "unable to chmod remote file %v", remotePath)
+	}
+
+	return nil
+}
+
+func SendData(factory SshConfigFactory, data []byte, remotePath string) error {
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return errors.Wrap(err, "error dialing ssh server")
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return errors.Wrap(err, "error creating sftp client")
+	}
+	defer func() { _ = client.Close() }()
+
+	path.Dir(remotePath)
+	logrus.Infof("Creating paths %s", path.Dir(remotePath))
+	if err := client.MkdirAll(path.Dir(remotePath)); err != nil {
+		return errors.Wrapf(err, "unable to create directories for %v", remotePath)
+	}
+
 	rmtFile, err := client.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 
 	if err != nil {
@@ -282,13 +313,23 @@ func SendFile(factory SshConfigFactory, localPath string, remotePath string) err
 	}
 	defer func() { _ = rmtFile.Close() }()
 
-	_, err = rmtFile.Write(localFile)
+	_, err = rmtFile.Write(data)
 
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func SendFile(factory SshConfigFactory, localPath string, remotePath string) error {
+	localFile, err := ioutil.ReadFile(localPath)
+
+	if err != nil {
+		return errors.Wrapf(err, "unable to read local file %v", localFile)
+	}
+
+	return SendData(factory, localFile, remotePath)
 }
 
 func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...string) error {
