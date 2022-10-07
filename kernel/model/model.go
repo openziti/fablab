@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2019 NetFoundry Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import (
 	"embed"
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib/figlet"
-	"github.com/openziti/foundation/util/concurrenz"
-	"github.com/openziti/foundation/util/info"
+	"github.com/openziti/foundation/v2/info"
 	"github.com/sirupsen/logrus"
 	"io/fs"
 	"sort"
 	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -220,7 +220,7 @@ type Model struct {
 
 	actions map[string]Action
 
-	initialized concurrenz.AtomicBoolean
+	initialized atomic.Bool
 
 	regionIds    IdPool
 	hostIds      IdPool

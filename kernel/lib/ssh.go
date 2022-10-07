@@ -1,5 +1,5 @@
 /*
-	Copyright 2019 NetFoundry, Inc.
+	Copyright 2019 NetFoundry Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import (
 	"sync"
 
 	"github.com/openziti/fablab/kernel/model"
-	"github.com/openziti/foundation/util/info"
+	"github.com/openziti/foundation/v2/info"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"

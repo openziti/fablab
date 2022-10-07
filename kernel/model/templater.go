@@ -2,7 +2,7 @@ package model
 
 import (
 	"bytes"
-	"github.com/openziti/foundation/util/errorz"
+	"github.com/openziti/foundation/v2/errorz"
 	"text/template"
 )
 
