@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry, Inc.
+	Copyright 2020 NetFoundry Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
-	"github.com/openziti/foundation/util/concurrenz"
 	"github.com/sirupsen/logrus"
+	"sync/atomic"
 )
 
 func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, runPhase Phase, cleanupPhase Phase) model.OperatingStage {
@@ -41,7 +41,7 @@ type streamSarMetrics struct {
 	reportIntervalCount int
 	joiner              chan struct{}
 	closer              <-chan struct{}
-	closed              concurrenz.AtomicBoolean
+	closed              atomic.Bool
 }
 
 func (s *streamSarMetrics) Operate(model.Run) error {
@@ -67,7 +67,7 @@ func (s *streamSarMetrics) runSar(ssh lib.SshConfigFactory) {
 		logrus.Debugf("joiner closed")
 	}()
 
-	for !s.closed.Get() {
+	for !s.closed.Load() {
 		if err := s.reportMetrics(ssh); err != nil {
 			return
 		}

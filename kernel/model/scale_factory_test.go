@@ -55,17 +55,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -86,7 +86,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -96,17 +96,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -115,7 +115,7 @@ func Test_Templating(t *testing.T) {
 							},
 						},
 					},
-					"scaled-host-{{ .Index }}": {
+					"scaled-host-{{ .ScaleIndex }}": {
 						Scope:                Scope{Tags: Tags{"c", "d.{{ .Index}}.{{ .Region.Id }}", "scaled"}},
 						PublicIp:             "1.1.{{ .Index}}.{{ .Region.Id }}",
 						PrivateIp:            "2.2.{{ .Index}}.{{ .Region.Id }}",
@@ -127,7 +127,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -137,17 +137,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -178,7 +178,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -188,17 +188,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -219,7 +219,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -229,17 +229,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -248,7 +248,7 @@ func Test_Templating(t *testing.T) {
 							},
 						},
 					},
-					"scaled-host-{{ .Index }}": {
+					"scaled-host-{{ .ScaleIndex }}": {
 						Scope:                Scope{Tags: Tags{"c", "d.{{ .Index}}.{{ .Region.Id }}", "scaled"}},
 						PublicIp:             "1.1.{{ .Index}}.{{ .Region.Id }}",
 						PrivateIp:            "2.2.{{ .Index}}.{{ .Region.Id }}",
@@ -260,7 +260,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -270,17 +270,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -294,7 +294,7 @@ func Test_Templating(t *testing.T) {
 					},
 				},
 			},
-			"scaled-region-{{ .Index }}": {
+			"scaled-region-{{ .ScaleIndex }}": {
 				Scope:  Scope{Tags: Tags{"a", "b.{{ .Index }}", "scaled"}},
 				Region: "us-west-1",
 				Site:   "us-west-1-{{ .Index }}",
@@ -311,7 +311,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -321,17 +321,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -352,7 +352,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -362,17 +362,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -381,7 +381,7 @@ func Test_Templating(t *testing.T) {
 							},
 						},
 					},
-					"scaled-host-{{ .Index }}": {
+					"scaled-host-{{ .ScaleIndex }}": {
 						Scope:                Scope{Tags: Tags{"c", "d.{{ .Index}}.{{ .Region.Id }}", "scaled"}},
 						PublicIp:             "1.1.{{ .Index}}.{{ .Region.Id }}",
 						PrivateIp:            "2.2.{{ .Index}}.{{ .Region.Id }}",
@@ -393,7 +393,7 @@ func Test_Templating(t *testing.T) {
 							"static-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -403,17 +403,17 @@ func Test_Templating(t *testing.T) {
 							"single-component": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PublicIdentity:  "public-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								PrivateIdentity: "private-id-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 							},
-							"scaled-component-{{ .Index }}": {
+							"scaled-component-{{ .ScaleIndex }}": {
 								Scope:           Scope{Tags: Tags{"e", "f-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}", "scaled"}},
 								ScriptSrc:       "script-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
-								ScriptName:      "script-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
+								ScriptName:      "script-name-{{ .ScaleIndex }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigSrc:       "config-src-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								ConfigName:      "config-name-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
 								BinaryName:      "binary-{{ .Index }}.{{ .Host.Id }}.{{ .Region.Id }}",
@@ -433,7 +433,8 @@ func Test_Templating(t *testing.T) {
 	model.init()
 
 	factory := &ScaleFactory{
-		Strategy: testScaleStrategy{},
+		Strategy:      testScaleStrategy{},
+		EntityFactory: DefaultScaleEntityFactory{},
 	}
 
 	req := require.New(t)
@@ -480,7 +481,7 @@ func validateHost(req *require.Assertions, region *Region, host *Host) {
 
 	req.True(len(host.Tags) >= 2)
 	req.Equal("c", host.Tags[0])
-	if host.HasTag("scaled") {
+	if host.HasTag("scaled") || region.HasTag("scaled") {
 		req.Equal(fmt.Sprintf("d.%v.%v", host.Index, region.Id), host.Tags[1])
 		req.Equal(fmt.Sprintf("1.1.%v.%v", host.Index, region.Id), host.PublicIp)
 		req.Equal(fmt.Sprintf("2.2.%v.%v", host.Index, region.Id), host.PrivateIp)
@@ -512,10 +513,10 @@ func validateComponent(req *require.Assertions, region *Region, host *Host, comp
 
 	req.True(len(component.Tags) >= 2)
 	req.Equal("e", component.Tags[0])
-	if component.HasTag("scaled") {
+	if component.HasTag("scaled") || host.HasTag("scaled") || region.HasTag("scaled") {
 		req.Equal(fmt.Sprintf("f-%v.%v.%v", component.Index, host.Id, region.Id), component.Tags[1])
 		req.Equal(fmt.Sprintf("script-src-%v.%v.%v", component.Index, host.Id, region.Id), component.ScriptSrc)
-		req.Equal(fmt.Sprintf("script-name-%v.%v.%v", component.Index, host.Id, region.Id), component.ScriptName)
+		req.Equal(fmt.Sprintf("script-name-%v.%v.%v", component.ScaleIndex, host.Id, region.Id), component.ScriptName)
 		req.Equal(fmt.Sprintf("config-src-%v.%v.%v", component.Index, host.Id, region.Id), component.ConfigSrc)
 		req.Equal(fmt.Sprintf("config-name-%v.%v.%v", component.Index, host.Id, region.Id), component.ConfigName)
 		req.Equal(fmt.Sprintf("binary-%v.%v.%v", component.Index, host.Id, region.Id), component.BinaryName)
