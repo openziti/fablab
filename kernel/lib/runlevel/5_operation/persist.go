@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -51,7 +50,7 @@ func (self *persist) storeDump(run model.Run) error {
 	if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating dump tree [%s] (%w)", filepath.Dir(filename), err)
 	}
-	if err := ioutil.WriteFile(filename, data, os.ModePerm); err != nil {
+	if err := os.WriteFile(filename, data, os.ModePerm); err != nil {
 		return fmt.Errorf("error writing dump [%s] (%w)", filename, err)
 	}
 

@@ -4,7 +4,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -83,7 +82,7 @@ func loadConfig() (*FablabConfig, error) {
 		}
 		return nil, errors.Wrapf(err, "error while statting config file %v", configFile)
 	}
-	result, err := ioutil.ReadFile(configFile)
+	result, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while reading config file %v", configFile)
 	}
@@ -118,7 +117,7 @@ func PersistConfig(config *FablabConfig) error {
 		return errors.Wrap(err, "error while marshalling config to YAML")
 	}
 
-	err = ioutil.WriteFile(configFile, data, 0600)
+	err = os.WriteFile(configFile, data, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "error while writing config file %v", configFile)
 	}

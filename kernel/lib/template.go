@@ -21,7 +21,6 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -42,7 +41,7 @@ func TemplateFuncMap(m *model.Model) template.FuncMap {
 }
 
 func RenderTemplate(src, dst string, m *model.Model, data interface{}) error {
-	tData, err := ioutil.ReadFile(src)
+	tData, err := os.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("error reading template [%s] (%w)", src, err)
 	}

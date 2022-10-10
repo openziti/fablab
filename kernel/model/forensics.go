@@ -18,7 +18,7 @@ package model
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -32,14 +32,14 @@ func AllocateDump(run string) string {
 }
 
 func ListDumps() ([]string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(BuildPath(), "dumps"))
+	files, err := os.ReadDir(filepath.Join(BuildPath(), "dumps"))
 	if err != nil {
 		return nil, fmt.Errorf("unable to list dumps (%w)", err)
 	}
 
 	var dumps []string
 	for _, file := range files {
-		if file.Mode().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
+		if file.Type().IsRegular() && strings.HasSuffix(file.Name(), ".json") {
 			dumps = append(dumps, filepath.Join(BuildPath(), "dumps", file.Name()))
 		}
 	}

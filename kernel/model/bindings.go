@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -28,7 +27,7 @@ import (
 func loadBindings() error {
 	var data []byte
 	var err error
-	data, err = ioutil.ReadFile(bindingsYml())
+	data, err = os.ReadFile(bindingsYml())
 	if err != nil {
 		if os.IsNotExist(err) {
 			logrus.Warnf("no bindings [%s]", bindingsYml())

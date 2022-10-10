@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"io/ioutil"
+	"os"
 	"path"
 )
 
@@ -73,7 +73,7 @@ func (stage awsKeyManager) Express(run model.Run) error {
 	keyPath := m.MustStringVariable("credentials.ssh.key_path")
 	logrus.Infof("checking for  private key in %v", keyPath)
 	var err error
-	if privateKey, err = ioutil.ReadFile(keyPath); err == nil {
+	if privateKey, err = os.ReadFile(keyPath); err == nil {
 		logrus.Infof("loaded private key from %v... deriving public key", keyPath)
 		publicKey, err = getPublicKey(privateKey)
 		if err != nil {
@@ -140,7 +140,7 @@ func (stage awsKeyManager) Express(run model.Run) error {
 			}
 			keyPath := m.MustStringVariable("credentials.ssh.key_path")
 			logrus.Infof("saving private key '%v' to %v", keyName, keyPath)
-			if err = ioutil.WriteFile(keyPath, privateKey, 0600); err != nil {
+			if err = os.WriteFile(keyPath, privateKey, 0600); err != nil {
 				return err
 			}
 		} else {

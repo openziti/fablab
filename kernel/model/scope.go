@@ -65,9 +65,7 @@ func (scope *Scope) CloneScope() *Scope {
 		result.Data[k] = v
 	}
 
-	for _, tag := range scope.Tags {
-		result.Tags = append(result.Tags, tag)
-	}
+	result.Tags = append(result.Tags, scope.Tags...)
 
 	return result
 }
@@ -286,34 +284,6 @@ func (v Variables) ForEach(f func(k string, v interface{}) (bool, interface{})) 
 			}
 		}
 	}
-}
-
-func (v Variables) getPath(path ...string) []Variables {
-	result := []Variables{v}
-	current := v
-	for _, e := range path {
-		next, found := current[e]
-		if !found {
-			return result
-		}
-		current, ok := next.(Variables)
-		if !ok {
-			return result
-		}
-		result = append(result, current)
-	}
-	return result
-}
-
-func (v Variables) getRelated(name string, path ...string) (interface{}, bool) {
-	p := v.getPath(path...)
-	for i := len(p) - 1; i >= 0; i-- {
-		node := p[i]
-		if val, found := node[name]; found {
-			return val, true
-		}
-	}
-	return nil, false
 }
 
 func (m *Model) IterateScopes(f func(i Entity, path ...string)) {
