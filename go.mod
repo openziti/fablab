@@ -3,7 +3,7 @@ module github.com/openziti/fablab
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.31.14
+	github.com/aws/aws-sdk-go v1.44.114
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jedib0t/go-pretty/v6 v6.4.0
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
@@ -25,7 +25,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/jmespath/go-jmespath v0.3.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
