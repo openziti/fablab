@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,7 +34,7 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func LaunchService(factory SshConfigFactory, name, cfg string, sudo bool) error {
@@ -76,20 +75,20 @@ func RemoteShell(factory SshConfigFactory) error {
 
 	fd := int(os.Stdout.Fd())
 
-	oldState, err := terminal.MakeRaw(fd)
+	oldState, err := term.MakeRaw(fd)
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
 		_ = session.Close()
-		_ = terminal.Restore(fd, oldState)
+		_ = term.Restore(fd, oldState)
 	}()
 
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
 
-	termWidth, termHeight, err := terminal.GetSize(fd)
+	termWidth, termHeight, err := term.GetSize(fd)
 	if err != nil {
 		panic(err)
 	}
@@ -213,7 +212,7 @@ func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
 
-		output, err = RemoteExec(factory, killCmd)
+		_, err = RemoteExec(factory, killCmd)
 		if err != nil {
 			return fmt.Errorf("unable to kill [%s] (%s)", factory.Address(), err)
 		}
@@ -323,7 +322,7 @@ func SendData(factory SshConfigFactory, data []byte, remotePath string) error {
 }
 
 func SendFile(factory SshConfigFactory, localPath string, remotePath string) error {
-	localFile, err := ioutil.ReadFile(localPath)
+	localFile, err := os.ReadFile(localPath)
 
 	if err != nil {
 		return errors.Wrapf(err, "unable to read local file %v", localFile)
@@ -467,8 +466,6 @@ func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
 			methods = append(methods, sshAuthMethodAgent())
 		}
 
-		methods = append(methods)
-
 		factory.authMethods = methods
 	})
 
@@ -480,7 +477,7 @@ func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
 }
 
 func sshAuthMethodFromFile(keyPath string) (ssh.AuthMethod, error) {
-	content, err := ioutil.ReadFile(keyPath)
+	content, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not read ssh file [%s]: %w", keyPath, err)
 	}

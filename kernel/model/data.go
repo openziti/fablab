@@ -106,7 +106,7 @@ type ProcessTimeslice struct {
 	RunQueueSize    int64   `json:"run_queue_size"`
 	ProcessListSize int64   `json:"process_list_size"`
 	LoadAverage1m   float64 `json:"load_average_1m"`
-	LoadAverage5m   float64 `json:"load_average_5m`
+	LoadAverage5m   float64 `json:"load_average_5m"`
 	LoadAverage15m  float64 `json:"load_average_15m"`
 	Blocked         int64   `json:"blocked"`
 }

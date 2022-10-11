@@ -2,6 +2,7 @@ package parallel
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -17,5 +18,6 @@ func Test_semaphore(t *testing.T) {
 		return nil
 	})
 
-	Execute(tasks, 2)
+	err := Execute(tasks, 2)
+	assert.NoError(t, err)
 }

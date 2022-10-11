@@ -80,7 +80,7 @@ type Process struct {
 }
 
 func StdoutTail(data []byte) {
-	fmt.Printf(string(data))
+	fmt.Print(string(data))
 }
 
 type TailFunction func(data []byte)

@@ -116,7 +116,8 @@ func (reporter *influxReporter) run() {
 	log.Info("started")
 	defer log.Warn("exited")
 
-	pingTicker := time.Tick(time.Second * 5)
+	pingTicker := time.NewTicker(time.Second * 5)
+	defer pingTicker.Stop()
 
 	for {
 		select {
@@ -124,7 +125,7 @@ func (reporter *influxReporter) run() {
 			if err := reporter.send(msg); err != nil {
 				log.Printf("unable to send metrics to influxdb. err=%v", err)
 			}
-		case <-pingTicker:
+		case <-pingTicker.C:
 			_, _, err := reporter.client.Ping()
 			if err != nil {
 				log.Printf("got error while sending a ping to influxdb, trying to recreate influxdb. err=%v", err)

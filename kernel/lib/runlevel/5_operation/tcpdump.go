@@ -21,7 +21,7 @@ import (
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -60,7 +60,7 @@ func (t *tcpdump) runTcpdump(ssh lib.SshConfigFactory) {
 		}
 	}()
 
-	pcapPath, err := ioutil.TempFile("", fmt.Sprintf("%s_*.pcap", t.scenario))
+	pcapPath, err := os.CreateTemp("", fmt.Sprintf("%s_*.pcap", t.scenario))
 	if err != nil {
 		logrus.Fatalf("error creating pcap filename (%v)", err)
 	}
@@ -73,7 +73,6 @@ func (t *tcpdump) runTcpdump(ssh lib.SshConfigFactory) {
 
 type tcpdump struct {
 	scenario string
-	region   string
 	host     string
 	snaplen  int
 	joiner   chan struct{}

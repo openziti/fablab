@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -75,7 +74,7 @@ func (label *Label) SaveAtPath(path string) error {
 		return fmt.Errorf("unable to create label directory [%s] (%s)", labelDir, err)
 	}
 
-	if err = ioutil.WriteFile(labelPath(path), data, 0600); err != nil {
+	if err = os.WriteFile(labelPath(path), data, 0600); err != nil {
 		return err
 	}
 
@@ -109,7 +108,7 @@ func CreateLabel(instanceId string, bindings map[string]string) error {
 }
 
 func LoadLabel(path string) (*Label, error) {
-	data, err := ioutil.ReadFile(filepath.Join(path, labelFilename))
+	data, err := os.ReadFile(filepath.Join(path, labelFilename))
 	if err != nil {
 		return nil, err
 	}

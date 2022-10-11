@@ -21,7 +21,7 @@ func (self *Templater) TemplatizeString(val string) string {
 	if self.SetError(tmpl.Execute(buf, self.data)) {
 		return val
 	}
-	return string(buf.Bytes())
+	return buf.String()
 }
 
 func (self *Templater) TemplatizeScope(scope *Scope) {

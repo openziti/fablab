@@ -46,6 +46,6 @@ func TestGetVariable(t *testing.T) {
 	fmt.Printf("c='%v'\n", value)
 	assert.False(t, found)
 
-	value, found = m.GetVariable("d.e.f")
+	_, found = m.GetVariable("d.e.f")
 	assert.False(t, found)
 }
