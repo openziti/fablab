@@ -44,7 +44,7 @@ func (self *readyStage) Express(run model.Run) error {
 
 				if output, err := lib.RemoteExec(sshConfigFactory, "uptime"); err != nil {
 					logrus.Warnf("host not ready [%s] (%v)", h.PublicIp, err)
-					if start.Add(self.maxWait).Before(time.Now()) {
+					if time.Now().Before(start.Add(self.maxWait)) {
 						time.Sleep(2 * time.Second)
 					} else {
 						break
