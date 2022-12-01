@@ -5,12 +5,12 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.44.118
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/jedib0t/go-pretty/v6 v6.4.2
+	github.com/jedib0t/go-pretty/v6 v6.4.3
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.6.9
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
-	github.com/openziti/foundation/v2 v2.0.7
+	github.com/openziti/foundation/v2 v2.0.8
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
 	github.com/sirupsen/logrus v1.9.0

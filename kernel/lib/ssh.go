@@ -42,8 +42,9 @@ func LaunchService(factory SshConfigFactory, name, cfg string, sudo bool) error 
 	if sudo {
 		sudoCmd = " sudo "
 	}
-	serviceCmd := fmt.Sprintf("nohup%v /home/%s/fablab/bin/%s --log-formatter pfxlog run /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &",
-		sudoCmd, factory.User(), name, factory.User(), cfg, name)
+	logName := strings.ReplaceAll(name, " ", "-")
+	serviceCmd := fmt.Sprintf("nohup%v /home/%s/fablab/bin/%s run --log-formatter pfxlog /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &",
+		sudoCmd, factory.User(), name, factory.User(), cfg, logName)
 	if value, err := RemoteExec(factory, serviceCmd); err == nil {
 		if len(value) > 0 {
 			logrus.Infof("output [%s]", strings.Trim(value, " \t\r\n"))
@@ -212,9 +213,9 @@ func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
 
-		_, err = RemoteExec(factory, killCmd)
+		output, err = RemoteExec(factory, killCmd)
 		if err != nil {
-			return fmt.Errorf("unable to kill [%s] (%s)", factory.Address(), err)
+			return fmt.Errorf("unable to execute [%v] on [%s] (%s). Output: [%v]", killCmd, factory.Address(), err, output)
 		}
 	}
 
