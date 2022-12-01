@@ -24,13 +24,15 @@ import (
 	"time"
 )
 
-func Iperf(scenarioName, endpoint, serverHosts, clientHosts string, seconds int) model.OperatingStage {
+type EndpointSelectorF func(m *model.Model) string
+
+func Iperf(scenarioName string, endpoint EndpointSelectorF, serverHosts, clientHosts string, seconds int) model.OperatingStage {
 	return &iperf{
-		scenarioName: scenarioName,
-		endpoint:     endpoint,
-		serverHosts:  serverHosts,
-		clientHosts:  clientHosts,
-		seconds:      seconds,
+		scenarioName:     scenarioName,
+		endpointSelector: endpoint,
+		serverHosts:      serverHosts,
+		clientHosts:      clientHosts,
+		seconds:          seconds,
 	}
 }
 
@@ -53,7 +55,9 @@ func (i *iperf) Operate(run model.Run) error {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
-		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", i.endpoint, i.seconds)
+		endpoint := i.endpointSelector(run.GetModel())
+
+		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", endpoint, i.seconds)
 		output, err := lib.RemoteExec(sshClientFactory, iperfCmd)
 		if err == nil {
 			logrus.Debugf("output = [%s]", output)
@@ -91,9 +95,9 @@ func (i *iperf) runServer(factory lib.SshConfigFactory) {
 }
 
 type iperf struct {
-	scenarioName string
-	endpoint     string
-	serverHosts  string
-	clientHosts  string
-	seconds      int
+	scenarioName     string
+	endpointSelector EndpointSelectorF
+	serverHosts      string
+	clientHosts      string
+	seconds          int
 }
