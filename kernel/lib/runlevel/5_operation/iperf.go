@@ -50,7 +50,7 @@ func (i *iperf) Operate(run model.Run) error {
 		sshClientFactory := lib.NewSshConfigFactory(host)
 
 		if i.overlay == false {
-			iperfCmdU := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 5M --json", serverHost.PublicIp, i.seconds)
+			iperfCmdU := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 640M --json", serverHost.PublicIp, i.seconds)
 			output, err := lib.RemoteExec(sshClientFactory, iperfCmdU)
 			if err == nil {
 				logrus.Debugf("output = [%s]", output)
@@ -67,7 +67,7 @@ func (i *iperf) Operate(run model.Run) error {
 				return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
 			}
 		} else {
-			iperfCmdO := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 5M --json", "iperf.service", i.seconds)
+			iperfCmdO := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 640M --json", "iperf.service", i.seconds)
 			output, err := lib.RemoteExec(sshClientFactory, iperfCmdO)
 			if err == nil {
 				logrus.Debugf("output = [%s]", output)
