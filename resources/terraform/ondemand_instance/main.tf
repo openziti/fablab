@@ -43,7 +43,7 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
-      "sudo chmod 777 /etc/sysctl.d",
+      "sudo chmod 777 /etc/sysctl.d"
     ]
   }
 
@@ -84,13 +84,12 @@ resource "aws_instance" "fablab" {
 
     inline = [
       "sudo mv /home/ubuntu/99remote-not-fancy /etc/apt/apt.conf.d/",
-      "sudo chmod 755 /etc/sysctl.d",
       "sudo apt update",
       #      "sudo apt upgrade -y",
       "sudo apt install -y iperf3 tcpdump sysstat",
       "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
       "sudo sed -i 's/ENABLED=\"false\"/ENABLED=\"true\"/g' /etc/default/sysstat",
-      "sudo shutdown -r +1"
+      "sudo shutdown -r +1",
     ]
   }
 }
