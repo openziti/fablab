@@ -43,7 +43,7 @@ func LaunchService(factory SshConfigFactory, name, cfg string, sudo bool) error 
 		sudoCmd = " sudo "
 	}
 	logName := strings.ReplaceAll(name, " ", "-")
-	serviceCmd := fmt.Sprintf("nohup%v /home/%s/fablab/bin/%s run --log-formatter pfxlog /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &",
+	serviceCmd := fmt.Sprintf("nohup%v /home/%s/fablab/bin/%s run --log-formatter json /home/%s/fablab/cfg/%s > logs/%s.log 2>&1 &",
 		sudoCmd, factory.User(), name, factory.User(), cfg, logName)
 	if value, err := RemoteExec(factory, serviceCmd); err == nil {
 		if len(value) > 0 {

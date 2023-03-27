@@ -56,21 +56,8 @@ resource "aws_instance" "fablab" {
       private_key = file(var.key_path)
     }
 
-    source      = "etc/apt/apt.conf.d/99remote-not-fancy"
-    destination = "/home/ubuntu/99remote-not-fancy"
-  }
-
-  provisioner "file" {
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      agent       = false
-      user        = var.ssh_user
-      private_key = file(var.key_path)
-    }
-
-    source      = "etc/sysctl.d/51-network-tuning.conf"
-    destination = "/etc/sysctl.d/51-network-tuning.conf"
+    source        = "etc/apt/apt.conf.d/99remote-not-fancy"
+    destination   = "/home/ubuntu/99remote-not-fancy"
   }
 
   provisioner "remote-exec" {
@@ -83,9 +70,8 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
-      "sudo mv /home/ubuntu/99remote-not-fancy /etc/apt/apt.conf.d/",
-      "sudo apt update",
-      #      "sudo apt upgrade -y",
+      # "sudo apt update",
+      # "sudo apt upgrade -y",
       "sudo apt install -y iperf3 tcpdump sysstat",
       "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
       "sudo sed -i 's/ENABLED=\"false\"/ENABLED=\"true\"/g' /etc/default/sysstat",
