@@ -47,19 +47,6 @@ resource "aws_instance" "fablab" {
     ]
   }
 
-  provisioner "file" {
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      agent       = false
-      user        = var.ssh_user
-      private_key = file(var.key_path)
-    }
-
-    source        = "etc/apt/apt.conf.d/99remote-not-fancy"
-    destination   = "/home/ubuntu/99remote-not-fancy"
-  }
-
   provisioner "remote-exec" {
     connection {
       host        = self.public_ip
@@ -70,11 +57,6 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
-      # "sudo apt update",
-      # "sudo apt upgrade -y",
-      "sudo apt install -y iperf3 tcpdump sysstat",
-      "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
-      "sudo sed -i 's/ENABLED=\"false\"/ENABLED=\"true\"/g' /etc/default/sysstat",
       "sudo shutdown -r +1",
     ]
   }
