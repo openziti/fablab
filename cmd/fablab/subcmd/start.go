@@ -17,41 +17,43 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/lib/actions/component"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	getCmd.AddCommand(getFilesCmd)
-	RootCmd.AddCommand(getCmd)
+	RootCmd.AddCommand(newStartCmd())
 }
 
-var getCmd = &cobra.Command{
-	Use:   "get",
-	Short: "get entities from remote instances",
+func newStartCmd() *cobra.Command {
+	action := &startAction{}
+
+	var cmd = &cobra.Command{
+		Use:   "start <component-spec> [-c concurrency]",
+		Short: "start components",
+		Args:  cobra.ExactArgs(1),
+		Run:   action.run,
+	}
+
+	cmd.Flags().IntVarP(&action.concurrency, "concurrency", "c", 10, "Number of components to start in parallel")
+
+	return cmd
 }
 
-var getFilesCmd = &cobra.Command{
-	Use:   "files <hostSpec> <localPath> <remoteFiles>",
-	Short: "copy remote file(s)",
-	Args:  cobra.MinimumNArgs(3),
-	Run:   getFiles,
+type startAction struct {
+	concurrency int
 }
 
-func getFiles(_ *cobra.Command, args []string) {
+func (self *startAction) run(_ *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
 	m := model.GetModel()
-	hosts := m.SelectHosts(args[0])
-	if len(hosts) != 1 {
-		logrus.Fatalf("your hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
-	}
 
-	if err := lib.RetrieveRemoteFiles(lib.NewSshConfigFactory(hosts[0]), args[1], args[2:]...); err != nil {
-		logrus.Fatalf("error executing remote shell (%v)", err)
+	if err := component.StartInParallel(args[0], self.concurrency).Execute(m); err != nil {
+		logrus.WithError(err).Fatalf("error starting components")
 	}
 }
