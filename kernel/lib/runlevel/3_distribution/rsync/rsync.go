@@ -36,7 +36,7 @@ func Rsync(concurrency int) model.DistributionStage {
 
 func (rsync *rsyncStage) Distribute(run model.Run) error {
 	return run.GetModel().ForEachHost("*", rsync.concurrency, func(host *model.Host) error {
-		config := newConfig(host)
+		config := NewConfig(host)
 		if err := synchronizeHost(config); err != nil {
 			return fmt.Errorf("error synchronizing host [%s/%s] (%s)", host.GetRegion().GetId(), host.GetId(), err)
 		}
@@ -145,7 +145,7 @@ func (self *localRsyncer) run() error {
 			return nil
 		}
 		logrus.Infof("syncing local -> %v. Left: %v, current: %v", host.PublicIp, left, current)
-		config := newConfig(host)
+		config := NewConfig(host)
 		if err := synchronizeHost(config); err != nil {
 			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
 		}
@@ -186,8 +186,8 @@ func (self *remoteRsyncer) run() error {
 		if host.Region.Id != self.host.Region.Id {
 			didAltRegion = true
 		}
-		srcConfig := newConfig(self.host)
-		dstConfig := newConfig(host)
+		srcConfig := NewConfig(self.host)
+		dstConfig := NewConfig(host)
 		if err := synchronizeHostToHost(srcConfig, dstConfig); err != nil {
 			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
 		}
@@ -217,7 +217,7 @@ func synchronizeHost(config *Config) error {
 		return err
 	}
 
-	if err := rsync(config, model.KitBuild()+"/", fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab", config.sshConfigFactory.Hostname())); err != nil {
+	if err := RunRsync(config, model.KitBuild()+"/", fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab", config.sshConfigFactory.Hostname())); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 
@@ -248,7 +248,7 @@ type Config struct {
 	rsyncBin         string
 }
 
-func newConfig(h *model.Host) *Config {
+func NewConfig(h *model.Host) *Config {
 	config := &Config{
 		sshBin:           h.GetStringVariableOr("distribution.ssh_bin", "ssh"),
 		sshConfigFactory: lib.NewSshConfigFactory(h),
@@ -268,4 +268,26 @@ func (config *Config) sshIdentityFlag() string {
 
 func (config *Config) SshCommand() string {
 	return config.sshBin + " " + config.sshIdentityFlag()
+}
+
+func NewRsyncHost(hostSpec, src, dest string) model.DistributionStage {
+	return &rsyncHostStage{
+		hostSpec: hostSpec,
+		src:      src,
+		dest:     dest,
+	}
+}
+
+type rsyncHostStage struct {
+	hostSpec string
+	src      string
+	dest     string
+}
+
+func (self *rsyncHostStage) Distribute(run model.Run) error {
+	return run.GetModel().ForEachHost(self.hostSpec, 1, func(host *model.Host) error {
+		cfg := NewConfig(host)
+		dest := cfg.sshConfigFactory.User() + "@" + cfg.sshConfigFactory.Hostname() + ":" + self.dest
+		return RunRsync(NewConfig(host), self.src, dest)
+	})
 }

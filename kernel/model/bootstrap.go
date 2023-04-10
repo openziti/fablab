@@ -92,6 +92,9 @@ func bootstrapModel() error {
 			}
 		}
 
+		// re-initialize after running structural factories, as there may be new uninitialized elements
+		model.init()
+
 		model.BindLabel(l)
 
 		for _, factory := range model.Factories {

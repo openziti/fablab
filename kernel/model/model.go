@@ -302,10 +302,10 @@ func (m *Model) init() {
 			m.Data = Data{}
 		}
 		m.Scope.initialize(m, false)
-		m.RangeSortedRegions(func(id string, region *Region) {
-			region.init(id, m)
-		})
 	}
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.init(id, m)
+	})
 }
 
 func (m *Model) Accept(visitor EntityVisitor) {
@@ -335,13 +335,14 @@ type Regions map[string]*Region
 
 type Region struct {
 	Scope
-	Model      *Model
-	Id         string
-	Region     string
-	Site       string
-	Hosts      Hosts
-	Index      uint32
-	ScaleIndex uint32
+	Model       *Model
+	Id          string
+	Region      string
+	Site        string
+	Hosts       Hosts
+	Index       uint32
+	ScaleIndex  uint32
+	initialized atomic.Bool
 }
 
 func (region *Region) CloneRegion(scaleIndex uint32) *Region {
@@ -361,12 +362,18 @@ func (region *Region) CloneRegion(scaleIndex uint32) *Region {
 }
 
 func (region *Region) init(id string, model *Model) {
-	region.Id = id
-	region.Model = model
-	region.Index = model.GetNextRegionIndex()
-	region.Scope.initialize(region, true)
-	if region.Data == nil {
-		region.Data = Data{}
+	if region.initialized.CompareAndSwap(false, true) {
+		region.Id = id
+		region.Model = model
+		region.Index = model.GetNextRegionIndex()
+		region.Scope.initialize(region, true)
+		if region.Data == nil {
+			region.Data = Data{}
+		}
+
+		if region.Hosts == nil {
+			region.Hosts = map[string]*Host{}
+		}
 	}
 
 	region.RangeSortedHosts(func(id string, host *Host) {
@@ -477,6 +484,7 @@ type Host struct {
 	Components           Components
 	Index                uint32
 	ScaleIndex           uint32
+	initialized          atomic.Bool
 }
 
 func (host *Host) CloneHost(scaleIndex uint32) *Host {
@@ -504,14 +512,19 @@ func (host *Host) CloneHost(scaleIndex uint32) *Host {
 
 func (host *Host) init(id string, region *Region) {
 	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
-	host.Id = id
-	host.Region = region
-	if host.Index == 0 {
-		host.Index = region.Model.GetNextHostIndex()
-	}
-	host.Scope.initialize(host, true)
-	if host.Data == nil {
-		host.Data = Data{}
+	if host.initialized.CompareAndSwap(false, true) {
+		host.Id = id
+		host.Region = region
+		if host.Index == 0 {
+			host.Index = region.Model.GetNextHostIndex()
+		}
+		host.Scope.initialize(host, true)
+		if host.Data == nil {
+			host.Data = Data{}
+		}
+		if host.Components == nil {
+			host.Components = map[string]*Component{}
+		}
 	}
 
 	host.RangeSortedComponents(func(id string, component *Component) {
@@ -618,6 +631,7 @@ type Component struct {
 	Index           uint32
 	ScaleIndex      uint32
 	RunWithSudo     bool
+	initialized     atomic.Bool
 }
 
 func (component *Component) CloneComponent(scaleIndex uint32) *Component {
@@ -640,12 +654,14 @@ func (component *Component) CloneComponent(scaleIndex uint32) *Component {
 }
 
 func (component *Component) init(id string, host *Host) {
-	component.Id = id
-	component.Host = host
-	component.Index = host.GetModel().GetNextComponentIndex()
-	component.Scope.initialize(component, true)
-	if component.Data == nil {
-		component.Data = Data{}
+	if component.initialized.CompareAndSwap(false, true) {
+		component.Id = id
+		component.Host = host
+		component.Index = host.GetModel().GetNextComponentIndex()
+		component.Scope.initialize(component, true)
+		if component.Data == nil {
+			component.Data = Data{}
+		}
 	}
 }
 
