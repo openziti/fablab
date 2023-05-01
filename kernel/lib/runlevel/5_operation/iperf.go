@@ -46,100 +46,44 @@ func (i *iperf) Operate(run model.Run) error {
 		serverHost := serverHosts[0]
 		sshServerFactory := lib.NewSshConfigFactory(serverHost)
 		go i.runServer(sshServerFactory)
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 		sshClientFactory := lib.NewSshConfigFactory(host)
 
 		if i.overlay == true {
-			iperfCmdU := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 128 -b 4M --json", "iperf.service", i.seconds)
-			//iperfCmdU := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 128 -b 78M --json", "172.28.149.215", i.seconds)
-			output, err := lib.RemoteExec(sshClientFactory, iperfCmdU)
-			if err == nil {
-				logrus.Debugf("output = [%s]", output)
-				if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
-					if host.Data == nil {
-						host.Data = make(map[string]interface{})
-					}
-					metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
-					host.Data[metricsKey] = summary
-				} else {
-					return fmt.Errorf("error summarizing client iperf data [%w]", err)
-				}
-			} else {
-				return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
+			// Alter this string to suit your tastes
+			iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 128 -b 4M --json", "iperf.service", i.seconds)
+			err2 := runTest(i, sshClientFactory, host, iperfCmd)
+			if err2 != nil {
+				return err2
 			}
 		} else {
-			iperfCmdO := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 5000M --json", serverHost.PublicIp, i.seconds)
-			output, err := lib.RemoteExec(sshClientFactory, iperfCmdO)
-			if err == nil {
-				logrus.Debugf("output = [%s]", output)
-				if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
-					if host.Data == nil {
-						host.Data = make(map[string]interface{})
-					}
-					metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
-					host.Data[metricsKey] = summary
-				} else {
-					return fmt.Errorf("error summarizing client iperf data [%w]", err)
-				}
-			} else {
-				return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
+			// Alter this string to suit your tastes
+			iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 1 -b 5000M --json", serverHost.PublicIp, i.seconds)
+			err3 := runTest(i, sshClientFactory, host, iperfCmd)
+			if err3 != nil {
+				return err3
 			}
 		}
-		//output, err := lib.RemoteExec(sshClientFactory, iperfCmdU)
-		//output, err := lib.RemoteExec(sshClientFactory, iperfCmdO)
-		//if err == nil {
-		//	logrus.Debugf("output = [%s]", output)
-		//	if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
-		//		if host.Data == nil {
-		//			host.Data = make(map[string]interface{})
-		//		}
-		//		metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
-		//		host.Data[metricsKey] = summary
-		//	} else {
-		//		return fmt.Errorf("error summarizing client iperf data [%w]", err)
-		//	}
-		//} else {
-		//	return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
-		//}
 	}
-	//fmt.Printf("clientHosts type and value: %T, ", clientHosts)
-	//if len(serverHosts) == 1 && len(clientHosts) == 1 {
-	//	serverHost := serverHosts[0]
-	//	clientHost := clientHosts[0]
-	//
-	//	sshClientFactory := lib.NewSshConfigFactory(clientHost)
-	//	sshServerFactory := lib.NewSshConfigFactory(serverHost)
-	//
-	//	go i.runServer(sshServerFactory)
-	//
-	//	time.Sleep(10 * time.Second)
-	//
-	//	if err := lib.RemoteKillFilter(sshClientFactory, "iperf3", "sudo"); err != nil {
-	//		return fmt.Errorf("error killing iperf3 clients (%w)", err)
-	//	}
-	//
-	//	endpoint := i.endpointSelector(run.GetModel())
-	//
-	//	iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d -P 128 -b 37M --json", endpoint, i.seconds)
-	//	output, err := lib.RemoteExec(sshClientFactory, iperfCmd)
-	//	if err == nil {
-	//		logrus.Debugf("output = [%s]", output)
-	//		if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
-	//			if clientHost.Data == nil {
-	//				clientHost.Data = make(map[string]interface{})
-	//			}
-	//			metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
-	//			clientHost.Data[metricsKey] = summary
-	//		} else {
-	//			return fmt.Errorf("error summarizing client iperf data [%w]", err)
-	//		}
-	//	} else {
-	//		return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
-	//	}
-	//
-	//} else {
-	//	return fmt.Errorf("found [%d] server hosts, and [%d] client hosts, skipping", len(serverHosts), len(clientHosts))
-	//}
+	return nil
+}
+
+func runTest(i *iperf, sshClientFactory *lib.SshConfigFactoryImpl, host *model.Host, iperfCmdU string) error {
+	output, err := lib.RemoteExec(sshClientFactory, iperfCmdU)
+	if err == nil {
+		logrus.Debugf("output = [%s]", output)
+		if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
+			if host.Data == nil {
+				host.Data = make(map[string]interface{})
+			}
+			metricsKey := fmt.Sprintf("iperf_%s_metrics", i.scenarioName)
+			host.Data[metricsKey] = summary
+		} else {
+			return fmt.Errorf("error summarizing client iperf data [%w]", err)
+		}
+	} else {
+		return fmt.Errorf("iperf3 client failure [%s] (%w)", output, err)
+	}
 	return nil
 }
 
