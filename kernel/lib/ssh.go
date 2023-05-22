@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/foundation/v2/info"
@@ -144,6 +145,31 @@ func RemoteExecAll(sshConfig SshConfigFactory, cmds ...string) (string, error) {
 	var b bytes.Buffer
 	err := RemoteExecAllTo(sshConfig, &b, cmds...)
 	return b.String(), err
+}
+
+func RemoteExecAllWithTimeout(sshConfig SshConfigFactory, timeout time.Duration, cmds ...string) (string, error) {
+	resultCh := make(chan struct {
+		output string
+		err    error
+	}, 1)
+
+	go func() {
+		result, err := RemoteExecAll(sshConfig, cmds...)
+		resultCh <- struct {
+			output string
+			err    error
+		}{
+			output: result,
+			err:    err,
+		}
+	}()
+
+	select {
+	case result := <-resultCh:
+		return result.output, result.err
+	case <-time.After(timeout):
+		return "", errors.Errorf("timed out after %v", timeout)
+	}
 }
 
 func RemoteExecAllTo(sshConfig SshConfigFactory, out io.Writer, cmds ...string) error {
