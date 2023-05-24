@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 NetFoundry Inc.
+	Copyright 2019 NetFoundry Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -14,15 +14,27 @@
 	limitations under the License.
 */
 
-package model
+package devkit
 
-// Factory builds model instances.
-type Factory interface {
-	Build(m *Model) error
+import (
+	"fmt"
+	"github.com/openziti/fablab/kernel/model"
+	"os"
+	"path/filepath"
+)
+
+type fetch struct {
+	f func(binDir string) error
 }
 
-type FactoryFunc func(m *Model) error
+func FetchBinaries(f func(binDir string) error) model.ConfigurationStage {
+	return &fetch{f: f}
+}
 
-func (f FactoryFunc) Build(m *Model) error {
-	return f(m)
+func (self *fetch) Configure(model.Run) error {
+	binDir := filepath.Join(model.KitBuild(), "bin")
+	if err := os.MkdirAll(binDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating kit bin directory (%s)", err)
+	}
+	return self.f(binDir)
 }
