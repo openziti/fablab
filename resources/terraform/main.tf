@@ -31,7 +31,7 @@ variable "amis" {
 	eu-west-3		= "ami-0f7cd40eac2214b37"
 	me-south-1		= "ami-0eddb8cfbd6a5f657"
 	sa-east-1		= "ami-054a31f1b3bf90920"
-	us-east-1		= "ami-07e1b350b5184dd41"
+	us-east-1		= "ami-0ca378c03ecc74103"
 	us-east-2		= "ami-00399ec92321828f5"
 	us-gov-east-1	= "ami-0dec4096f1af85e9b"
 	us-gov-west-1	= "ami-0c39aacd1cc8a1ccf"
