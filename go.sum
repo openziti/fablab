@@ -221,8 +221,8 @@ github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce/go.mod h1:ifHPsLnd
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852 h1:Yl0tPBa8QPjGmesFh1D0rDy+q1Twx6FyU7VWHi8wZbI=
 github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852/go.mod h1:eqOVx5Vwu4gd2mmMZvVZsgIqNSaW3xxRThUJ0k/TPk4=
-github.com/openziti/foundation/v2 v2.0.25 h1:tGb9wdu6KCpO49RJ3HX2ClOVHf8gdntplIh/7CEVaM4=
-github.com/openziti/foundation/v2 v2.0.25/go.mod h1:EOqea8Q1wXd4hS9MxFYM6ngDgenKGxz8c+CJ8Svr7BI=
+github.com/openziti/foundation/v2 v2.0.26 h1:RISGM97aIFnnEkxrcVsO6fnGg9W4ByydSnqWAVkJAqY=
+github.com/openziti/foundation/v2 v2.0.26/go.mod h1:ngdQq0KLGIDfzkQQzu1BQSMLNrsBUXdziGvsJns4cFM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
