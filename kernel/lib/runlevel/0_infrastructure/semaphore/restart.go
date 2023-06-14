@@ -25,11 +25,11 @@ import (
 	"time"
 )
 
-func Restart(preDelay time.Duration) model.InfrastructureStage {
+func Restart(preDelay time.Duration) model.Stage {
 	return &restartStage{preDelay: preDelay}
 }
 
-func (restartStage *restartStage) Express(run model.Run) error {
+func (restartStage *restartStage) Execute(run model.Run) error {
 	m := run.GetModel()
 
 	logrus.Infof("waiting for expressed hosts to restart (pre-delay: %s)", restartStage.preDelay.String())

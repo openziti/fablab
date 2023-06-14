@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Sar(scenario string, host *model.Host, intervalSeconds int, joiner chan struct{}) model.OperatingStage {
+func Sar(scenario string, host *model.Host, intervalSeconds int, joiner chan struct{}) model.Stage {
 	return &sar{
 		scenario:        scenario,
 		host:            host,
@@ -34,19 +34,19 @@ func Sar(scenario string, host *model.Host, intervalSeconds int, joiner chan str
 	}
 }
 
-func SarCloser(host *model.Host) model.OperatingStage {
+func SarCloser(host *model.Host) model.Stage {
 	return &sarCloser{
 		host: host,
 	}
 }
 
-func (s *sar) Operate(model.Run) error {
+func (s *sar) Execute(model.Run) error {
 	ssh := lib.NewSshConfigFactory(s.host)
 	go s.runSar(ssh)
 	return nil
 }
 
-func (s *sarCloser) Operate(model.Run) error {
+func (s *sarCloser) Execute(model.Run) error {
 	ssh := lib.NewSshConfigFactory(s.host)
 	if err := lib.RemoteKill(ssh, "sar"); err != nil {
 		return fmt.Errorf("error closing sar (%w)", err)

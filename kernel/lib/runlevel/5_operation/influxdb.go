@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-func InfluxMetricsReporter() model.OperatingStage {
+func InfluxMetricsReporter() model.Stage {
 	return &influxMetricsReporterStage{}
 }
 
@@ -35,7 +35,7 @@ type influxMetricsReporterStage struct {
 	errorz.ErrorHolderImpl
 }
 
-func (stage *influxMetricsReporterStage) Operate(run model.Run) error {
+func (stage *influxMetricsReporterStage) Execute(run model.Run) error {
 	m := run.GetModel()
 	urlVar := m.GetRequiredStringVariable(stage, "metrics.influxdb.url")
 	db := m.GetRequiredStringVariable(stage, "metrics.influxdb.db")

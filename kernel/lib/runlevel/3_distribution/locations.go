@@ -23,14 +23,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Locations(hostSpec string, paths ...string) model.DistributionStage {
+func Locations(hostSpec string, paths ...string) model.Stage {
 	return &locations{
 		hostSpec: hostSpec,
 		paths:    paths,
 	}
 }
 
-func (self *locations) Distribute(run model.Run) error {
+func (self *locations) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
 		ssh := lib.NewSshConfigFactory(host)
 		var cmds []string

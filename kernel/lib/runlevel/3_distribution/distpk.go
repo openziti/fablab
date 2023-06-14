@@ -7,13 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DistributeSshKey(hostSpec string) model.DistributionStage {
+func DistributeSshKey(hostSpec string) model.Stage {
 	return &distSshKey{
 		hostSpec: hostSpec,
 	}
 }
 
-func (self *distSshKey) Distribute(run model.Run) error {
+func (self *distSshKey) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
 		ssh := lib.NewSshConfigFactory(host)
 		keyPath := fmt.Sprintf("/home/%v/.ssh/id_rsa", ssh.User())

@@ -28,11 +28,11 @@ import (
 	"text/template"
 )
 
-func Static(configs []StaticConfig) model.ConfigurationStage {
+func Static(configs []StaticConfig) model.Stage {
 	return &staticConfig{configs: configs}
 }
 
-func (staticConfig *staticConfig) Configure(run model.Run) error {
+func (staticConfig *staticConfig) Execute(run model.Run) error {
 	m := run.GetModel()
 	configResource := run.GetModel().GetResource(resources.Configs)
 	for _, config := range staticConfig.configs {

@@ -29,8 +29,8 @@ func GroupKill(hostSpec, match string) model.Action {
 	}
 }
 
-func (groupKill *groupKill) Execute(m *model.Model) error {
-	for _, h := range m.SelectHosts(groupKill.hostSpec) {
+func (groupKill *groupKill) Execute(run model.Run) error {
+	for _, h := range run.GetModel().SelectHosts(groupKill.hostSpec) {
 
 		sshConfigFactory := lib.NewSshConfigFactory(h)
 		if err := lib.RemoteKill(sshConfigFactory, groupKill.match); err != nil {

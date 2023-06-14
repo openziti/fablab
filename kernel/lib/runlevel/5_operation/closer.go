@@ -21,11 +21,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Closer(ch chan struct{}) model.OperatingStage {
+func Closer(ch chan struct{}) model.Stage {
 	return &closer{close: ch}
 }
 
-func (closer *closer) Operate(model.Run) error {
+func (closer *closer) Execute(model.Run) error {
 	logrus.Info("closing")
 	close(closer.close)
 	return nil

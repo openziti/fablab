@@ -38,7 +38,10 @@ func express(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	ctx := model.NewRun()
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
 	if err := ctx.GetModel().Express(ctx); err != nil {
 		logrus.Fatalf("error expressing infrastructure (%v)", err)
 	}

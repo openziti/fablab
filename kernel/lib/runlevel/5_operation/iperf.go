@@ -26,7 +26,7 @@ import (
 
 type EndpointSelectorF func(m *model.Model) string
 
-func Iperf(scenarioName string, endpoint EndpointSelectorF, serverHosts, clientHosts string, seconds int) model.OperatingStage {
+func Iperf(scenarioName string, endpoint EndpointSelectorF, serverHosts, clientHosts string, seconds int) model.Stage {
 	return &iperf{
 		scenarioName:     scenarioName,
 		endpointSelector: endpoint,
@@ -36,7 +36,7 @@ func Iperf(scenarioName string, endpoint EndpointSelectorF, serverHosts, clientH
 	}
 }
 
-func (i *iperf) Operate(run model.Run) error {
+func (i *iperf) Execute(run model.Run) error {
 	m := run.GetModel()
 	serverHosts := m.SelectHosts(i.serverHosts)
 	clientHosts := m.SelectHosts(i.clientHosts)

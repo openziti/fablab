@@ -21,11 +21,17 @@ import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/foundation/v2/info"
+	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
+	"time"
 )
 
 const (
@@ -209,12 +215,12 @@ type Model struct {
 	Factories           []Factory
 	BootstrapExtensions []BootstrapExtension
 	Actions             map[string]ActionBinder
-	Infrastructure      InfrastructureStages
-	Configuration       ConfigurationStages
-	Distribution        DistributionStages
-	Activation          ActivationStages
-	Operation           OperatingStages
-	Disposal            DisposalStages
+	Infrastructure      Stages
+	Configuration       Stages
+	Distribution        Stages
+	Activation          Stages
+	Operation           Stages
+	Disposal            Stages
 	MetricsHandlers     []MetricsHandler
 	Resources           Resources
 
@@ -617,114 +623,6 @@ func (host *Host) RangeSortedComponents(f func(id string, component *Component))
 
 type Hosts map[string]*Host
 
-type Component struct {
-	Scope
-	Id              string
-	Host            *Host
-	ScriptSrc       string
-	ScriptName      string
-	ConfigSrc       string
-	ConfigName      string
-	BinaryName      string
-	PublicIdentity  string
-	PrivateIdentity string
-	Index           uint32
-	ScaleIndex      uint32
-	RunWithSudo     bool
-	initialized     atomic.Bool
-}
-
-func (component *Component) CloneComponent(scaleIndex uint32) *Component {
-	result := &Component{
-		Scope:           *component.CloneScope(),
-		Id:              component.Id,
-		Host:            component.Host,
-		ScriptSrc:       component.ScriptSrc,
-		ScriptName:      component.ScriptName,
-		ConfigSrc:       component.ConfigSrc,
-		ConfigName:      component.ConfigName,
-		BinaryName:      component.BinaryName,
-		PublicIdentity:  component.PublicIdentity,
-		PrivateIdentity: component.PrivateIdentity,
-		Index:           component.GetModel().GetNextComponentIndex(),
-		RunWithSudo:     component.RunWithSudo,
-		ScaleIndex:      scaleIndex,
-	}
-	return result
-}
-
-func (component *Component) init(id string, host *Host) {
-	if component.initialized.CompareAndSwap(false, true) {
-		component.Id = id
-		component.Host = host
-		component.Index = host.GetModel().GetNextComponentIndex()
-		component.Scope.initialize(component, true)
-		if component.Data == nil {
-			component.Data = Data{}
-		}
-	}
-}
-
-func (component *Component) GetId() string {
-	return component.Id
-}
-
-func (component *Component) GetPath() string {
-	return fmt.Sprintf("%v > %v", component.Host.GetPath(), component.Id)
-}
-
-func (component *Component) GetPathId() string {
-	return component.GetRegion().Id + "." + component.Host.Id + "." + component.Id
-}
-
-func (component *Component) GetType() string {
-	return EntityTypeComponent
-}
-
-func (component *Component) GetScope() *Scope {
-	return &component.Scope
-}
-
-func (component *Component) GetHost() *Host {
-	return component.Host
-}
-
-func (component *Component) Region() *Region {
-	return component.Host.Region
-}
-
-func (component *Component) GetRegion() *Region {
-	return component.Host.Region
-}
-
-func (component *Component) GetModel() *Model {
-	return component.Host.Region.Model
-}
-
-func (component *Component) GetParentEntity() Entity {
-	return component.Host
-}
-
-func (component *Component) Accept(visitor EntityVisitor) {
-	visitor(component)
-}
-
-func (component *Component) GetChildren() []Entity {
-	return nil
-}
-
-func (component *Component) Matches(entityType string, matcher EntityMatcher) bool {
-	if EntityTypeModel == entityType || EntityTypeRegion == entityType || EntityTypeHost == entityType {
-		return component.Host.Matches(entityType, matcher)
-	}
-
-	if EntityTypeComponent == entityType {
-		return matcher(component)
-	}
-
-	return matchHierarchical(entityType, matcher, component)
-}
-
 type Components map[string]*Component
 
 type ActionBinder func(m *Model) Action
@@ -737,96 +635,201 @@ func Bind(action Action) ActionBinder {
 }
 
 type Action interface {
-	Execute(m *Model) error
+	Execute(run Run) error
 }
 
-type ActionFunc func(m *Model) error
+type ActionFunc func(run Run) error
 
-func (f ActionFunc) Execute(m *Model) error {
-	return f(m)
+func (f ActionFunc) Execute(run Run) error {
+	return f(run)
 }
 
-func NewRun() Run {
-	return &runImpl{
-		label: GetLabel(),
-		model: GetModel(),
-		runId: fmt.Sprintf("%d", info.NowInMilliseconds()),
+func NewRun() (Run, error) {
+	result := &runImpl{
+		label:          GetLabel(),
+		model:          GetModel(),
+		runId:          fmt.Sprintf("%d", info.NowInMilliseconds()),
+		instanceConfig: instanceConfig,
+		oneTimeOps:     cmap.New[*oneTimeOpContext](),
 	}
+	return result.init()
+}
+
+type StagingArea interface {
+	GetWorkingDir() string
+	GetConfigDir() string
+	GetPkiDir() string
+	GetBinDir() string
+	GetTmpDir() string
+
+	DirExists(path string) (bool, error)
+	FileExists(path string) (bool, error)
+
+	DoOnce(operation string, f func() error) error
 }
 
 type Run interface {
+	StagingArea
 	GetModel() *Model
 	GetLabel() *Label
 	GetId() string
 }
 
 type runImpl struct {
-	label *Label
-	model *Model
-	runId string
+	label          *Label
+	model          *Model
+	runId          string
+	instanceConfig *InstanceConfig
+	oneTimeOps     cmap.ConcurrentMap[string, *oneTimeOpContext]
 }
 
-func (run *runImpl) GetModel() *Model {
-	return run.model
+func (self *runImpl) DoOnce(operation string, f func() error) error {
+	var ctx *oneTimeOpContext
+	ctx, found := self.oneTimeOps.Get(operation)
+	opOwner := false
+	if !found {
+		ctx = newOneTimeOpContext()
+		if opOwner = self.oneTimeOps.SetIfAbsent(operation, ctx); !opOwner {
+			ctx, _ = self.oneTimeOps.Get(operation)
+		}
+	}
+	if opOwner {
+		return ctx.runOp(f)
+	}
+	return ctx.getOpResult()
 }
 
-func (run *runImpl) GetLabel() *Label {
-	return run.label
+func (self *runImpl) init() (*runImpl, error) {
+	if err := os.MkdirAll(self.GetBinDir(), 0700); err != nil {
+		return nil, errors.Wrapf(err, "unable to create binaries working directory [%s]", self.GetBinDir())
+	}
+	if err := os.MkdirAll(self.GetConfigDir(), 0700); err != nil {
+		return nil, errors.Wrapf(err, "unable to create config working directory [%s]", self.GetConfigDir())
+	}
+	if err := os.MkdirAll(self.GetPkiDir(), 0700); err != nil {
+		return nil, errors.Wrapf(err, "unable to create pki working directory [%s]", self.GetPkiDir())
+	}
+	if err := os.MkdirAll(self.GetTmpDir(), 0700); err != nil {
+		return nil, errors.Wrapf(err, "unable to create tmp working directory [%s]", self.GetTmpDir())
+	}
+	return self, nil
 }
 
-func (run *runImpl) GetId() string {
-	return run.runId
+func (self *runImpl) GetWorkingDir() string {
+	return self.instanceConfig.WorkingDirectory
 }
 
-type InfrastructureStages []InfrastructureStage
-
-type InfrastructureStage interface {
-	Express(run Run) error
+func (self *runImpl) GetConfigDir() string {
+	return filepath.Join(self.GetWorkingDir(), BuildKitDir, BuildConfigDir)
 }
 
-type ConfigurationStages []ConfigurationStage
-
-type ConfigurationStage interface {
-	Configure(run Run) error
+func (self *runImpl) GetPkiDir() string {
+	return filepath.Join(self.GetWorkingDir(), BuildKitDir, BuildPkiDir)
 }
 
-type DistributionStages []DistributionStage
-
-type DistributionStage interface {
-	Distribute(run Run) error
+func (self *runImpl) GetBinDir() string {
+	return filepath.Join(self.GetWorkingDir(), BuildKitDir, BuildBinDir)
 }
 
-type ActivationStages []ActivationStage
-
-type ActivationStage interface {
-	Activate(run Run) error
+func (self *runImpl) GetTmpDir() string {
+	return filepath.Join(self.GetWorkingDir(), BuildTmpDir)
 }
 
-type OperatingStages []OperatingStage
-
-type OperatingStage interface {
-	Operate(run Run) error
+func (self *runImpl) DirExists(path string) (bool, error) {
+	fullPath := filepath.Join(self.GetWorkingDir(), path)
+	s, err := os.Stat(fullPath)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, nil
+	}
+	return s.IsDir(), nil
 }
 
-type OperatingStageF func(run Run) error
+func (self *runImpl) FileExists(path string) (bool, error) {
+	fullPath := filepath.Join(self.instanceConfig.WorkingDirectory, path)
+	s, err := os.Stat(fullPath)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, nil
+	}
+	return !s.IsDir(), nil
+}
 
-func (self OperatingStageF) Operate(run Run) error {
+func (self *runImpl) GetModel() *Model {
+	return self.model
+}
+
+func (self *runImpl) GetLabel() *Label {
+	return self.label
+}
+
+func (self *runImpl) GetId() string {
+	return self.runId
+}
+
+func newOneTimeOpContext() *oneTimeOpContext {
+	return &oneTimeOpContext{
+		doneC: make(chan struct{}),
+	}
+}
+
+type oneTimeOpContext struct {
+	doneC chan struct{}
+	err   error
+	sync.Mutex
+}
+
+func (self *oneTimeOpContext) runOp(f func() error) error {
+	result := f()
+	self.Lock()
+	defer self.Unlock()
+	self.err = result
+	close(self.doneC)
+	return self.err
+}
+
+func (self *oneTimeOpContext) getOpResult() error {
+	<-self.doneC
+	return self.Err()
+}
+
+func (self *oneTimeOpContext) Deadline() (deadline time.Time, ok bool) {
+	return time.Time{}, false
+}
+
+func (self *oneTimeOpContext) Done() <-chan struct{} {
+	return self.doneC
+}
+
+func (self *oneTimeOpContext) Err() error {
+	self.Lock()
+	defer self.Unlock()
+	return self.err
+}
+
+func (self *oneTimeOpContext) Value(any) any {
+	return nil
+}
+
+type Stages []Stage
+
+type Stage interface {
+	Execute(run Run) error
+}
+
+type StageActionF func(run Run) error
+
+func (self StageActionF) Execute(run Run) error {
 	return self(run)
-}
-
-type DisposalStages []DisposalStage
-
-type DisposalStage interface {
-	Dispose(run Run) error
 }
 
 type actionStage string
 
-func (stage actionStage) Activate(run Run) error {
-	return stage.execute(run)
-}
-
-func (stage actionStage) Operate(run Run) error {
+func (stage actionStage) Execute(run Run) error {
 	return stage.execute(run)
 }
 
@@ -838,17 +841,17 @@ func (stage actionStage) execute(run Run) error {
 		return fmt.Errorf("no [%s] action", actionName)
 	}
 	figlet.FigletMini("action: " + actionName)
-	if err := action.Execute(m); err != nil {
+	if err := action.Execute(run); err != nil {
 		return fmt.Errorf("error executing [%s] action (%w)", actionName, err)
 	}
 	return nil
 }
 
-func (m *Model) AddActivationStage(stage ActivationStage) {
+func (m *Model) AddActivationStage(stage Stage) {
 	m.Activation = append(m.Activation, stage)
 }
 
-func (m *Model) AddActivationStages(stage ...ActivationStage) {
+func (m *Model) AddActivationStages(stage ...Stage) {
 	m.Activation = append(m.Activation, stage...)
 }
 
@@ -858,15 +861,15 @@ func (m *Model) AddActivationActions(actions ...string) {
 	}
 }
 
-func (m *Model) AddOperatingStage(stage OperatingStage) {
+func (m *Model) AddOperatingStage(stage Stage) {
 	m.Operation = append(m.Operation, stage)
 }
 
-func (m *Model) AddOperatingStageF(stage OperatingStageF) {
+func (m *Model) AddOperatingStageF(stage StageActionF) {
 	m.AddOperatingStage(stage)
 }
 
-func (m *Model) AddOperatingStages(stages ...OperatingStage) {
+func (m *Model) AddOperatingStages(stages ...Stage) {
 	m.Operation = append(m.Operation, stages...)
 }
 
@@ -878,7 +881,7 @@ func (m *Model) AddOperatingActions(actions ...string) {
 
 func (m *Model) Express(run Run) error {
 	for _, stage := range m.Infrastructure {
-		if err := stage.Express(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error expressing infrastructure (%w)", err)
 		}
 	}
@@ -890,8 +893,19 @@ func (m *Model) Express(run Run) error {
 }
 
 func (m *Model) Build(run Run) error {
+	err := m.ForEachComponent("*", 1, func(c *Component) error {
+		if stageable, ok := c.Type.(FileStagingComponent); ok {
+			return stageable.StageFiles(run, c)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
 	for _, stage := range m.Configuration {
-		if err := stage.Configure(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error building configuration (%w)", err)
 		}
 	}
@@ -904,20 +918,33 @@ func (m *Model) Build(run Run) error {
 
 func (m *Model) Sync(run Run) error {
 	for _, stage := range m.Distribution {
-		if err := stage.Distribute(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error distributing (%w)", err)
 		}
 	}
+
+	err := m.ForEachComponent("*", 1, func(c *Component) error {
+		if hostInitializer, ok := c.Type.(HostInitializingComponent); ok {
+			return hostInitializer.InitializeHost(run, c)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
 	run.GetLabel().State = Distributed
 	if err := run.GetLabel().Save(); err != nil {
 		return fmt.Errorf("error updating instance label (%w)", err)
 	}
+
 	return nil
 }
 
 func (m *Model) Activate(run Run) error {
 	for _, stage := range m.Activation {
-		if err := stage.Activate(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error activating (%w)", err)
 		}
 	}
@@ -930,7 +957,7 @@ func (m *Model) Activate(run Run) error {
 
 func (m *Model) Operate(run Run) error {
 	for _, stage := range m.Operation {
-		if err := stage.Operate(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error operating (%w)", err)
 		}
 	}
@@ -943,7 +970,7 @@ func (m *Model) Operate(run Run) error {
 
 func (m *Model) Dispose(run Run) error {
 	for _, stage := range m.Disposal {
-		if err := stage.Dispose(run); err != nil {
+		if err := stage.Execute(run); err != nil {
 			return fmt.Errorf("error disposing (%w)", err)
 		}
 	}

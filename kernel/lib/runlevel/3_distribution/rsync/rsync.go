@@ -28,13 +28,13 @@ import (
 	"sync"
 )
 
-func Rsync(concurrency int) model.DistributionStage {
+func Rsync(concurrency int) model.Stage {
 	return &rsyncStage{
 		concurrency: concurrency,
 	}
 }
 
-func (rsync *rsyncStage) Distribute(run model.Run) error {
+func (rsync *rsyncStage) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost("*", rsync.concurrency, func(host *model.Host) error {
 		config := NewConfig(host)
 		if err := synchronizeHost(config); err != nil {
@@ -48,7 +48,7 @@ type rsyncStage struct {
 	concurrency int
 }
 
-func RsyncStaged() model.DistributionStage {
+func RsyncStaged() model.Stage {
 	return &stagedRsyncStage{}
 }
 
@@ -58,7 +58,7 @@ type stagedRsyncStage struct {
 // rsync to first host
 // rsync from first host to next host in region
 
-func (rsync *stagedRsyncStage) Distribute(run model.Run) error {
+func (rsync *stagedRsyncStage) Execute(run model.Run) error {
 	group, ctx := errgroup.WithContext(context.Background())
 	hosts := map[string]*model.Host{}
 
@@ -270,7 +270,7 @@ func (config *Config) SshCommand() string {
 	return config.sshBin + " " + config.sshIdentityFlag()
 }
 
-func NewRsyncHost(hostSpec, src, dest string) model.DistributionStage {
+func NewRsyncHost(hostSpec, src, dest string) model.Stage {
 	return &rsyncHostStage{
 		hostSpec: hostSpec,
 		src:      src,
@@ -284,7 +284,7 @@ type rsyncHostStage struct {
 	dest     string
 }
 
-func (self *rsyncHostStage) Distribute(run model.Run) error {
+func (self *rsyncHostStage) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 1, func(host *model.Host) error {
 		cfg := NewConfig(host)
 		dest := cfg.sshConfigFactory.User() + "@" + cfg.sshConfigFactory.Hostname() + ":" + self.dest

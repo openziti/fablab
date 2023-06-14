@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 )
 
-func Tcpdump(scenarioName, host string, snaplen int, joiner chan struct{}) model.OperatingStage {
+func Tcpdump(scenarioName, host string, snaplen int, joiner chan struct{}) model.Stage {
 	return &tcpdump{
 		scenario: scenarioName,
 		host:     host,
@@ -34,7 +34,7 @@ func Tcpdump(scenarioName, host string, snaplen int, joiner chan struct{}) model
 	}
 }
 
-func (t *tcpdump) Operate(run model.Run) error {
+func (t *tcpdump) Execute(run model.Run) error {
 	m := run.GetModel()
 	host, err := m.SelectHost(t.host)
 	if err != nil {

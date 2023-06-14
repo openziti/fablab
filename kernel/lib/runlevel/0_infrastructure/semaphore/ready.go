@@ -25,11 +25,11 @@ import (
 	"time"
 )
 
-func Ready(maxWait time.Duration) model.InfrastructureStage {
+func Ready(maxWait time.Duration) model.Stage {
 	return &readyStage{maxWait: maxWait}
 }
 
-func (self *readyStage) Express(run model.Run) error {
+func (self *readyStage) Execute(run model.Run) error {
 	m := run.GetModel()
 
 	logrus.Infof("waiting for expressed hosts to be ready (max-wait: %s)", self.maxWait.String())

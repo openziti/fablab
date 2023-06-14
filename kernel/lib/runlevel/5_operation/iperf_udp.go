@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-func IperfUdp(scenarioName, endpoint, serverHosts, clientHosts, bandwidth string, seconds int) model.OperatingStage {
+func IperfUdp(scenarioName, endpoint, serverHosts, clientHosts, bandwidth string, seconds int) model.Stage {
 	return &iperfUdp{
 		scenarioName: scenarioName,
 		endpoint:     endpoint,
@@ -35,7 +35,7 @@ func IperfUdp(scenarioName, endpoint, serverHosts, clientHosts, bandwidth string
 	}
 }
 
-func (i *iperfUdp) Operate(run model.Run) error {
+func (i *iperfUdp) Execute(run model.Run) error {
 	m := run.GetModel()
 	serverHosts := m.SelectHosts(i.serverHosts)
 	clientHosts := m.SelectHosts(i.clientHosts)

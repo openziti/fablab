@@ -120,16 +120,13 @@ func dumpComponents(cs map[string]*Component) map[string]*ComponentDump {
 }
 
 func dumpComponent(c *Component) *ComponentDump {
-	return &ComponentDump{
-		Scope:           dumpScope(c.Scope),
-		ScriptSrc:       c.ScriptSrc,
-		ScriptName:      c.ScriptName,
-		ConfigSrc:       c.ConfigSrc,
-		ConfigName:      c.ConfigName,
-		BinaryName:      c.BinaryName,
-		PublicIdentity:  c.PublicIdentity,
-		PrivateIdentity: c.PrivateIdentity,
+	result := &ComponentDump{
+		Scope: dumpScope(c.Scope),
 	}
+	if c.Type != nil {
+		result.Type = c.Type.Dump()
+	}
+	return result
 }
 
 type Dump struct {
@@ -174,12 +171,6 @@ type HostDump struct {
 }
 
 type ComponentDump struct {
-	Scope           *ScopeDump `json:"scope,omitempty"`
-	ScriptSrc       string     `json:"script_src,omitempty"`
-	ScriptName      string     `json:"script_name,omitempty"`
-	ConfigSrc       string     `json:"config_src,omitempty"`
-	ConfigName      string     `json:"config_name,omitempty"`
-	BinaryName      string     `json:"binary_name,omitempty"`
-	PublicIdentity  string     `json:"public_identity,omitempty"`
-	PrivateIdentity string     `json:"private_identity,omitempty"`
+	Scope *ScopeDump `json:"scope,omitempty"`
+	Type  any        `json:"type"`
 }

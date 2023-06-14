@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 )
 
-func Dispose() model.DisposalStage {
+func Dispose() model.Stage {
 	return &terraform{}
 }
 
-func (terraform *terraform) Dispose(model.Run) error {
+func (terraform *terraform) Execute(model.Run) error {
 	prc := lib.NewProcess("terraform", "destroy", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)

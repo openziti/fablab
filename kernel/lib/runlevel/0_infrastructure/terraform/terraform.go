@@ -29,13 +29,13 @@ import (
 	"strings"
 )
 
-func Express() model.InfrastructureStage {
+func Express() model.Stage {
 	return &terraform{}
 }
 
 type terraform struct{}
 
-func (t *terraform) Express(run model.Run) error {
+func (t *terraform) Execute(run model.Run) error {
 	m := run.GetModel()
 	l := run.GetLabel()
 
