@@ -21,12 +21,36 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Exec[T model.ComponentType](componentSpec string, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
-	return ExecInParallel(componentSpec, 1, strategyAction)
+func Exec(componentSpec string, action string) model.Action {
+	return ExecInParallel(componentSpec, 1, action)
 }
 
-func ExecInParallel[T model.ComponentType](componentSpec string, concurrency int, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
+func ExecInParallel(componentSpec string, concurrency int, action string) model.Action {
 	return &exec{
+		componentSpec: componentSpec,
+		concurrency:   concurrency,
+		action:        action,
+	}
+}
+
+func ExecF[T model.ComponentType](componentSpec string, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
+	return ExecInParallelF(componentSpec, 1, strategyAction)
+}
+
+func ExecIfApplies(componentSpec string, action string) model.Action {
+	return ExecIfAppliesInParallel(componentSpec, 1, action)
+}
+
+func ExecIfAppliesInParallel(componentSpec string, concurrency int, action string) model.Action {
+	return &execIfApplies{
+		componentSpec: componentSpec,
+		concurrency:   concurrency,
+		action:        action,
+	}
+}
+
+func ExecInParallelF[T model.ComponentType](componentSpec string, concurrency int, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
+	return &execF{
 		componentSpec: componentSpec,
 		concurrency:   concurrency,
 		f: func(run model.Run, c *model.Component) error {
@@ -35,8 +59,8 @@ func ExecInParallel[T model.ComponentType](componentSpec string, concurrency int
 	}
 }
 
-func ExecIfApplies[T model.ComponentType](componentSpec string, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
-	return ExecIfAppliesInParallel(componentSpec, 1, strategyAction)
+func ExecIfAppliesF[T model.ComponentType](componentSpec string, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
+	return ExecIfAppliesInParallelF(componentSpec, 1, strategyAction)
 }
 
 func Dispatch[T model.ComponentType](run model.Run, component *model.Component, strategyAction func(strategy T, run model.Run, component *model.Component) error) error {
@@ -62,8 +86,8 @@ func DispatchIfApplies[T model.ComponentType](run model.Run, component *model.Co
 	return strategyAction(typedStrategy, run, component)
 }
 
-func ExecIfAppliesInParallel[T model.ComponentType](componentSpec string, concurrency int, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
-	return &exec{
+func ExecIfAppliesInParallelF[T model.ComponentType](componentSpec string, concurrency int, strategyAction func(strategy T, run model.Run, component *model.Component) error) model.Action {
+	return &execF{
 		componentSpec: componentSpec,
 		concurrency:   concurrency,
 		f: func(run model.Run, c *model.Component) error {
@@ -75,10 +99,42 @@ func ExecIfAppliesInParallel[T model.ComponentType](componentSpec string, concur
 type exec struct {
 	componentSpec string
 	concurrency   int
-	f             func(run model.Run, c *model.Component) error
+	action        string
 }
 
 func (self *exec) Execute(run model.Run) error {
+	return run.GetModel().ForEachComponent(self.componentSpec, self.concurrency, func(c *model.Component) error {
+		actions := c.GetActions()
+		if componentAction, ok := actions[self.action]; ok {
+			return componentAction.Execute(run, c)
+		}
+		return errors.Errorf("component [%s] does not implement action [%s]", c.Id, self.action)
+	})
+}
+
+type execIfApplies struct {
+	componentSpec string
+	concurrency   int
+	action        string
+}
+
+func (self *execIfApplies) Execute(run model.Run) error {
+	return run.GetModel().ForEachComponent(self.componentSpec, self.concurrency, func(c *model.Component) error {
+		actions := c.GetActions()
+		if componentAction, ok := actions[self.action]; ok {
+			return componentAction.Execute(run, c)
+		}
+		return nil
+	})
+}
+
+type execF struct {
+	componentSpec string
+	concurrency   int
+	f             func(run model.Run, c *model.Component) error
+}
+
+func (self *execF) Execute(run model.Run) error {
 	return run.GetModel().ForEachComponent(self.componentSpec, self.concurrency, func(c *model.Component) error {
 		return self.f(run, c)
 	})

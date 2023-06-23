@@ -181,3 +181,30 @@ func (component *Component) Matches(entityType string, matcher EntityMatcher) bo
 
 	return matchHierarchical(entityType, matcher, component)
 }
+
+func (component *Component) GetActions() map[string]ComponentAction {
+	result := map[string]ComponentAction{}
+	if component.Type != nil {
+		result[ComponentActionStop] = ComponentActionF(component.Type.Stop)
+
+		if startType, ok := component.Type.(ServerComponent); ok {
+			result[ComponentActionStart] = ComponentActionF(startType.Start)
+		}
+
+		if stagingType, ok := component.Type.(FileStagingComponent); ok {
+			result[ComponentActionStageFiles] = ComponentActionF(stagingType.StageFiles)
+		}
+
+		if hostInitType, ok := component.Type.(HostInitializingComponent); ok {
+			result[ComponentActionInitializeHost] = ComponentActionF(hostInitType.InitializeHost)
+		}
+
+		if actionsType, ok := component.Type.(ActionsComponent); ok {
+			for k, v := range actionsType.GetActions() {
+				result[k] = v
+			}
+		}
+	}
+
+	return result
+}
