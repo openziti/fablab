@@ -38,7 +38,10 @@ func activate(_ *cobra.Command, _ []string) {
 		logrus.WithError(err).Fatal("unable to bootstrap")
 	}
 
-	ctx := model.NewRun()
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
 	if err := ctx.GetModel().Activate(ctx); err != nil {
 		logrus.Fatalf("error synchronizing all hosts (%v)", err)
 	}

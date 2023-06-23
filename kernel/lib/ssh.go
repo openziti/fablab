@@ -212,9 +212,40 @@ func RemoteKill(factory SshConfigFactory, match string) error {
 }
 
 func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error {
+	return RemoteKillFilterF(factory, func(s string) bool {
+		return killMatch(s, match, anti)
+	})
+}
+
+func RemoteKillFilterF(factory SshConfigFactory, filter func(string) bool) error {
+	return RemoteKillSignalFilterF(factory, "-TERM", filter)
+}
+
+func RemoteKillSignalFilterF(factory SshConfigFactory, signal string, filter func(string) bool) error {
+	pidList, err := FindProcesses(factory, filter)
+	if err != nil {
+		return err
+	}
+
+	if len(pidList) > 0 {
+		killCmd := "sudo kill " + signal + " "
+		for _, pid := range pidList {
+			killCmd += fmt.Sprintf(" %d", pid)
+		}
+
+		output, err := RemoteExec(factory, killCmd)
+		if err != nil {
+			return fmt.Errorf("unable to execute [%v] on [%s] (%s). Output: [%v]", killCmd, factory.Address(), err, output)
+		}
+	}
+
+	return nil
+}
+
+func FindProcesses(factory SshConfigFactory, filter func(string) bool) ([]int, error) {
 	output, err := RemoteExec(factory, "ps ax")
 	if err != nil {
-		return errors.Wrapf(err, "unable to get remote process listing [%s]", factory.Address())
+		return nil, errors.Wrapf(err, "unable to get remote process listing [%s]", factory.Address())
 	}
 
 	var pidList []int
@@ -222,30 +253,18 @@ func RemoteKillFilter(factory SshConfigFactory, match string, anti string) error
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if killMatch(line, match, anti) {
+		if filter(line) {
 			logrus.Infof("line [%s]", scanner.Text())
 			tokens := strings.Split(strings.Trim(line, " \t\n"), " ")
 			if pid, err := strconv.Atoi(tokens[0]); err == nil {
 				pidList = append(pidList, pid)
 			} else {
-				return fmt.Errorf("unexpected ps output")
+				return nil, fmt.Errorf("unexpected ps output")
 			}
 		}
 	}
 
-	if len(pidList) > 0 {
-		killCmd := "sudo kill"
-		for _, pid := range pidList {
-			killCmd += fmt.Sprintf(" %d", pid)
-		}
-
-		output, err = RemoteExec(factory, killCmd)
-		if err != nil {
-			return fmt.Errorf("unable to execute [%v] on [%s] (%s). Output: [%v]", killCmd, factory.Address(), err, output)
-		}
-	}
-
-	return nil
+	return pidList, nil
 }
 
 func killMatch(s, search, anti string) bool {

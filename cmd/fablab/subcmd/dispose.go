@@ -38,7 +38,10 @@ func dispose(_ *cobra.Command, _ []string) {
 		logrus.WithError(err).Fatal("unable to bootstrap")
 	}
 
-	ctx := model.NewRun()
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
 	if err := ctx.GetModel().Dispose(ctx); err != nil {
 		logrus.WithError(err).Fatal("error building configuration")
 	}

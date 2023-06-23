@@ -13,12 +13,12 @@ func NewPhase() Phase {
 }
 
 type Phase interface {
-	model.OperatingStage
+	model.Stage
 	GetCloser() <-chan struct{}
 	AddJoiner() chan struct{}
 }
 
-func (phase *phaseImpl) Operate(model.Run) error {
+func (phase *phaseImpl) Execute(model.Run) error {
 	logrus.Debugf("waiting for [%d] tasks to complete", len(phase.joiners))
 	count := 0
 	for _, joiner := range phase.joiners {

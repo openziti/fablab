@@ -17,8 +17,6 @@
 package component
 
 import (
-	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 )
 
@@ -33,12 +31,10 @@ func StartInParallel(componentSpec string, concurrency int) model.Action {
 	}
 }
 
-func (start *start) Execute(m *model.Model) error {
-	return m.ForEachComponent(start.componentSpec, start.concurrency, func(c *model.Component) error {
-		sshConfigFactory := lib.NewSshConfigFactory(c.GetHost())
-
-		if err := lib.LaunchService(sshConfigFactory, c.BinaryName, c.ConfigName, c.RunWithSudo); err != nil {
-			return fmt.Errorf("error starting component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
+func (start *start) Execute(run model.Run) error {
+	return run.GetModel().ForEachComponent(start.componentSpec, start.concurrency, func(c *model.Component) error {
+		if startable, ok := c.Type.(model.ServerComponent); ok {
+			return startable.Start(run, c)
 		}
 		return nil
 	})

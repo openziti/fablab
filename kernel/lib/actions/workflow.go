@@ -31,9 +31,9 @@ func (workflow *workflow) AddAction(action model.Action) {
 	workflow.actions = append(workflow.actions, action)
 }
 
-func (workflow *workflow) Execute(m *model.Model) error {
+func (workflow *workflow) Execute(run model.Run) error {
 	for _, action := range workflow.actions {
-		if err := action.Execute(m); err != nil {
+		if err := action.Execute(run); err != nil {
 			return fmt.Errorf("error executing action (%s)", err)
 		}
 	}

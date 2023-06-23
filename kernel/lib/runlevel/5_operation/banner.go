@@ -22,11 +22,11 @@ import (
 	"github.com/openziti/fablab/kernel/model"
 )
 
-func Banner(msg string) model.OperatingStage {
+func Banner(msg string) model.Stage {
 	return &banner{msg: msg}
 }
 
-func (b *banner) Operate(model.Run) error {
+func (b *banner) Execute(model.Run) error {
 	figlet.Figlet(b.msg)
 	fmt.Println()
 	return nil

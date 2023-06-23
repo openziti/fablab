@@ -57,11 +57,4 @@ func (self *Templater) TemplatizeHost(host *Host) {
 
 func (self *Templater) TemplatizeComponent(component *Component) {
 	self.TemplatizeScope(&component.Scope)
-	component.ScriptSrc = self.TemplatizeString(component.ScriptSrc)
-	component.ScriptName = self.TemplatizeString(component.ScriptName)
-	component.ConfigSrc = self.TemplatizeString(component.ConfigSrc)
-	component.ConfigName = self.TemplatizeString(component.ConfigName)
-	component.BinaryName = self.TemplatizeString(component.BinaryName)
-	component.PublicIdentity = self.TemplatizeString(component.PublicIdentity)
-	component.PrivateIdentity = self.TemplatizeString(component.PrivateIdentity)
 }

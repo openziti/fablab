@@ -25,11 +25,11 @@ import (
 	"path/filepath"
 )
 
-func Persist() model.OperatingStage {
+func Persist() model.Stage {
 	return &persist{}
 }
 
-func (self *persist) Operate(run model.Run) error {
+func (self *persist) Execute(run model.Run) error {
 	if err := self.storeDump(run); err != nil {
 		return fmt.Errorf("error storing dump (%w)", err)
 	}

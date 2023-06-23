@@ -21,13 +21,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Joiner(joiners []chan struct{}) model.OperatingStage {
+func Joiner(joiners []chan struct{}) model.Stage {
 	return &joiner{
 		joiners: joiners,
 	}
 }
 
-func (j *joiner) Operate(model.Run) error {
+func (j *joiner) Execute(model.Run) error {
 	logrus.Debugf("will join with [%d] joiners", len(j.joiners))
 	count := 0
 	for _, joiner := range j.joiners {

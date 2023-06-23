@@ -42,6 +42,11 @@ func exec(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
+
 	m := model.GetModel()
 
 	if !m.IsBound() {
@@ -65,7 +70,7 @@ func exec(_ *cobra.Command, args []string) {
 	}
 
 	for _, action := range actions {
-		if err := action.Execute(m); err != nil {
+		if err := action.Execute(ctx); err != nil {
 			logrus.WithError(err).Fatalf("action failed [%s]", action)
 		}
 	}

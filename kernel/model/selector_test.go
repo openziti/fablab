@@ -19,11 +19,7 @@ func createTestModel() *Model {
 						Scope: Scope{Tags: Tags{"ctrl"}},
 						Components: Components{
 							"ctrl": {
-								Scope:          Scope{Tags: Tags{"ctrl"}},
-								BinaryName:     "ziti-controller",
-								ConfigSrc:      "ctrl.yml",
-								ConfigName:     "ctrl.yml",
-								PublicIdentity: "ctrl",
+								Scope: Scope{Tags: Tags{"ctrl"}},
 							},
 						},
 					},
@@ -31,21 +27,14 @@ func createTestModel() *Model {
 						Scope: Scope{Tags: Tags{"initiator", "edge-router"}},
 						Components: Components{
 							"initiator": {
-								Scope:          Scope{Tags: Tags{"edge-router", "initiator"}},
-								BinaryName:     "ziti-router",
-								ConfigSrc:      "edge_router.yml",
-								ConfigName:     "edge_router_initiator.yml",
-								PublicIdentity: "edge_router_initiator",
+								Scope: Scope{Tags: Tags{"edge-router", "initiator"}},
 							},
 						},
 					},
 					"client": {
 						Scope: Scope{Tags: Tags{"client", "sdk-app"}},
 						Components: Components{
-							"client1": {
-								BinaryName:     "ziti-fabric-test",
-								PublicIdentity: "client1",
-							},
+							"client1": {},
 						},
 					},
 				},
@@ -59,21 +48,14 @@ func createTestModel() *Model {
 						Scope: Scope{Tags: Tags{"terminator", "edge-router"}},
 						Components: Components{
 							"terminator": {
-								Scope:          Scope{Tags: Tags{"edge-router", "terminator"}},
-								BinaryName:     "ziti-router",
-								ConfigSrc:      "edge_router.yml",
-								ConfigName:     "edge_router_terminator.yml",
-								PublicIdentity: "edge_router_terminator",
+								Scope: Scope{Tags: Tags{"edge-router", "terminator"}},
 							},
 						},
 					},
 					"service": {
 						Scope: Scope{Tags: Tags{"service", "sdk-app"}},
 						Components: Components{
-							"server1": {
-								BinaryName:     "ziti-fabric-test",
-								PublicIdentity: "server1",
-							},
+							"server1": {},
 						},
 					},
 				},

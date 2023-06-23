@@ -29,11 +29,11 @@ type iperfClient struct {
 	port     int
 }
 
-func IperfClient(hostSpec, address string, port int) model.OperatingStage {
+func IperfClient(hostSpec, address string, port int) model.Stage {
 	return &iperfClient{hostSpec, address, port}
 }
 
-func (self *iperfClient) Operate(run model.Run) error {
+func (self *iperfClient) Execute(run model.Run) error {
 	m := run.GetModel()
 	hosts := m.SelectHosts(self.hostSpec)
 	if len(hosts) != 1 {

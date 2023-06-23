@@ -23,13 +23,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func TcpdumpCloser(host string) model.OperatingStage {
+func TcpdumpCloser(host string) model.Stage {
 	return &tcpdumpCloser{
 		host: host,
 	}
 }
 
-func (t *tcpdumpCloser) Operate(run model.Run) error {
+func (t *tcpdumpCloser) Execute(run model.Run) error {
 	m := run.GetModel()
 	host, err := m.SelectHost(t.host)
 	if err != nil {
