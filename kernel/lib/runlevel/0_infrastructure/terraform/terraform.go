@@ -18,7 +18,9 @@ package terraform_0
 
 import (
 	"fmt"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
+	semaphore_0 "github.com/openziti/fablab/kernel/lib/runlevel/0_infrastructure/semaphore"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/openziti/fablab/resources"
 	"github.com/pkg/errors"
@@ -30,12 +32,15 @@ import (
 )
 
 func Express() model.Stage {
-	return &terraform{}
+	return &Terraform{}
 }
 
-type terraform struct{}
+type Terraform struct {
+	Retries    uint8
+	ReadyCheck *semaphore_0.ReadyStage
+}
 
-func (t *terraform) Execute(run model.Run) error {
+func (t *Terraform) Execute(run model.Run) error {
 	m := run.GetModel()
 	l := run.GetLabel()
 
@@ -45,16 +50,35 @@ func (t *terraform) Execute(run model.Run) error {
 	if err := t.init(); err != nil {
 		return err
 	}
-	if err := t.apply(); err != nil {
-		return err
+
+	attemptsRemaining := t.Retries + 1
+
+	var err error
+	for attemptsRemaining > 0 {
+		err = t.apply()
+
+		if err == nil {
+			err = t.bind(m, l)
+		}
+
+		if err == nil && t.ReadyCheck != nil {
+			err = t.ReadyCheck.Execute(run)
+		}
+
+		if err == nil {
+			return nil
+		}
+
+		attemptsRemaining--
+		if attemptsRemaining > 0 {
+			pfxlog.Logger().WithError(err).Error("terraform failure, retrying")
+		}
 	}
-	if err := t.bind(m, l); err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
-func (t *terraform) generate(m *model.Model) error {
+func (t *Terraform) generate(m *model.Model) error {
 	terraformResource := m.GetResource(resources.Terraform)
 
 	visitor := &terraformVisitor{
@@ -68,7 +92,7 @@ func (t *terraform) generate(m *model.Model) error {
 	return nil
 }
 
-func (t *terraform) init() error {
+func (t *Terraform) init() error {
 	prc := lib.NewProcess("terraform", "init")
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)
@@ -78,7 +102,7 @@ func (t *terraform) init() error {
 	return nil
 }
 
-func (t *terraform) apply() error {
+func (t *Terraform) apply() error {
 	prc := lib.NewProcess("terraform", "apply", "-auto-approve")
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)
@@ -88,7 +112,9 @@ func (t *terraform) apply() error {
 	return nil
 }
 
-func (t *terraform) bind(m *model.Model, l *model.Label) error {
+func (t *Terraform) bind(m *model.Model, l *model.Label) error {
+	hostIps := map[string]string{}
+
 	for regionId, region := range m.Regions {
 		for hostId := range region.Hosts {
 			publicIpOutput := fmt.Sprintf("%s_host_%s_public_ip", regionId, hostId)
@@ -99,6 +125,13 @@ func (t *terraform) bind(m *model.Model, l *model.Label) error {
 				return fmt.Errorf("unable to get output [%s] (%s)", publicIpOutput, err)
 			}
 
+			if otherHostId, found := hostIps[publicIpOutput]; found {
+				return errors.Errorf("duplicate ips found, terraform bug! ip %s found for hosts %s and %s",
+					publicIpOutput, otherHostId, hostId)
+			}
+
+			hostIps[publicIpOutput] = hostId
+
 			privateIpOutput := fmt.Sprintf("%s_host_%s_private_ip", regionId, hostId)
 			if output, err := terraformOutput(privateIpOutput); err == nil {
 				l.Bindings[privateIpOutput] = output
@@ -108,6 +141,7 @@ func (t *terraform) bind(m *model.Model, l *model.Label) error {
 			}
 		}
 	}
+
 	if err := l.Save(); err != nil {
 		return fmt.Errorf("unable to save updated instance label [%s] (%w)", model.BuildPath(), err)
 	}
