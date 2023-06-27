@@ -64,18 +64,22 @@ func GetConfig() *FablabConfig {
 }
 
 func loadConfig() (*FablabConfig, error) {
-	config := &FablabConfig{
-		Instances: map[string]*InstanceConfig{},
-	}
-
 	cfgDir, err := ConfigDir()
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get config dir while loading cli configuration")
 	}
 	configFile := filepath.Join(cfgDir, ConfigFileName)
+	return LoadConfig(configFile)
+}
+
+func LoadConfig(configFile string) (*FablabConfig, error) {
+	config := &FablabConfig{
+		Instances: map[string]*InstanceConfig{},
+	}
+
 	config.ConfigPath = configFile
 
-	_, err = os.Stat(configFile)
+	_, err := os.Stat(configFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return config, nil

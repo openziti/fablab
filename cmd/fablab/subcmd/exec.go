@@ -33,11 +33,11 @@ var execCmd = &cobra.Command{
 	Use:   "exec <action> [<actions>...]",
 	Short: "execute one or more actions",
 	Args:  cobra.MinimumNArgs(1),
-	Run:   exec,
+	Run:   runExec,
 }
 var execCmdBindings []string
 
-func exec(_ *cobra.Command, args []string) {
+func runExec(_ *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}

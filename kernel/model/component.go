@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sync/atomic"
 )
 
@@ -207,4 +208,11 @@ func (component *Component) GetActions() map[string]ComponentAction {
 	}
 
 	return result
+}
+
+func (component *Component) IsRunning(run Run) (bool, error) {
+	if component.Type == nil {
+		return false, errors.Errorf("component [%s] has no component type defined", component.Id)
+	}
+	return component.Type.IsRunning(run, component)
 }
