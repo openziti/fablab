@@ -39,14 +39,17 @@ func up(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("unable to bootstrap (%v)", err)
 	}
 
-	ctx := model.NewRun()
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
 
 	figlet.Figlet("infrastructure")
 
 	if err := ctx.GetModel().Express(ctx); err != nil {
 		logrus.Fatalf("error expressing (%v)", err)
 	}
-	
+
 	figlet.Figlet("configuration")
 
 	if err := ctx.GetModel().Build(ctx); err != nil {

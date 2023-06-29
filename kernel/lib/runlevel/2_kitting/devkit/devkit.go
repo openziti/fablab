@@ -30,15 +30,15 @@ type devKit struct {
 	binaries []string
 }
 
-func DevKit(root string, binaries []string) model.ConfigurationStage {
+func DevKit(root string, binaries []string) model.Stage {
 	return &devKit{root: func() string { return root }, binaries: binaries}
 }
 
-func DevKitF(root func() string, binaries []string) model.ConfigurationStage {
+func DevKitF(root func() string, binaries []string) model.Stage {
 	return &devKit{root: root, binaries: binaries}
 }
 
-func (devKit *devKit) Configure(model.Run) error {
+func (devKit *devKit) Execute(model.Run) error {
 	cfgRoot := filepath.Join(model.KitBuild(), "cfg")
 	fi, err := os.Stat(model.ConfigBuild())
 	if err == nil && fi.IsDir() {

@@ -17,7 +17,12 @@
 package model
 
 // Factory builds model instances.
-//
 type Factory interface {
 	Build(m *Model) error
+}
+
+type FactoryFunc func(m *Model) error
+
+func (f FactoryFunc) Build(m *Model) error {
+	return f(m)
 }

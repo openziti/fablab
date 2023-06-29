@@ -22,11 +22,11 @@ import (
 	"time"
 )
 
-func Timer(duration time.Duration, closer chan struct{}) model.OperatingStage {
+func Timer(duration time.Duration, closer chan struct{}) model.Stage {
 	return &timer{duration: duration, closer: closer}
 }
 
-func (timer *timer) Operate(model.Run) error {
+func (timer *timer) Execute(model.Run) error {
 	logrus.Infof("waiting for %s", timer.duration)
 	time.Sleep(timer.duration)
 	if timer.closer != nil {

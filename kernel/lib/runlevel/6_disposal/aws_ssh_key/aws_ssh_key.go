@@ -9,14 +9,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Dispose() model.DisposalStage {
+func Dispose() model.Stage {
 	return &awsKeyManager{}
 }
 
 type awsKeyManager struct {
 }
 
-func (stage awsKeyManager) Dispose(run model.Run) error {
+func (stage awsKeyManager) Execute(run model.Run) error {
 	m := run.GetModel()
 	if managedKey, found := m.GetBoolVariable("credentials.aws.managed_key"); !found || !managedKey {
 		return nil

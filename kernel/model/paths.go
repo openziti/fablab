@@ -22,12 +22,20 @@ import (
 	"path/filepath"
 )
 
+const (
+	BuildConfigDir = "cfg"
+	BuildKitDir    = "kit"
+	BuildPkiDir    = "pki"
+	BuildBinDir    = "bin"
+	BuildTmpDir    = "tmp"
+)
+
 func ScriptBuild() string {
-	return MakeBuildPath("bin")
+	return MakeBuildPath(BuildBinDir)
 }
 
 func ConfigBuild() string {
-	return MakeBuildPath("cfg")
+	return MakeBuildPath(BuildConfigDir)
 }
 
 func KitBuild() string {
@@ -35,7 +43,7 @@ func KitBuild() string {
 }
 
 func PkiBuild() string {
-	return MakeBuildPath("pki")
+	return MakeBuildPath(BuildPkiDir)
 }
 
 func MakeBuildPath(path string) string {

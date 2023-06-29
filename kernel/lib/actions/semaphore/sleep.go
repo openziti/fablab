@@ -26,7 +26,7 @@ func Sleep(duration time.Duration) model.Action {
 	return &sleep{duration: duration}
 }
 
-func (sleep *sleep) Execute(_ *model.Model) error {
+func (sleep *sleep) Execute(_ model.Run) error {
 	logrus.Infof("sleeping for [%s]", sleep.duration)
 	time.Sleep(sleep.duration)
 	return nil

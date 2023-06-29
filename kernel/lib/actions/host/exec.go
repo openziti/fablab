@@ -30,7 +30,7 @@ func Exec(h *model.Host, cmds ...string) model.Action {
 	}
 }
 
-func (exec *exec) Execute(m *model.Model) error {
+func (exec *exec) Execute(model.Run) error {
 	sshConfigFactory := lib.NewSshConfigFactory(exec.h)
 
 	if o, err := lib.RemoteExecAll(sshConfigFactory, exec.cmds...); err != nil {

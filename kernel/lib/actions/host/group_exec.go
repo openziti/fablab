@@ -31,8 +31,8 @@ func GroupExec(hostSpec string, concurrency int, cmds ...string) model.Action {
 	}
 }
 
-func (groupExec *groupExec) Execute(m *model.Model) error {
-	return m.ForEachHost(groupExec.hostSpec, groupExec.concurrency, func(h *model.Host) error {
+func (groupExec *groupExec) Execute(run model.Run) error {
+	return run.GetModel().ForEachHost(groupExec.hostSpec, groupExec.concurrency, func(h *model.Host) error {
 		sshConfigFactory := lib.NewSshConfigFactory(h)
 
 		if o, err := lib.RemoteExecAll(sshConfigFactory, groupExec.cmds...); err != nil {

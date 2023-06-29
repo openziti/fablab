@@ -17,8 +17,6 @@
 package component
 
 import (
-	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 )
 
@@ -33,12 +31,10 @@ func StopInParallel(componentSpec string, concurrency int) model.Action {
 	}
 }
 
-func (stop *stop) Execute(m *model.Model) error {
-	return m.ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
-		sshConfigFactory := lib.NewSshConfigFactory(c.GetHost())
-
-		if err := lib.KillService(sshConfigFactory, c.BinaryName); err != nil {
-			return fmt.Errorf("error stopping component [%s] on [%s] (%s)", c.BinaryName, c.GetHost().PublicIp, err)
+func (stop *stop) Execute(run model.Run) error {
+	return run.GetModel().ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
+		if c.Type != nil {
+			return c.Type.Stop(run, c)
 		}
 		return nil
 	})

@@ -19,7 +19,7 @@ import (
 
 var KeyManager = awsKeyManager{}
 
-func Express() model.InfrastructureStage {
+func Express() model.Stage {
 	return KeyManager
 }
 
@@ -43,7 +43,7 @@ func (l awsKeyManager) Bootstrap(m *model.Model) error {
 	return nil
 }
 
-func (stage awsKeyManager) Express(run model.Run) error {
+func (stage awsKeyManager) Execute(run model.Run) error {
 	m := run.GetModel()
 
 	if managedKey, found := m.GetBoolVariable("credentials.aws.managed_key"); !found || !managedKey {

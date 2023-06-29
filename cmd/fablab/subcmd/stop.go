@@ -51,9 +51,12 @@ func (self *stopAction) run(_ *cobra.Command, args []string) {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
-	m := model.GetModel()
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
 
-	if err := component.StopInParallel(args[0], self.concurrency).Execute(m); err != nil {
+	if err := component.StopInParallel(args[0], self.concurrency).Execute(ctx); err != nil {
 		logrus.WithError(err).Fatalf("error stoping components")
 	}
 }

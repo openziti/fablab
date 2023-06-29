@@ -25,7 +25,7 @@ import (
 	"sync/atomic"
 )
 
-func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, runPhase Phase, cleanupPhase Phase) model.OperatingStage {
+func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, runPhase Phase, cleanupPhase Phase) model.Stage {
 	return &streamSarMetrics{
 		host:                host,
 		intervalSeconds:     intervalSeconds,
@@ -44,7 +44,7 @@ type streamSarMetrics struct {
 	closed              atomic.Bool
 }
 
-func (s *streamSarMetrics) Operate(model.Run) error {
+func (s *streamSarMetrics) Execute(model.Run) error {
 	go s.waitForClose()
 	ssh := lib.NewSshConfigFactory(s.host)
 	go s.runSar(ssh)

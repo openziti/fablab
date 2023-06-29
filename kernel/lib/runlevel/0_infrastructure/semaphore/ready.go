@@ -25,14 +25,14 @@ import (
 	"time"
 )
 
-func Ready(maxWait time.Duration) model.InfrastructureStage {
-	return &readyStage{maxWait: maxWait}
+func Ready(maxWait time.Duration) model.Stage {
+	return &ReadyStage{MaxWait: maxWait}
 }
 
-func (self *readyStage) Express(run model.Run) error {
+func (self *ReadyStage) Execute(run model.Run) error {
 	m := run.GetModel()
 
-	logrus.Infof("waiting for expressed hosts to be ready (max-wait: %s)", self.maxWait.String())
+	logrus.Infof("waiting for expressed hosts to be ready (max-wait: %s)", self.MaxWait.String())
 
 	start := time.Now()
 
@@ -44,7 +44,7 @@ func (self *readyStage) Express(run model.Run) error {
 
 				if output, err := lib.RemoteExec(sshConfigFactory, "uptime"); err != nil {
 					logrus.Warnf("host not ready [%s] (%v)", h.PublicIp, err)
-					if time.Now().Before(start.Add(self.maxWait)) {
+					if time.Now().Before(start.Add(self.MaxWait)) {
 						time.Sleep(2 * time.Second)
 					} else {
 						break
@@ -63,6 +63,6 @@ func (self *readyStage) Express(run model.Run) error {
 	return nil
 }
 
-type readyStage struct {
-	maxWait time.Duration
+type ReadyStage struct {
+	MaxWait time.Duration
 }

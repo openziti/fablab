@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os.FileMode, callbacks map[string]func(*model.Host) string) model.DistributionStage {
+func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os.FileMode, callbacks map[string]func(*model.Host) string) model.Stage {
 	return &distDataWithReplaceCallbacks{
 		hostSpec:  hostSpec,
 		data:      data,
@@ -19,7 +19,7 @@ func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os
 	}
 }
 
-func (df *distDataWithReplaceCallbacks) Distribute(run model.Run) error {
+func (df *distDataWithReplaceCallbacks) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
 		ssh := lib.NewSshConfigFactory(host)
 
@@ -53,7 +53,7 @@ type distDataWithReplaceCallbacks struct {
 	filemode  os.FileMode
 }
 
-func DistributeData(hostSpec string, data []byte, dest string) model.DistributionStage {
+func DistributeData(hostSpec string, data []byte, dest string) model.Stage {
 	return &distData{
 		hostSpec: hostSpec,
 		data:     data,
@@ -61,7 +61,7 @@ func DistributeData(hostSpec string, data []byte, dest string) model.Distributio
 	}
 }
 
-func (df *distData) Distribute(run model.Run) error {
+func (df *distData) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
 		ssh := lib.NewSshConfigFactory(host)
 		if err := lib.SendData(ssh, df.data, df.dest); err != nil {

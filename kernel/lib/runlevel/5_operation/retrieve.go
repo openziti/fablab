@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-func Retrieve(host, path, extension string) model.OperatingStage {
+func Retrieve(host, path, extension string) model.Stage {
 	return &retrieve{
 		host:      host,
 		path:      path,
@@ -32,7 +32,7 @@ func Retrieve(host, path, extension string) model.OperatingStage {
 	}
 }
 
-func (self *retrieve) Operate(run model.Run) error {
+func (self *retrieve) Execute(run model.Run) error {
 	m := run.GetModel()
 	runId := run.GetId()
 	hosts := m.SelectHosts(self.host)
