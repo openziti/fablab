@@ -54,13 +54,8 @@ var listActionsCmd = &cobra.Command{
 }
 
 func listInstances(_ *cobra.Command, _ []string) {
-	if err := model.BootstrapInstance(); err != nil {
-		logrus.Fatalf("unable to bootstrap config (%v)", err)
-	}
-
-	activeInstanceId := model.ActiveInstanceId()
-
 	cfg := model.GetConfig()
+	activeInstanceId := cfg.Default
 
 	var instanceIds []string
 	for k := range cfg.Instances {
