@@ -69,6 +69,15 @@ type HostInitializingComponent interface {
 	InitializeHost(r Run, c *Component) error
 }
 
+// An InitializingComponentType has a hook to allow it to be setup while the model is being initialized.
+type InitializingComponentType interface {
+	ComponentType
+
+	// InitType is called as part of model initialization. It can be used to set or validate type fields.
+	// It will be called once for each component using the type
+	InitType(c *Component)
+}
+
 // A ComponentAction is an action execute in the context of a specific component
 type ComponentAction interface {
 	Execute(r Run, c *Component) error
@@ -119,6 +128,9 @@ func (component *Component) init(id string, host *Host) {
 		component.Scope.initialize(component, true)
 		if component.Data == nil {
 			component.Data = Data{}
+		}
+		if v, ok := component.Type.(InitializingComponentType); ok {
+			v.InitType(component)
 		}
 	}
 }
