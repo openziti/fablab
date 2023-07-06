@@ -1,6 +1,6 @@
 module github.com/openziti/fablab
 
-go 1.20
+go 1.19
 
 require (
 	github.com/aws/aws-sdk-go v1.44.118
@@ -10,7 +10,7 @@ require (
 	github.com/michaelquigley/pfxlog v0.6.10
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
-	github.com/openziti/foundation/v2 v2.0.27
+	github.com/openziti/foundation/v2 v2.0.28
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
