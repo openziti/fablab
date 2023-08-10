@@ -18,6 +18,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sync/atomic"
 )
 
@@ -66,6 +67,15 @@ type HostInitializingComponent interface {
 	// InitializeHost is called at the end of the distribution phase and allows the component to
 	// make changes to Host configuration
 	InitializeHost(r Run, c *Component) error
+}
+
+// An InitializingComponentType has a hook to allow it to be setup while the model is being initialized.
+type InitializingComponentType interface {
+	ComponentType
+
+	// InitType is called as part of model initialization. It can be used to set or validate type fields.
+	// It will be called once for each component using the type
+	InitType(c *Component)
 }
 
 // A ComponentAction is an action execute in the context of a specific component
@@ -118,6 +128,9 @@ func (component *Component) init(id string, host *Host) {
 		component.Scope.initialize(component, true)
 		if component.Data == nil {
 			component.Data = Data{}
+		}
+		if v, ok := component.Type.(InitializingComponentType); ok {
+			v.InitType(component)
 		}
 	}
 }
@@ -207,4 +220,11 @@ func (component *Component) GetActions() map[string]ComponentAction {
 	}
 
 	return result
+}
+
+func (component *Component) IsRunning(run Run) (bool, error) {
+	if component.Type == nil {
+		return false, errors.Errorf("component [%s] has no component type defined", component.Id)
+	}
+	return component.Type.IsRunning(run, component)
 }

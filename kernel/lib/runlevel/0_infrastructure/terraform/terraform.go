@@ -29,6 +29,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func Express() model.Stage {
@@ -47,15 +48,23 @@ func (t *Terraform) Execute(run model.Run) error {
 	if err := t.generate(m); err != nil {
 		return err
 	}
-	if err := t.init(); err != nil {
-		return err
-	}
 
 	attemptsRemaining := t.Retries + 1
 
+	initDone := false
+
 	var err error
 	for attemptsRemaining > 0 {
-		err = t.apply()
+		if !initDone {
+			err = t.Init()
+			if err == nil {
+				initDone = true
+			}
+		}
+
+		if err == nil {
+			err = t.apply()
+		}
 
 		if err == nil {
 			err = t.bind(m, l)
@@ -71,7 +80,8 @@ func (t *Terraform) Execute(run model.Run) error {
 
 		attemptsRemaining--
 		if attemptsRemaining > 0 {
-			pfxlog.Logger().WithError(err).Error("terraform failure, retrying")
+			pfxlog.Logger().WithError(err).Error("terraform failure, retrying in 3s")
+			time.Sleep(3 * time.Second)
 		}
 	}
 
@@ -92,7 +102,7 @@ func (t *Terraform) generate(m *model.Model) error {
 	return nil
 }
 
-func (t *Terraform) init() error {
+func (t *Terraform) Init() error {
 	prc := lib.NewProcess("terraform", "init")
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)
@@ -115,30 +125,33 @@ func (t *Terraform) apply() error {
 func (t *Terraform) bind(m *model.Model, l *model.Label) error {
 	hostIps := map[string]string{}
 
+	output, err := allTerraformOutput()
+	if err != nil {
+		return err
+	}
+
 	for regionId, region := range m.Regions {
 		for hostId := range region.Hosts {
-			publicIpOutput := fmt.Sprintf("%s_host_%s_public_ip", regionId, hostId)
-			if output, err := terraformOutput(publicIpOutput); err == nil {
-				l.Bindings[publicIpOutput] = output
-				logrus.Infof("set public ip [%s] for [%s/%s]", output, regionId, hostId)
-			} else {
-				return fmt.Errorf("unable to get output [%s] (%s)", publicIpOutput, err)
+			publicIpKey := fmt.Sprintf("%s_host_%s_public_ip", regionId, hostId)
+			publicIpVal, found := output[publicIpKey]
+			if !found {
+				return fmt.Errorf("unable to get public key for [%s]", publicIpKey)
 			}
+			l.Bindings[publicIpKey] = publicIpVal
 
-			if otherHostId, found := hostIps[publicIpOutput]; found {
+			if otherHostId, found := hostIps[publicIpKey]; found {
 				return errors.Errorf("duplicate ips found, terraform bug! ip %s found for hosts %s and %s",
-					publicIpOutput, otherHostId, hostId)
+					publicIpKey, otherHostId, hostId)
 			}
 
-			hostIps[publicIpOutput] = hostId
+			hostIps[publicIpKey] = hostId
 
-			privateIpOutput := fmt.Sprintf("%s_host_%s_private_ip", regionId, hostId)
-			if output, err := terraformOutput(privateIpOutput); err == nil {
-				l.Bindings[privateIpOutput] = output
-				logrus.Infof("set private ip [%s] for [%s/%s]", output, regionId, hostId)
-			} else {
-				return fmt.Errorf("unable to get output [%s] (%s)", privateIpOutput, err)
+			privateIpKey := fmt.Sprintf("%s_host_%s_private_ip", regionId, hostId)
+			privateIpVal, found := output[privateIpKey]
+			if !found {
+				return fmt.Errorf("unable to get private key for [%s]", privateIpKey)
 			}
+			l.Bindings[privateIpKey] = privateIpVal
 		}
 	}
 
@@ -188,13 +201,29 @@ type terraformVisitor struct {
 	resource fs.FS
 }
 
-func terraformOutput(name string) (string, error) {
-	prc := lib.NewProcess("terraform", "output", name)
+func allTerraformOutput() (map[string]string, error) {
+	prc := lib.NewProcess("terraform", "output")
 	prc.Cmd.Dir = terraformRun()
 	if err := prc.Run(); err != nil {
-		return "", fmt.Errorf("error executing 'terraform output' (%w)", err)
+		return nil, errors.Wrap(err, "error executing 'terraform output'")
 	}
-	return strings.Trim(prc.Output.String(), " \t\r\n\""), nil
+	result := map[string]string{}
+	lines := strings.Split(prc.Output.String(), "\n")
+	for _, line := range lines {
+		line = strings.Trim(line, " \t\r\n\"")
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Split(line, "=")
+		if len(parts) != 2 {
+			return nil, errors.Errorf("error parsing 'terraform output' line '%s'", line)
+		}
+		key := strings.Trim(parts[0], " \t\r\n\"")
+		val := strings.Trim(parts[1], " \t\r\n\"")
+		result[key] = val
+	}
+	return result, nil
 }
 
 func terraformRun() string {

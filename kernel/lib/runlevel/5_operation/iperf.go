@@ -93,7 +93,6 @@ func (i *iperf) runServer(factory lib.SshConfigFactory) {
 		return
 	}
 
-	//output, err := lib.RemoteExec(factory, "iperf3 -s -p 7001")
 	output, err := lib.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
 		logrus.Infof("iperf3 server completed")

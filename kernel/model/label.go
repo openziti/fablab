@@ -86,8 +86,15 @@ func (label *Label) GetFilePath(fileName string) string {
 }
 
 func CreateLabel(instanceId string, bindings map[string]string) error {
-	if err := assertNoLabel(instanceId); err != nil {
-		return fmt.Errorf("error with instance path [%s] (%s)", instanceId, err)
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	workingDir := cfg.Instances[instanceId].WorkingDirectory
+
+	if old, err := LoadLabel(workingDir); err == nil {
+		return fmt.Errorf("existing instance [%s] found at [%s]", old.Model, workingDir)
 	}
 
 	l := &Label{
@@ -101,8 +108,8 @@ func CreateLabel(instanceId string, bindings map[string]string) error {
 		l.Bindings[k] = v
 	}
 
-	if err := l.SaveAtPath(instancePath(instanceId)); err != nil {
-		return fmt.Errorf("error writing run label [%s] (%s)", instancePath(instanceId), err)
+	if err = l.SaveAtPath(workingDir); err != nil {
+		return fmt.Errorf("error writing run label [%s] (%s)", workingDir, err)
 	}
 	return nil
 }
@@ -135,20 +142,6 @@ func bootstrapLabel() error {
 		return fmt.Errorf("unable to bootstrap instance label [%s] (%s)", instancePath, err)
 	}
 	return nil
-}
-
-func assertNoLabel(instanceId string) error {
-	if _, err := os.Stat(instancePath(instanceId)); err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	} else {
-		if old, err := LoadLabel(instancePath(instanceId)); err == nil {
-			return fmt.Errorf("existing instance [%s] found at [%s]", old.Model, instancePath(instanceId))
-		}
-		return nil
-	}
 }
 
 func labelPath(path string) string {

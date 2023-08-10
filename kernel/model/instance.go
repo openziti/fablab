@@ -44,8 +44,14 @@ func NewInstance(id, workingDirectory string) (string, error) {
 	}
 
 	if workingDirectory == "" {
-		root := userInstanceRoot()
+		root := UserInstanceRoot()
 		workingDirectory = filepath.Join(root, id)
+	}
+
+	var err error
+	workingDirectory, err = filepath.Abs(workingDirectory)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get absolute path of working directory")
 	}
 
 	if err := os.MkdirAll(workingDirectory, os.ModePerm); err != nil {
@@ -111,11 +117,7 @@ func BootstrapInstance() error {
 	return nil
 }
 
-func instancePath(instanceId string) string {
-	return filepath.Join(userInstanceRoot(), instanceId)
-}
-
-func userInstanceRoot() string {
+func UserInstanceRoot() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		logrus.Fatalf("unable to get user home directory (%v)", err)
