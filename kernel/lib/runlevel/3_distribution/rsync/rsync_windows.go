@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-func rsync(config *Config, sourcePath, targetPath string) error {
+func RunRsync(config *Config, sourcePath, targetPath string) error {
 	//Only Cygwin's OpenSSH ssh binary and Cygwin's rsync binary used together seem to work.
 	//Using cwRsync + Microsoft's OpenSSH ssh port did not work 1st quarter 2020.
 	if !strings.Contains(config.rsyncBin, "cygwin") {
