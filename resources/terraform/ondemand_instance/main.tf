@@ -33,6 +33,46 @@ resource "aws_instance" "fablab" {
     Name = var.environment_tag
   }
 
+#   provisioner "remote-exec" {
+#     connection {
+#       host        = self.public_ip
+#       type        = "ssh"
+#       agent       = false
+#       user        = var.ssh_user
+#       private_key = file(var.key_path)
+#     }
+#
+#     inline = [
+#       "sudo chmod 777 /etc/sysctl.d",
+#     ]
+#   }
+
+#   provisioner "file" {
+#     connection {
+#       host        = self.public_ip
+#       type        = "ssh"
+#       agent       = false
+#       user        = var.ssh_user
+#       private_key = file(var.key_path)
+#     }
+#
+#     source        = "etc/apt/apt.conf.d/99remote-not-fancy"
+#     destination   = "/home/ubuntu/99remote-not-fancy"
+#   }
+
+#   provisioner "file" {
+#     connection {
+#       host        = self.public_ip
+#       type        = "ssh"
+#       agent       = false
+#       user        = var.ssh_user
+#       private_key = file(var.key_path)
+#     }
+#
+#     source        = "etc/sysctl.d/51-network-tuning.conf"
+#     destination   = "/etc/sysctl.d/51-network-tuning.conf"
+#   }
+
   provisioner "remote-exec" {
     connection {
       host        = self.public_ip
@@ -43,53 +83,6 @@ resource "aws_instance" "fablab" {
     }
 
     inline = [
-      "sudo chmod 777 /etc/sysctl.d",
-    ]
-  }
-
-  provisioner "file" {
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      agent       = false
-      user        = var.ssh_user
-      private_key = file(var.key_path)
-    }
-
-    source        = "etc/apt/apt.conf.d/99remote-not-fancy"
-    destination   = "/home/ubuntu/99remote-not-fancy"
-  }
-
-  provisioner "file" {
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      agent       = false
-      user        = var.ssh_user
-      private_key = file(var.key_path)
-    }
-
-    source        = "etc/sysctl.d/51-network-tuning.conf"
-    destination   = "/etc/sysctl.d/51-network-tuning.conf"
-  }
-
-  provisioner "remote-exec" {
-    connection {
-      host        = self.public_ip
-      type        = "ssh"
-      agent       = false
-      user        = var.ssh_user
-      private_key = file(var.key_path)
-    }
-
-    inline = [
-      "sudo mv /home/ubuntu/99remote-not-fancy /etc/apt/apt.conf.d/",
-      "sudo chmod 755 /etc/sysctl.d",
-      "sudo apt update",
-      "sudo apt upgrade -y",
-      "sudo apt install -y iperf3 tcpdump sysstat",
-      "sudo bash -c \"echo 'ubuntu soft nofile 40960' >> /etc/security/limits.conf\"",
-      "sudo sed -i 's/ENABLED=\"false\"/ENABLED=\"true\"/g' /etc/default/sysstat",
       "sudo shutdown -r +1"
     ]
   }

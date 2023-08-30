@@ -31,12 +31,12 @@ variable "amis" {
 	eu-west-3		= "ami-0f7cd40eac2214b37"
 	me-south-1		= "ami-0eddb8cfbd6a5f657"
 	sa-east-1		= "ami-054a31f1b3bf90920"
-	us-east-1		= "ami-0f088695a37bfed29"
+	us-east-1		= "ami-0c89b535c180d3a68"
 	us-east-2		= "ami-05bff5af86ab7517a"
 	us-gov-east-1	= "ami-0dec4096f1af85e9b"
 	us-gov-west-1	= "ami-0c39aacd1cc8a1ccf"
 	us-west-1		= "ami-0d382e80be7ffdae5"
-	us-west-2		= "ami-0329ee6c35395b766"
+	us-west-2		= "ami-0e4fd86185c2230f5"
   }
 }
 
