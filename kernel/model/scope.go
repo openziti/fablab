@@ -141,6 +141,11 @@ func (scope *Scope) GetBoolVariable(name string) (bool, bool) {
 	return strings.EqualFold("true", fmt.Sprintf("%v", val)), true
 }
 
+func (scope *Scope) GetFlag(name string) bool {
+	result, _ := scope.GetBoolVariable(name)
+	return result
+}
+
 func (scope *Scope) GetVariableOr(name string, defaultValue interface{}) interface{} {
 	val, found := scope.GetVariable(name)
 	if found {
