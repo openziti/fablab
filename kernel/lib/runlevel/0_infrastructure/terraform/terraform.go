@@ -51,16 +51,9 @@ func (t *Terraform) Execute(run model.Run) error {
 
 	attemptsRemaining := t.Retries + 1
 
-	initDone := false
-
 	var err error
 	for attemptsRemaining > 0 {
-		if !initDone {
-			err = t.Init()
-			if err == nil {
-				initDone = true
-			}
-		}
+		err = t.Init()
 
 		if err == nil {
 			err = t.apply()
