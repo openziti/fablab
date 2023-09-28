@@ -22,9 +22,6 @@ Like many other software tools that offer multiple degrees of freedom and extens
 
 Once you've grokked those ideas, you'll begin to see how they can be combined to create extremely powerful implementations, which dovetail seamlessly into your development environment.
 
-<p align="center">
-	<img src="docs/images/0.4.architecture.png"/>
-</p>
 
 ### The Model
 
