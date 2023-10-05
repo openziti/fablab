@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.45.13
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/jedib0t/go-pretty/v6 v6.4.7
+	github.com/jedib0t/go-pretty/v6 v6.4.8
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.6.10
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
