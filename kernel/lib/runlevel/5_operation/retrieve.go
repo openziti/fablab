@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"os"
 	"strings"
@@ -38,9 +38,9 @@ func (self *retrieve) Execute(run model.Run) error {
 	hosts := m.SelectHosts(self.host)
 	if len(hosts) == 1 {
 		host := hosts[0]
-		ssh := lib.NewSshConfigFactory(host)
+		ssh := host.NewSshConfigFactory()
 
-		if files, err := lib.RemoteFileList(ssh, self.path); err == nil {
+		if files, err := libssh.RemoteFileList(ssh, self.path); err == nil {
 			paths := make([]string, 0)
 			for _, file := range files {
 				if strings.HasSuffix(file.Name(), self.extension) {
@@ -51,10 +51,10 @@ func (self *retrieve) Execute(run model.Run) error {
 			if err := os.MkdirAll(forensicsPath, os.ModePerm); err != nil {
 				return fmt.Errorf("error creating forensics root [%s] (%w)", forensicsPath, err)
 			}
-			if err := lib.RetrieveRemoteFiles(ssh, forensicsPath, paths...); err != nil {
+			if err := libssh.RetrieveRemoteFiles(ssh, forensicsPath, paths...); err != nil {
 				return fmt.Errorf("error retrieving remote files (%w)", err)
 			}
-			if err := lib.DeleteRemoteFiles(ssh, paths...); err != nil {
+			if err := libssh.DeleteRemoteFiles(ssh, paths...); err != nil {
 				return fmt.Errorf("error deleting remote files (%w)", err)
 			}
 

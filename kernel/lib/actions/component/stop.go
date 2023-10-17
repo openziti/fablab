@@ -31,6 +31,13 @@ func StopInParallel(componentSpec string, concurrency int) model.Action {
 	}
 }
 
+func StopInParallelHostExclusive(componentSpec string, concurrency int) model.Action {
+	return &stopByHost{
+		componentSpec: componentSpec,
+		concurrency:   concurrency,
+	}
+}
+
 func (stop *stop) Execute(run model.Run) error {
 	return run.GetModel().ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
 		if c.Type != nil {
@@ -43,4 +50,20 @@ func (stop *stop) Execute(run model.Run) error {
 type stop struct {
 	componentSpec string
 	concurrency   int
+}
+
+type stopByHost struct {
+	componentSpec string
+	concurrency   int
+}
+
+func (stop *stopByHost) Execute(run model.Run) error {
+	return run.GetModel().ForEachComponent(stop.componentSpec, stop.concurrency, func(c *model.Component) error {
+		return c.Host.DoExclusiveFallible(func() error {
+			if c.Type != nil {
+				return c.Type.Stop(run, c)
+			}
+			return nil
+		})
+	})
 }

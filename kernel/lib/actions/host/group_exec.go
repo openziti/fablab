@@ -18,7 +18,7 @@ package host
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -33,9 +33,9 @@ func GroupExec(hostSpec string, concurrency int, cmds ...string) model.Action {
 
 func (groupExec *groupExec) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(groupExec.hostSpec, groupExec.concurrency, func(h *model.Host) error {
-		sshConfigFactory := lib.NewSshConfigFactory(h)
+		sshConfigFactory := h.NewSshConfigFactory()
 
-		if o, err := lib.RemoteExecAll(sshConfigFactory, groupExec.cmds...); err != nil {
+		if o, err := libssh.RemoteExecAll(sshConfigFactory, groupExec.cmds...); err != nil {
 			logrus.Errorf("output [%s]", o)
 			return fmt.Errorf("error executing process on [%s] (%s)", h.PublicIp, err)
 		}

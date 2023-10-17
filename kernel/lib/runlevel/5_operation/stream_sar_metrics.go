@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"sync/atomic"
@@ -46,7 +47,7 @@ type streamSarMetrics struct {
 
 func (s *streamSarMetrics) Execute(model.Run) error {
 	go s.waitForClose()
-	ssh := lib.NewSshConfigFactory(s.host)
+	ssh := s.host.NewSshConfigFactory()
 	go s.runSar(ssh)
 	return nil
 }
@@ -54,14 +55,14 @@ func (s *streamSarMetrics) Execute(model.Run) error {
 func (s *streamSarMetrics) waitForClose() {
 	<-s.closer
 	if s.closed.CompareAndSwap(false, true) {
-		ssh := lib.NewSshConfigFactory(s.host)
-		if err := lib.RemoteKill(ssh, "sar"); err != nil {
+		ssh := s.host.NewSshConfigFactory()
+		if err := libssh.RemoteKill(ssh, "sar"); err != nil {
 			logrus.Warnf("did not close sar, it may have already stopped normally (%v)", err)
 		}
 	}
 }
 
-func (s *streamSarMetrics) runSar(ssh lib.SshConfigFactory) {
+func (s *streamSarMetrics) runSar(ssh libssh.SshConfigFactory) {
 	defer func() {
 		close(s.joiner)
 		logrus.Debugf("joiner closed")
@@ -74,10 +75,10 @@ func (s *streamSarMetrics) runSar(ssh lib.SshConfigFactory) {
 	}
 }
 
-func (s *streamSarMetrics) reportMetrics(ssh lib.SshConfigFactory) error {
+func (s *streamSarMetrics) reportMetrics(ssh libssh.SshConfigFactory) error {
 	log := pfxlog.Logger().WithField("addr", ssh.Address())
 	sar := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.reportIntervalCount)
-	output, err := lib.RemoteExec(ssh, sar)
+	output, err := libssh.RemoteExec(ssh, sar)
 	if err != nil {
 		log.WithError(err).Warn("sar exited")
 	}

@@ -18,7 +18,7 @@ package semaphore_0
 
 import (
 	"errors"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"strings"
@@ -40,9 +40,9 @@ func (restartStage *restartStage) Execute(run model.Run) error {
 		for _, h := range r.Hosts {
 			success := false
 			for tries := 0; tries < 5; tries++ {
-				sshConfigFactory := lib.NewSshConfigFactory(h)
+				sshConfigFactory := h.NewSshConfigFactory()
 
-				if output, err := lib.RemoteExec(sshConfigFactory, "uptime"); err != nil {
+				if output, err := libssh.RemoteExec(sshConfigFactory, "uptime"); err != nil {
 					logrus.Warnf("host not restarted [%s] (%v)", h.PublicIp, err)
 					time.Sleep(10 * time.Second)
 				} else {

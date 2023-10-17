@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -41,9 +41,9 @@ func (t *tcpdump) Execute(run model.Run) error {
 		return err
 	}
 
-	ssh := lib.NewSshConfigFactory(host)
+	ssh := host.NewSshConfigFactory()
 
-	if err := lib.RemoteKill(ssh, "tcpdump"); err != nil {
+	if err := libssh.RemoteKill(ssh, "tcpdump"); err != nil {
 		return fmt.Errorf("error killing tcpdump instances")
 	}
 
@@ -52,7 +52,7 @@ func (t *tcpdump) Execute(run model.Run) error {
 	return nil
 }
 
-func (t *tcpdump) runTcpdump(ssh lib.SshConfigFactory) {
+func (t *tcpdump) runTcpdump(ssh libssh.SshConfigFactory) {
 	defer func() {
 		if t.joiner != nil {
 			close(t.joiner)
@@ -65,7 +65,7 @@ func (t *tcpdump) runTcpdump(ssh lib.SshConfigFactory) {
 		logrus.Fatalf("error creating pcap filename (%v)", err)
 	}
 
-	output, err := lib.RemoteExec(ssh, fmt.Sprintf("sudo tcpdump -s %d -w %s", t.snaplen, filepath.Base(pcapPath.Name())))
+	output, err := libssh.RemoteExec(ssh, fmt.Sprintf("sudo tcpdump -s %d -w %s", t.snaplen, filepath.Base(pcapPath.Name())))
 	if err != nil {
 		logrus.Infof("output = [%s]", output)
 	}

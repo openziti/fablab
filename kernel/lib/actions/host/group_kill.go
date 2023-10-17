@@ -18,7 +18,7 @@ package host
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 )
 
@@ -32,8 +32,8 @@ func GroupKill(hostSpec, match string) model.Action {
 func (groupKill *groupKill) Execute(run model.Run) error {
 	for _, h := range run.GetModel().SelectHosts(groupKill.hostSpec) {
 
-		sshConfigFactory := lib.NewSshConfigFactory(h)
-		if err := lib.RemoteKill(sshConfigFactory, groupKill.match); err != nil {
+		sshConfigFactory := h.NewSshConfigFactory()
+		if err := libssh.RemoteKill(sshConfigFactory, groupKill.match); err != nil {
 			return fmt.Errorf("error killing [%s] on [%s] (%s)", groupKill.match, h.PublicIp, err)
 		}
 	}

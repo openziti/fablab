@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -41,20 +42,20 @@ func SarCloser(host *model.Host) model.Stage {
 }
 
 func (s *sar) Execute(model.Run) error {
-	ssh := lib.NewSshConfigFactory(s.host)
+	ssh := s.host.NewSshConfigFactory()
 	go s.runSar(ssh)
 	return nil
 }
 
 func (s *sarCloser) Execute(model.Run) error {
-	ssh := lib.NewSshConfigFactory(s.host)
-	if err := lib.RemoteKill(ssh, "sar"); err != nil {
+	ssh := s.host.NewSshConfigFactory()
+	if err := libssh.RemoteKill(ssh, "sar"); err != nil {
 		return fmt.Errorf("error closing sar (%w)", err)
 	}
 	return nil
 }
 
-func (s *sar) runSar(ssh lib.SshConfigFactory) {
+func (s *sar) runSar(ssh libssh.SshConfigFactory) {
 	log := pfxlog.Logger().WithField("ip", ssh.Address())
 	defer func() {
 		close(s.joiner)
@@ -62,7 +63,7 @@ func (s *sar) runSar(ssh lib.SshConfigFactory) {
 	}()
 
 	sar := fmt.Sprintf("sar -u -r -q %d", s.intervalSeconds)
-	output, err := lib.RemoteExec(ssh, sar)
+	output, err := libssh.RemoteExec(ssh, sar)
 	if err != nil {
 		log.Warnf("sar exited (%v)", err)
 	}

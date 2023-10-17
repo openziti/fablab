@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -45,7 +45,7 @@ func ssh(_ *cobra.Command, args []string) {
 		logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
 	}
 
-	if err := lib.RemoteShell(lib.NewSshConfigFactory(hosts[0])); err != nil {
+	if err := libssh.RemoteShell(hosts[0].NewSshConfigFactory()); err != nil {
 		logrus.Fatalf("error executing remote shell (%v)", err)
 	}
 }

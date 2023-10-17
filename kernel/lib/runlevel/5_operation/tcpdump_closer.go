@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -36,9 +36,9 @@ func (t *tcpdumpCloser) Execute(run model.Run) error {
 		return err
 	}
 
-	ssh := lib.NewSshConfigFactory(host)
+	ssh := host.NewSshConfigFactory()
 
-	if err := lib.RemoteKillFilter(ssh, "tcpdump", "sudo"); err != nil {
+	if err := libssh.RemoteKillFilter(ssh, "tcpdump", "sudo"); err != nil {
 		return fmt.Errorf("error closing tcpdump (%w)", err)
 	}
 	logrus.Infof("tcpdump closed")
