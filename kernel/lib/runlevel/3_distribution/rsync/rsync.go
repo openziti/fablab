@@ -19,7 +19,7 @@ package rsync
 import (
 	"context"
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -209,7 +209,7 @@ func (self *remoteRsyncer) run() error {
 }
 
 func synchronizeHost(config *Config) error {
-	if output, err := lib.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
+	if output, err := libssh.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -225,7 +225,7 @@ func synchronizeHost(config *Config) error {
 }
 
 func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
-	if output, err := lib.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
+	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -235,7 +235,7 @@ func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
 
 	dst := fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/", dstConfig.sshConfigFactory.Hostname())
 	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' /home/ubuntu/fablab/* %v", dst)
-	output, err := lib.RemoteExec(srcConfig.sshConfigFactory, cmd)
+	output, err := libssh.RemoteExec(srcConfig.sshConfigFactory, cmd)
 	if err == nil && output != "" {
 		logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 	}
@@ -244,14 +244,14 @@ func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
 
 type Config struct {
 	sshBin           string
-	sshConfigFactory lib.SshConfigFactory
+	sshConfigFactory libssh.SshConfigFactory
 	rsyncBin         string
 }
 
 func NewConfig(h *model.Host) *Config {
 	config := &Config{
 		sshBin:           h.GetStringVariableOr("distribution.ssh_bin", "ssh"),
-		sshConfigFactory: lib.NewSshConfigFactory(h),
+		sshConfigFactory: h.NewSshConfigFactory(),
 		rsyncBin:         h.GetStringVariableOr("distribution.rsync_bin", "rsync"),
 	}
 

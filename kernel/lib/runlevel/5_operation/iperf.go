@@ -19,6 +19,7 @@ package operation
 import (
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -44,21 +45,21 @@ func (i *iperf) Execute(run model.Run) error {
 		serverHost := serverHosts[0]
 		clientHost := clientHosts[0]
 
-		sshClientFactory := lib.NewSshConfigFactory(clientHost)
-		sshServerFactory := lib.NewSshConfigFactory(serverHost)
+		sshClientFactory := clientHost.NewSshConfigFactory()
+		sshServerFactory := serverHost.NewSshConfigFactory()
 
 		go i.runServer(sshServerFactory)
 
 		time.Sleep(10 * time.Second)
 
-		if err := lib.RemoteKillFilter(sshClientFactory, "iperf3", "sudo"); err != nil {
+		if err := libssh.RemoteKillFilter(sshClientFactory, "iperf3", "sudo"); err != nil {
 			return fmt.Errorf("error killing iperf3 clients (%w)", err)
 		}
 
 		endpoint := i.endpointSelector(run.GetModel())
 
 		iperfCmd := fmt.Sprintf("iperf3 -c %s -p 7001 -t %d --json", endpoint, i.seconds)
-		output, err := lib.RemoteExec(sshClientFactory, iperfCmd)
+		output, err := libssh.RemoteExec(sshClientFactory, iperfCmd)
 		if err == nil {
 			logrus.Debugf("output = [%s]", output)
 			if summary, err := lib.SummarizeIperf([]byte(output)); err == nil {
@@ -80,13 +81,13 @@ func (i *iperf) Execute(run model.Run) error {
 	return nil
 }
 
-func (i *iperf) runServer(factory lib.SshConfigFactory) {
-	if err := lib.RemoteKill(factory, "iperf3"); err != nil {
+func (i *iperf) runServer(factory libssh.SshConfigFactory) {
+	if err := libssh.RemoteKill(factory, "iperf3"); err != nil {
 		logrus.Errorf("error killing iperf3 servers (%v)", err)
 		return
 	}
 
-	output, err := lib.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
+	output, err := libssh.RemoteExec(factory, "iperf3 -s -p 7001 --one-off")
 	if err == nil {
 		logrus.Infof("iperf3 server completed")
 	} else {

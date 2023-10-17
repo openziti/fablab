@@ -17,15 +17,21 @@
 package model
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib/figlet"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/foundation/v2/info"
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
+	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -491,6 +497,165 @@ type Host struct {
 	Index                uint32
 	ScaleIndex           uint32
 	initialized          atomic.Bool
+	lock                 sync.Mutex
+	sshLock              sync.Mutex
+	sshClient            *ssh.Client
+	sshConfigFactory     libssh.SshConfigFactory
+}
+
+func (host *Host) DoExclusive(f func()) {
+	host.lock.Lock()
+	defer host.lock.Unlock()
+	f()
+}
+
+func (host *Host) DoExclusiveFallible(f func() error) error {
+	host.lock.Lock()
+	defer host.lock.Unlock()
+	return f()
+}
+
+func (host *Host) ExecLogged(cmds ...string) (string, error) {
+	buf := &bytes.Buffer{}
+	err := host.Exec(buf, cmds...)
+	return buf.String(), err
+}
+
+func (host *Host) ExecLogOnlyOnError(cmds ...string) error {
+	if o, err := host.ExecLogged(cmds...); err != nil {
+		logrus.Errorf("output [%s]", o)
+		return fmt.Errorf("error executing process on [%s] (%s)", host.PublicIp, err)
+	}
+	return nil
+}
+
+func (host *Host) GetSshUser() string {
+	return host.MustStringVariable("credentials.ssh.username")
+}
+
+func (host *Host) NewSshConfigFactory() *libssh.SshConfigFactoryImpl {
+	keyPath := host.MustStringVariable("credentials.ssh.key_path")
+	return libssh.NewSshConfigFactory(host.GetSshUser(), keyPath, host.PublicIp)
+}
+
+func (host *Host) Exec(out io.Writer, cmds ...string) error {
+	host.sshLock.Lock()
+	defer host.sshLock.Unlock()
+
+	if host.sshClient == nil {
+		if host.sshConfigFactory == nil {
+			host.sshConfigFactory = host.NewSshConfigFactory()
+		}
+
+		client, err := ssh.Dial("tcp", host.sshConfigFactory.Address(), host.sshConfigFactory.Config())
+		if err != nil {
+			return err
+		}
+		host.sshClient = client
+	}
+
+	for idx, cmd := range cmds {
+		session, err := host.sshClient.NewSession()
+		if err != nil {
+			return err
+		}
+		session.Stdout = out
+
+		if idx > 0 {
+			logrus.Infof("executing [%s]: '%s'", host.sshConfigFactory.Address(), cmd)
+		}
+		err = session.Run(cmd)
+		_ = session.Close()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (host *Host) SendFile(localPath string, remotePath string) error {
+	localFile, err := os.ReadFile(localPath)
+
+	if err != nil {
+		return errors.Wrapf(err, "unable to read local file %v", localFile)
+	}
+
+	return host.SendData(localFile, remotePath)
+}
+
+func (host *Host) SendData(data []byte, remotePath string) error {
+	host.sshLock.Lock()
+	defer host.sshLock.Unlock()
+
+	if host.sshClient == nil {
+		if host.sshConfigFactory == nil {
+			host.sshConfigFactory = host.NewSshConfigFactory()
+		}
+
+		client, err := ssh.Dial("tcp", host.sshConfigFactory.Address(), host.sshConfigFactory.Config())
+		if err != nil {
+			return err
+		}
+		host.sshClient = client
+	}
+
+	client, err := sftp.NewClient(host.sshClient)
+	if err != nil {
+		return errors.Wrap(err, "error creating sftp client")
+	}
+	defer func() { _ = client.Close() }()
+
+	path.Dir(remotePath)
+	logrus.Infof("Creating paths %s", path.Dir(remotePath))
+	if err := client.MkdirAll(path.Dir(remotePath)); err != nil {
+		return errors.Wrapf(err, "unable to create directories for %v", remotePath)
+	}
+
+	rmtFile, err := client.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+
+	if err != nil {
+		return errors.Wrapf(err, "unable to open remote file %v", remotePath)
+	}
+	defer func() { _ = rmtFile.Close() }()
+
+	_, err = rmtFile.Write(data)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (host *Host) FindProcesses(filter func(string) bool) ([]int, error) {
+	output, err := host.ExecLogged("ps ax")
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to get remote process listing [%s]", host.PublicIp)
+	}
+	return libssh.FilterProcessList(output, filter)
+}
+
+func (host *Host) KillProcesses(signal string, filter func(string) bool) error {
+	pidList, err := host.FindProcesses(filter)
+	if err != nil {
+		return err
+	}
+
+	if len(pidList) > 0 {
+		killCmd := "sudo kill " + signal + " "
+		for _, pid := range pidList {
+			killCmd += fmt.Sprintf(" %d", pid)
+		}
+
+		output, err := host.ExecLogged(killCmd)
+		if err != nil {
+			return fmt.Errorf("unable to execute [%v] on [%s] (%s). Output: [%v]", killCmd, host.PublicIp, err, output)
+		}
+	}
+
+	return nil
 }
 
 func (host *Host) CloneHost(scaleIndex uint32) *Host {
@@ -712,6 +877,12 @@ func (self *runImpl) init() (*runImpl, error) {
 	if err := os.MkdirAll(self.GetTmpDir(), 0700); err != nil {
 		return nil, errors.Wrapf(err, "unable to create tmp working directory [%s]", self.GetTmpDir())
 	}
+
+	// ensure a cfg dir exists for things like re-enrollment JWTs
+	if err := os.MkdirAll(filepath.Join(self.GetWorkingDir(), BuildConfigDir), 0700); err != nil {
+		return nil, errors.Wrapf(err, "unable to create config working directory [%s]", self.GetConfigDir())
+	}
+
 	return self, nil
 }
 

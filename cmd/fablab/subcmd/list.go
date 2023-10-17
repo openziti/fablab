@@ -102,12 +102,32 @@ func listHosts(cmd *cobra.Command, args []string) {
 
 	count := 0
 	for _, host := range m.SelectHosts(hostSpec) {
-		var components []string
+		components := &strings.Builder{}
+		line := &strings.Builder{}
+		first := true
 		for component := range host.Components {
-			components = append(components, component)
+			if line.Len()+len(component) > 40 {
+				if components.Len() > 0 {
+					components.WriteString("\n")
+				}
+				components.WriteString(line.String())
+				line = &strings.Builder{}
+				first = true
+			}
+			if !first {
+				line.WriteString(", ")
+			}
+			first = false
+			line.WriteString(component)
 		}
+
+		if components.Len() > 0 {
+			components.WriteString("\n")
+		}
+		components.WriteString(line.String())
+
 		t.AppendRow(table.Row{count + 1, host.GetId(), host.PublicIp, host.PrivateIp,
-			strings.Join(components, ","), host.GetRegion().Region,
+			components.String(), host.GetRegion().Region,
 			strings.Join(host.Tags, ",")})
 		count++
 	}

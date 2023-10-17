@@ -1,10 +1,10 @@
 package distribution
 
 import (
+	"github.com/openziti/fablab/kernel/libssh"
 	"os"
 	"strings"
 
-	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +21,7 @@ func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os
 
 func (df *distDataWithReplaceCallbacks) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
-		ssh := lib.NewSshConfigFactory(host)
+		ssh := host.NewSshConfigFactory()
 
 		dataRaw := df.data
 
@@ -29,12 +29,12 @@ func (df *distDataWithReplaceCallbacks) Execute(run model.Run) error {
 			dataRaw = strings.ReplaceAll(dataRaw, k, v(host))
 		}
 
-		if err := lib.SendData(ssh, []byte(dataRaw), df.dest); err != nil {
+		if err := libssh.SendData(ssh, []byte(dataRaw), df.dest); err != nil {
 			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
 			return err
 		}
 
-		if err := lib.Chmod(ssh, df.dest, df.filemode); err != nil {
+		if err := libssh.Chmod(ssh, df.dest, df.filemode); err != nil {
 			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
 			return err
 		}
@@ -63,13 +63,13 @@ func DistributeData(hostSpec string, data []byte, dest string) model.Stage {
 
 func (df *distData) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
-		ssh := lib.NewSshConfigFactory(host)
-		if err := lib.SendData(ssh, df.data, df.dest); err != nil {
+		ssh := host.NewSshConfigFactory()
+		if err := libssh.SendData(ssh, df.data, df.dest); err != nil {
 			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
 			return err
 		}
 
-		if err := lib.Chmod(ssh, df.dest, os.FileMode(0644)); err != nil {
+		if err := libssh.Chmod(ssh, df.dest, os.FileMode(0644)); err != nil {
 			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
 			return err
 		}

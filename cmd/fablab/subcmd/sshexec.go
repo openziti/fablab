@@ -19,7 +19,7 @@ package subcmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -88,8 +88,8 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 			buf = &bytes.Buffer{}
 			out = buf
 		}
-		sshConfigFactory := lib.NewSshConfigFactory(h)
-		err := lib.RemoteExecAllTo(sshConfigFactory, out, args[1])
+		sshConfigFactory := h.NewSshConfigFactory()
+		err := libssh.RemoteExecAllTo(sshConfigFactory, out, args[1])
 		if err != nil {
 			if buf != nil {
 				logrus.Errorf("output [%s]", buf.String())

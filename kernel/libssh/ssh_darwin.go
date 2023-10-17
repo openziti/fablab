@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package lib
+package libssh
 
 import (
 	"golang.org/x/crypto/ssh"

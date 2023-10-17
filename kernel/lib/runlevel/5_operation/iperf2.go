@@ -18,7 +18,7 @@ package operation
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 )
@@ -40,10 +40,10 @@ func (self *iperfClient) Execute(run model.Run) error {
 		return errors.Errorf("expected [1] iperf client host, found [%d]", len(hosts))
 	}
 
-	ssh := lib.NewSshConfigFactory(hosts[0])
+	ssh := hosts[0].NewSshConfigFactory()
 
 	cmd := fmt.Sprintf("iperf3 -c %s -p %d", self.address, self.port)
-	if err := lib.RemoteConsole(ssh, cmd); err != nil {
+	if err := libssh.RemoteConsole(ssh, cmd); err != nil {
 		return errors.Wrap(err, "iperf3 client exec")
 	}
 
