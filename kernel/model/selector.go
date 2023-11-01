@@ -151,14 +151,24 @@ func (m *Model) ForEachHost(spec string, concurrency int, f func(host *Host) err
 
 func (m *Model) ForEachComponent(spec string, concurrency int, f func(c *Component) error) error {
 	components := m.SelectComponents(spec)
+
 	var tasks []parallel.Task
 	for _, component := range components {
-		boundComponent := component
-		tasks = append(tasks, func() error {
-			return f(boundComponent)
-		})
+		if concurrency == 1 {
+			if err := f(component); err != nil {
+				return err
+			}
+		} else {
+			boundComponent := component
+			tasks = append(tasks, func() error {
+				return f(boundComponent)
+			})
+		}
 	}
-	return parallel.Execute(tasks, int64(concurrency))
+	if concurrency > 1 {
+		return parallel.Execute(tasks, int64(concurrency))
+	}
+	return nil
 }
 
 type EntityMatcher func(Entity) bool
