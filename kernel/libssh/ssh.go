@@ -192,7 +192,7 @@ func RemoteExecAllTo(sshConfig SshConfigFactory, out io.Writer, cmds ...string) 
 			return err
 		}
 		session.Stdout = out
-
+		session.Stderr = out
 		if idx > 0 {
 			logrus.Infof("executing [%s]: '%s'", sshConfig.Address(), cmd)
 		}
