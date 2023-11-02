@@ -403,26 +403,67 @@ func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...st
 	}
 	defer func() { _ = client.Close() }()
 
-	for _, path := range paths {
-		rf, err := client.Open(path)
+	for _, nextPath := range paths {
+		fileInfo, err := client.Stat(nextPath)
 		if err != nil {
-			return fmt.Errorf("error opening remote file [%s] (%w)", path, err)
+			return err
 		}
-		defer func() { _ = rf.Close() }()
+		if fileInfo.IsDir() {
+			if err = retrieveRemoteDir(client, nextPath, localPath); err != nil {
+				return err
+			}
+		} else if err = retrieveRemoteFile(client, nextPath, localPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-		lf, err := os.OpenFile(filepath.Join(localPath, filepath.Base(path)), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("error opening local file [%s] (%w)", path, err)
-		}
-		defer func() { _ = lf.Close() }()
-
-		n, err := io.Copy(lf, rf)
-		if err != nil {
-			return fmt.Errorf("error copying remote file to local [%s] (%w)", path, err)
-		}
-		logrus.Infof("%s => %s", path, info.ByteCount(n))
+func retrieveRemoteDir(client *sftp.Client, path string, localPath string) error {
+	files, err := client.ReadDir(path)
+	if err != nil {
+		return err
 	}
 
+	if err = os.MkdirAll(localPath, 0700); err != nil {
+		return errors.Wrapf(err, "unable to create local target director [%s]", localPath)
+	}
+
+	for _, file := range files {
+		remotePath := filepath.Join(path, file.Name())
+		if file.IsDir() {
+			newLocalPath := filepath.Join(localPath, file.Name())
+			if err = retrieveRemoteDir(client, remotePath, newLocalPath); err != nil {
+				return err
+			}
+		} else {
+			if err = retrieveRemoteFile(client, remotePath, localPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func retrieveRemoteFile(client *sftp.Client, path string, localPath string) error {
+	rf, err := client.Open(path)
+	if err != nil {
+		return fmt.Errorf("error opening remote file [%s] (%w)", path, err)
+	}
+	defer func() { _ = rf.Close() }()
+
+	lf, err := os.OpenFile(filepath.Join(localPath, filepath.Base(path)), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error opening local file [%s] (%w)", path, err)
+	}
+	defer func() { _ = lf.Close() }()
+
+	n, err := io.Copy(lf, rf)
+	if err != nil {
+		return fmt.Errorf("error copying remote file to local [%s] (%w)", path, err)
+	}
+	logrus.Infof("%s => %s [%s]", path, localPath, info.ByteCount(n))
 	return nil
 }
 
@@ -441,11 +482,11 @@ func DeleteRemoteFiles(factory SshConfigFactory, paths ...string) error {
 	}
 	defer func() { _ = client.Close() }()
 
-	for _, path := range paths {
-		if err := client.Remove(path); err != nil {
-			return fmt.Errorf("error removing path [%s] (%w)", path, err)
+	for _, nextPath := range paths {
+		if err := client.Remove(nextPath); err != nil {
+			return fmt.Errorf("error removing path [%s] (%w)", nextPath, err)
 		}
-		logrus.Infof("%s removed", path)
+		logrus.Infof("%s removed", nextPath)
 	}
 
 	return nil
