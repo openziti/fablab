@@ -215,22 +215,6 @@ func LoadInfluxConfig2(src map[interface{}]interface{}) (*influxConfig2, error) 
 		return nil, errors.New("missing influx 'database' config")
 	}
 
-	//if value, found := src["username"]; found {
-	//	if username, ok := value.(string); ok {
-	//		cfg.username = username
-	//	} else {
-	//		return nil, errors.New("invalid influx 'username' value")
-	//	}
-	//}
-	//
-	//if value, found := src["password"]; found {
-	//	if password, ok := value.(string); ok {
-	//		cfg.password = password
-	//	} else {
-	//		return nil, errors.New("invalid influx 'password' value")
-	//	}
-	//}
-
 	return cfg, nil
 }
 
