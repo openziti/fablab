@@ -18,7 +18,6 @@ package operation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
@@ -30,15 +29,15 @@ import (
 	"time"
 )
 
-func InfluxMetricsReporter2() model.Stage {
-	return &influxMetricsReporterStage2{}
+func Influx2MetricsReporter() model.Stage {
+	return &influx2MetricsReporterStage{}
 }
 
-type influxMetricsReporterStage2 struct {
+type influx2MetricsReporterStage struct {
 	errorz.ErrorHolderImpl
 }
 
-func (stage *influxMetricsReporterStage2) Execute(run model.Run) error {
+func (stage *influx2MetricsReporterStage) Execute(run model.Run) error {
 	m := run.GetModel()
 	urlVar := m.GetRequiredStringVariable(stage, "metrics.influxdb.url")
 	db := m.GetRequiredStringVariable(stage, "metrics.influxdb.db")
@@ -55,7 +54,7 @@ func (stage *influxMetricsReporterStage2) Execute(run model.Run) error {
 		return err
 	}
 
-	config := influxConfig2{
+	config := influx2Config{
 		url:      *influxUrl,
 		database: db,
 		token:    token,
@@ -63,7 +62,7 @@ func (stage *influxMetricsReporterStage2) Execute(run model.Run) error {
 		bucket:   bucket,
 	}
 
-	handler, err := NewInfluxDBMetricsHandler2(&config)
+	handler, err := NewInflux2DBMetricsHandler(&config)
 	if err != nil {
 		return err
 	}
@@ -72,8 +71,8 @@ func (stage *influxMetricsReporterStage2) Execute(run model.Run) error {
 	return nil
 }
 
-func NewInfluxDBMetricsHandler2(cfg *influxConfig2) (model.MetricsHandler, error) {
-	rep := &influxReporter2{
+func NewInflux2DBMetricsHandler(cfg *influx2Config) (model.MetricsHandler, error) {
+	rep := &influx2Reporter{
 		url:         cfg.url,
 		database:    cfg.bucket,
 		token:       cfg.token,
@@ -89,29 +88,28 @@ func NewInfluxDBMetricsHandler2(cfg *influxConfig2) (model.MetricsHandler, error
 	return rep, nil
 }
 
-type influxReporter2 struct {
+type influx2Reporter struct {
 	url         url.URL
 	database    string
 	metricsChan chan *hostMetricsEvent2
 	client      influxdb2.Client
 	token       string
 	org         string
-	bucket      string
 }
 
-func (reporter *influxReporter2) AcceptHostMetrics(host *model.Host, event *model.MetricsEvent) {
+func (reporter *influx2Reporter) AcceptHostMetrics(host *model.Host, event *model.MetricsEvent) {
 	reporter.metricsChan <- &hostMetricsEvent2{
 		host:  host,
 		event: event,
 	}
 }
 
-func (reporter *influxReporter2) makeClient() error {
+func (reporter *influx2Reporter) makeClient() error {
 	reporter.client = influxdb2.NewClient(reporter.url.String(), reporter.token)
 	return nil
 }
 
-func (reporter *influxReporter2) run() {
+func (reporter *influx2Reporter) run() {
 	logz := pfxlog.Logger()
 	logz.Info("started")
 	defer logz.Warn("exited")
@@ -165,7 +163,7 @@ func AsBatch2(hostEvent *hostMetricsEvent2) ([]*write.Point, error) {
 	return pts, nil
 }
 
-func (reporter *influxReporter2) send(msg *hostMetricsEvent2) error {
+func (reporter *influx2Reporter) send(msg *hostMetricsEvent2) error {
 	points, err := AsBatch2(msg)
 	if err != nil {
 		return err
@@ -180,42 +178,12 @@ func (reporter *influxReporter2) send(msg *hostMetricsEvent2) error {
 	return nil
 }
 
-type influxConfig2 struct {
+type influx2Config struct {
 	url      url.URL
 	database string
 	token    string
 	org      string
 	bucket   string
-}
-
-func LoadInfluxConfig2(src map[interface{}]interface{}) (*influxConfig2, error) {
-	cfg := &influxConfig2{}
-
-	if value, found := src["url"]; found {
-		if urlSrc, ok := value.(string); ok {
-			if parsedURL, err := url.Parse(urlSrc); err == nil {
-				cfg.url = *parsedURL
-			} else {
-				return nil, fmt.Errorf("cannot parse influx 'parsedURL' value (%s)", err)
-			}
-		} else {
-			return nil, errors.New("invalid influx 'url' value")
-		}
-	} else {
-		return nil, errors.New("missing influx 'url' config")
-	}
-
-	if value, found := src["database"]; found {
-		if database, ok := value.(string); ok {
-			cfg.database = database
-		} else {
-			return nil, errors.New("invalid influx 'database' value")
-		}
-	} else {
-		return nil, errors.New("missing influx 'database' config")
-	}
-
-	return cfg, nil
 }
 
 type hostMetricsEvent2 struct {
