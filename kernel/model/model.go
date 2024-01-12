@@ -523,7 +523,7 @@ func (host *Host) ExecLogged(cmds ...string) (string, error) {
 
 func (host *Host) ExecLogOnlyOnError(cmds ...string) error {
 	if o, err := host.ExecLogged(cmds...); err != nil {
-		logrus.Errorf("output [%s]", o)
+		logrus.WithField("hostId", host.Id).Errorf("output [%s]", o)
 		return fmt.Errorf("error executing process on [%s] (%s)", host.PublicIp, err)
 	}
 	return nil

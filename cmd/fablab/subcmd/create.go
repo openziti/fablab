@@ -17,45 +17,59 @@
 package subcmd
 
 import (
+	"fmt"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
+	"os/exec"
 )
 
 func init() {
-	createCmd := NewCreateCommand()
-
-	createCmd.Flags().StringVarP(&createCmd.Name, "name", "n", "", "name for the new instance")
-	createCmd.Flags().StringVarP(&createCmd.WorkingDir, "directory", "d", "", "working directory for the new instance")
-	createCmd.Flags().StringToStringVarP(&createCmd.Bindings, "label", "l", nil, "label bindings to include in the model")
-	createCmd.Flags()
-
-	RootCmd.AddCommand(createCmd.Command)
+	RootCmd.AddCommand(NewCreateCommand())
 }
 
-func NewCreateCommand() *CreateCommand {
-	result := &CreateCommand{
-		Command: &cobra.Command{
-			Use:   "create <model>",
-			Short: "create a fablab instance from a model",
-			Args:  cobra.MaximumNArgs(1),
-		},
+func NewCreateCommand() *cobra.Command {
+	createCmd := &CreateCommand{}
+
+	cmd := &cobra.Command{
+		Use:   "create <model>",
+		Short: "create a fablab instance from a model",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  createCmd.create,
 	}
 
-	result.Command.RunE = result.create
+	cmd.Flags().StringVarP(&createCmd.Name, "name", "n", "", "name for the new instance")
+	cmd.Flags().StringVarP(&createCmd.WorkingDir, "directory", "d", "", "working directory for the new instance")
+	cmd.Flags().StringVarP(&createCmd.Executable, "executable", "e", "",
+		"path to the model specific fablab executable. defaults to the current executable")
+	cmd.Flags().StringToStringVarP(&createCmd.Bindings, "label", "l", nil, "label bindings to include in the model")
 
-	return result
+	return cmd
 }
 
 type CreateCommand struct {
-	*cobra.Command
 	Name       string
 	WorkingDir string
 	Bindings   map[string]string
+	Executable string
 }
 
 func (self *CreateCommand) create(*cobra.Command, []string) error {
+	if self.Executable == "" {
+		executable, err := exec.LookPath(os.Args[0])
+		if err != nil {
+			return fmt.Errorf("unable to get path (%w)", err)
+		}
+		self.Executable = executable
+	}
+
+	_, err := os.Stat(self.Executable)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("invalid executable path '%s' (%w)", self.Executable, err)
+	}
+
 	if model.GetModel() == nil {
 		return errors.New("no model configured, exiting")
 	}
@@ -64,7 +78,7 @@ func (self *CreateCommand) create(*cobra.Command, []string) error {
 		return errors.New("no model id provided, exiting")
 	}
 
-	instanceId, err := model.NewInstance(self.Name, self.WorkingDir)
+	instanceId, err := model.NewInstance(self.Name, self.WorkingDir, self.Executable)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create instance of model %v, exiting", model.GetModel().Id)
 	}

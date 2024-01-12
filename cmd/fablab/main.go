@@ -19,7 +19,10 @@ package main
 import (
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/cmd/fablab/subcmd"
+	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
+	"os"
+	"os/exec"
 )
 
 func init() {
@@ -27,7 +30,39 @@ func init() {
 }
 
 func main() {
-	if err := subcmd.Execute(); err != nil {
-		logrus.Fatalf("failure (%v)", err)
+	if len(os.Args) > 1 {
+		runLocalBinary := false
+		if os.Args[1] == "completion" {
+			runLocalBinary = true
+		} else if len(os.Args) > 2 {
+			if os.Args[1] == "list" && os.Args[2] == "instances" {
+				runLocalBinary = true
+			}
+		}
+
+		if runLocalBinary {
+			if err := subcmd.Execute(); err != nil {
+				logrus.Fatalf("failure (%v)", err)
+			}
+			return
+		}
 	}
+
+	cfg := model.GetConfig()
+	instance, ok := cfg.Instances[cfg.Default]
+	if !ok {
+		logrus.Fatalf("invalid default instance '%s'", cfg.Default)
+		return
+	}
+
+	if instance.Executable == "" {
+		logrus.Fatalf("default instance '%s' has no executable configured to delegate to", cfg.Default)
+		return
+	}
+
+	cmd := exec.Command(instance.Executable, os.Args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stderr
+	_ = cmd.Run()
 }

@@ -209,7 +209,7 @@ func (self *remoteRsyncer) run() error {
 }
 
 func synchronizeHost(config *Config) error {
-	if output, err := libssh.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
+	if output, err := libssh.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab/bin"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -217,7 +217,9 @@ func synchronizeHost(config *Config) error {
 		return err
 	}
 
-	if err := RunRsync(config, model.KitBuild()+"/", fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab", config.sshConfigFactory.Hostname())); err != nil {
+	extraPath := config.syncTarget
+
+	if err := RunRsync(config, model.KitBuild()+"/"+extraPath, fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/"+extraPath, config.sshConfigFactory.Hostname())); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 
@@ -225,7 +227,7 @@ func synchronizeHost(config *Config) error {
 }
 
 func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
-	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab"); err == nil {
+	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab/bin"); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -233,8 +235,10 @@ func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
 		return err
 	}
 
-	dst := fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/", dstConfig.sshConfigFactory.Hostname())
-	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' /home/ubuntu/fablab/* %v", dst)
+	extraPath := dstConfig.syncTarget
+
+	dst := fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/%s", dstConfig.sshConfigFactory.Hostname(), extraPath)
+	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' /home/ubuntu/fablab/%v* %v", extraPath, dst)
 	output, err := libssh.RemoteExec(srcConfig.sshConfigFactory, cmd)
 	if err == nil && output != "" {
 		logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
@@ -246,6 +250,7 @@ type Config struct {
 	sshBin           string
 	sshConfigFactory libssh.SshConfigFactory
 	rsyncBin         string
+	syncTarget       string
 }
 
 func NewConfig(h *model.Host) *Config {
@@ -253,6 +258,15 @@ func NewConfig(h *model.Host) *Config {
 		sshBin:           h.GetStringVariableOr("distribution.ssh_bin", "ssh"),
 		sshConfigFactory: h.NewSshConfigFactory(),
 		rsyncBin:         h.GetStringVariableOr("distribution.rsync_bin", "rsync"),
+	}
+
+	config.syncTarget = h.GetStringVariableOr("sync.target", "all")
+	if config.syncTarget == "all" {
+		config.syncTarget = ""
+	}
+
+	if config.syncTarget != "" && !strings.HasSuffix(config.syncTarget, "/") {
+		config.syncTarget += "/"
 	}
 
 	return config

@@ -35,6 +35,7 @@ type InstanceConfig struct {
 	Id               string `yaml:"name"`
 	Model            string `yaml:"model"`
 	WorkingDirectory string `yaml:"working_directory"`
+	Executable       string `yaml:"executable"`
 }
 
 func (self *InstanceConfig) CleanupWorkingDir() error {
