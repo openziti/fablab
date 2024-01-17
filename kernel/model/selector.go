@@ -151,7 +151,10 @@ func (m *Model) ForEachHost(spec string, concurrency int, f func(host *Host) err
 
 func (m *Model) ForEachComponent(spec string, concurrency int, f func(c *Component) error) error {
 	components := m.SelectComponents(spec)
+	return m.ForEachComponentIn(components, concurrency, f)
+}
 
+func (m *Model) ForEachComponentIn(components []*Component, concurrency int, f func(c *Component) error) error {
 	var tasks []parallel.Task
 	for _, component := range components {
 		if concurrency == 1 {
