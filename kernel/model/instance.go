@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 )
 
-func NewInstance(id, workingDirectory string) (string, error) {
+func NewInstance(id, workingDirectory, executable string) (string, error) {
 	cfg := GetConfig()
 
 	if id == "" {
@@ -62,6 +62,7 @@ func NewInstance(id, workingDirectory string) (string, error) {
 		Id:               id,
 		Model:            model.Id,
 		WorkingDirectory: workingDirectory,
+		Executable:       executable,
 	}
 
 	cfg.Instances[id] = instanceConfig
