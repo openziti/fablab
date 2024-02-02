@@ -71,7 +71,7 @@ func runExec(_ *cobra.Command, args []string) {
 
 	for _, action := range actions {
 		if err := action.Execute(ctx); err != nil {
-			logrus.WithError(err).Fatalf("action failed [%s]", action)
+			logrus.WithError(err).Fatalf("action failed [%+v]", action)
 		}
 	}
 }

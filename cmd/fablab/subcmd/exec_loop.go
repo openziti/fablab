@@ -18,6 +18,8 @@ package subcmd
 
 import (
 	"fmt"
+	"github.com/michaelquigley/pfxlog"
+	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -89,15 +91,22 @@ func (self *execLoopCmd) runExec(_ *cobra.Command, args []string) {
 		logrus.Fatalf("invalid until specification, must 'forever', a number (iterations) or a duration [%s]", args[0])
 	}
 
+	iterations := 1
+	start := time.Now()
+
 	for {
+		figlet.Figlet(fmt.Sprintf("ITERATION-%03d", iterations))
 		for _, action := range actions {
 			if err = action.Execute(ctx); err != nil {
-				logrus.WithError(err).Fatalf("action failed [%s]", action)
+				logrus.WithError(err).Fatalf("action failed [%+v]", action)
 			}
 		}
 		if until.isDone() {
+			pfxlog.Logger().Infof("finished after %v iteration(s) in %v", iterations, time.Since(start))
 			return
 		}
+		pfxlog.Logger().Infof("iteration: %v, time elapsed: %v", iterations, time.Since(start))
+		iterations++
 	}
 }
 

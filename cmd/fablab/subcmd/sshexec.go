@@ -69,7 +69,7 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 	}
 
 	err := m.ForEachHost(args[0], cmd.concurrency, func(h *model.Host) error {
-		var buf *bytes.Buffer
+		var buf *libssh.SyncBuffer
 		var out io.Writer
 		if tmpl != nil {
 			buf := &bytes.Buffer{}
@@ -82,15 +82,15 @@ func (cmd *sshExecCmd) run(_ *cobra.Command, args []string) {
 				return err
 			}
 			defer func() { _ = file.Close() }()
-			out = file
+			out = &libssh.SyncWriter{
+				Writer: file,
+			}
 			logrus.Infof("[%v] output -> %v", h.PublicIp, fileName)
 		} else {
-			buf = &bytes.Buffer{}
+			buf = &libssh.SyncBuffer{}
 			out = buf
 		}
-		sshConfigFactory := h.NewSshConfigFactory()
-		err := libssh.RemoteExecAllTo(sshConfigFactory, out, args[1])
-		if err != nil {
+		if err := h.Exec(out, args[1]); err != nil {
 			if buf != nil {
 				logrus.Errorf("output [%s]", buf.String())
 			}

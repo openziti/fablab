@@ -17,7 +17,6 @@
 package model
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
 	"github.com/openziti/fablab/kernel/lib/figlet"
@@ -516,7 +515,7 @@ func (host *Host) DoExclusiveFallible(f func() error) error {
 }
 
 func (host *Host) ExecLogged(cmds ...string) (string, error) {
-	buf := &bytes.Buffer{}
+	buf := &libssh.SyncBuffer{}
 	err := host.Exec(buf, cmds...)
 	return buf.String(), err
 }
@@ -560,6 +559,7 @@ func (host *Host) Exec(out io.Writer, cmds ...string) error {
 			return err
 		}
 		session.Stdout = out
+		session.Stderr = out
 
 		if idx > 0 {
 			logrus.Infof("executing [%s]: '%s'", host.sshConfigFactory.Address(), cmd)
