@@ -257,7 +257,6 @@ func FilterProcessList(output string, filter func(string) bool) ([]int, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if filter(line) {
-			logrus.Infof("line [%s]", scanner.Text())
 			tokens := strings.Split(strings.Trim(line, " \t\n"), " ")
 			if pid, err := strconv.Atoi(tokens[0]); err == nil {
 				pidList = append(pidList, pid)
@@ -581,4 +580,38 @@ func sshAuthMethodFromFile(keyPath string) (ssh.AuthMethod, error) {
 			return nil, fmt.Errorf("error parsing private key from [%s]L %w", keyPath, err)
 		}
 	}
+}
+
+type SyncBuffer struct {
+	buf  bytes.Buffer
+	lock sync.Mutex
+}
+
+func (self *SyncBuffer) Write(data []byte) (int, error) {
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	return self.buf.Write(data)
+}
+
+func (self *SyncBuffer) Read(data []byte) (int, error) {
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	return self.buf.Read(data)
+}
+
+func (self *SyncBuffer) String() string {
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	return self.buf.String()
+}
+
+type SyncWriter struct {
+	io.Writer
+	lock sync.Mutex
+}
+
+func (self *SyncWriter) Write(data []byte) (int, error) {
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	return self.Writer.Write(data)
 }

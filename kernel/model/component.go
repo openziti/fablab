@@ -27,6 +27,7 @@ const (
 	ComponentActionStart          = "start"
 	ComponentActionStageFiles     = "stageFiles"
 	ComponentActionInitializeHost = "initializeHost"
+	ComponentActionInit           = "init"
 )
 
 // ComponentType contains the custom logic for a component. This can
@@ -67,6 +68,17 @@ type HostInitializingComponent interface {
 	// InitializeHost is called at the end of the distribution phase and allows the component to
 	// make changes to Host configuration
 	InitializeHost(r Run, c *Component) error
+}
+
+// A InitializingComponent can run some configuration on the host as part of the activation phase.
+// Init isn't called explicitly as it often has dependencies on other components. However, by
+// implementing this interface, the action will be made available, without requiring explicit
+// registration
+type InitializingComponent interface {
+	ComponentType
+
+	// Init needs to be called explicitly
+	Init(r Run, c *Component) error
 }
 
 // An InitializingComponentType has a hook to allow it to be setup while the model is being initialized.
@@ -210,6 +222,10 @@ func (component *Component) GetActions() map[string]ComponentAction {
 
 		if hostInitType, ok := component.Type.(HostInitializingComponent); ok {
 			result[ComponentActionInitializeHost] = ComponentActionF(hostInitType.InitializeHost)
+		}
+
+		if initType, ok := component.Type.(InitializingComponent); ok {
+			result[ComponentActionInit] = ComponentActionF(initType.Init)
 		}
 
 		if actionsType, ok := component.Type.(ActionsComponent); ok {
