@@ -12,8 +12,8 @@ import (
 
 func init() {
 	listCmd.AddCommand(listInstancesCmd)
-	listCmd.AddCommand(listHostsCmd)
-	listCmd.AddCommand(listComponentsCmd)
+	listCmd.AddCommand(newListHostsCmd())
+	listCmd.AddCommand(newListComponentsCmd())
 	listCmd.AddCommand(listActionsCmd)
 	RootCmd.AddCommand(listCmd)
 }
@@ -31,19 +31,33 @@ var listInstancesCmd = &cobra.Command{
 	Run:   listInstances,
 }
 
-var listHostsCmd = &cobra.Command{
-	Use:   "hosts <spec?>",
-	Short: "list hosts",
-	Args:  cobra.MaximumNArgs(1),
-	Run:   listHosts,
+func newListHostsCmd() *cobra.Command {
+	action := &listHostsAction{}
+
+	var cmd = &cobra.Command{
+		Use:   "hosts <spec?>",
+		Short: "list hosts",
+		Args:  cobra.MaximumNArgs(1),
+		Run:   action.execute,
+	}
+
+	cmd.Flags().BoolVarP(&action.componentDetail, "detail", "d", false, "show extra component detail")
+
+	return cmd
 }
 
-var listComponentsCmd = &cobra.Command{
-	Use:     "components <spec?>",
-	Aliases: []string{"comp"},
-	Short:   "list components",
-	Args:    cobra.MaximumNArgs(1),
-	Run:     listComponents,
+func newListComponentsCmd() *cobra.Command {
+	action := listComponentsAction{}
+
+	var cmd = &cobra.Command{
+		Use:     "components <spec?>",
+		Aliases: []string{"comp"},
+		Short:   "list components",
+		Args:    cobra.MaximumNArgs(1),
+		Run:     action.execute,
+	}
+
+	return cmd
 }
 
 var listActionsCmd = &cobra.Command{
@@ -83,7 +97,11 @@ func listInstances(_ *cobra.Command, _ []string) {
 	}
 }
 
-func listHosts(cmd *cobra.Command, args []string) {
+type listHostsAction struct {
+	componentDetail bool
+}
+
+func (self *listHostsAction) execute(cmd *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
@@ -98,36 +116,46 @@ func listHosts(cmd *cobra.Command, args []string) {
 
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
-	t.AppendHeader(table.Row{"#", "ID", "Public IP", "Private IP", "Components", "Region", "Tags"})
+	t.AppendHeader(table.Row{"#", "ID", "Public IP", "Private IP", "Components", "Region", "InstanceType", "Tags"})
 
 	count := 0
 	for _, host := range m.SelectHosts(hostSpec) {
 		components := &strings.Builder{}
-		line := &strings.Builder{}
 		first := true
-		for component := range host.Components {
-			if line.Len()+len(component) > 40 {
-				if components.Len() > 0 {
+
+		if self.componentDetail {
+			for _, component := range host.Components {
+				cType := "none"
+				if component.Type != nil {
+					cType = component.Type.Label()
+				}
+
+				if !first {
 					components.WriteString("\n")
 				}
-				components.WriteString(line.String())
-				line = &strings.Builder{}
-				first = true
+				components.WriteString(fmt.Sprintf("%s: %s", component.Id, cType))
+				first = false
 			}
-			if !first {
-				line.WriteString(", ")
+		} else {
+			summary := map[string]int{}
+			for _, component := range host.Components {
+				cType := "none"
+				if component.Type != nil {
+					cType = component.Type.Label()
+				}
+				summary[cType]++
 			}
-			first = false
-			line.WriteString(component)
+			for cType, count := range summary {
+				if !first {
+					components.WriteString("\n")
+				}
+				components.WriteString(fmt.Sprintf("%s: %4d", cType, count))
+				first = false
+			}
 		}
-
-		if components.Len() > 0 {
-			components.WriteString("\n")
-		}
-		components.WriteString(line.String())
 
 		t.AppendRow(table.Row{count + 1, host.GetId(), host.PublicIp, host.PrivateIp,
-			components.String(), host.GetRegion().Region,
+			components.String(), host.GetRegion().Region, host.InstanceType,
 			strings.Join(host.Tags, ",")})
 		count++
 	}
@@ -137,7 +165,9 @@ func listHosts(cmd *cobra.Command, args []string) {
 	}
 }
 
-func listComponents(cmd *cobra.Command, args []string) {
+type listComponentsAction struct{}
+
+func (self *listComponentsAction) execute(cmd *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
@@ -151,11 +181,18 @@ func listComponents(cmd *cobra.Command, args []string) {
 
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
-	t.AppendHeader(table.Row{"#", "ID", "Host", "Region", "Tags"})
+	t.AppendHeader(table.Row{"#", "ID", "Type", "Host", "Region", "Version", "Tags"})
 
 	count := 0
 	for _, c := range m.SelectComponents(componentSpec) {
-		t.AppendRow(table.Row{count + 1, c.GetId(), c.GetHost().GetId(), c.GetRegion().GetId(), strings.Join(c.Tags, ",")})
+		componentType := "none"
+		componentVersion := ""
+		if c.Type != nil {
+			componentType = c.Type.Label()
+			componentVersion = c.Type.GetVersion()
+		}
+		t.AppendRow(table.Row{count + 1, c.GetId(), componentType, c.GetHost().GetId(), c.GetRegion().GetId(),
+			componentVersion, strings.Join(c.Tags, ",")})
 		count++
 	}
 
@@ -164,7 +201,7 @@ func listComponents(cmd *cobra.Command, args []string) {
 	}
 }
 
-func listActions(cmd *cobra.Command, args []string) {
+func listActions(*cobra.Command, []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}

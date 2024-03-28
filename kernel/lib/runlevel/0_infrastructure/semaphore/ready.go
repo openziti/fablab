@@ -18,7 +18,6 @@ package semaphore_0
 
 import (
 	"errors"
-	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"strings"
@@ -30,37 +29,26 @@ func Ready(maxWait time.Duration) model.Stage {
 }
 
 func (self *ReadyStage) Execute(run model.Run) error {
-	m := run.GetModel()
-
 	logrus.Infof("waiting for expressed hosts to be ready (max-wait: %s)", self.MaxWait.String())
 
 	start := time.Now()
 
-	for _, r := range m.Regions {
-		for _, h := range r.Hosts {
-			success := false
-			for !success {
-				sshConfigFactory := h.NewSshConfigFactory()
-
-				if output, err := libssh.RemoteExec(sshConfigFactory, "uptime"); err != nil {
-					logrus.Warnf("host not ready [%s] (%v)", h.PublicIp, err)
-					if time.Now().Before(start.Add(self.MaxWait)) {
-						time.Sleep(2 * time.Second)
-					} else {
-						break
-					}
-				} else {
-					logrus.Infof("%s", strings.Trim(output, " \t\r\n"))
-					success = true
-				}
+	return run.GetModel().ForEachHost("*", 20, func(host *model.Host) error {
+		for {
+			output, err := host.ExecLogged("uptime")
+			if err == nil {
+				logrus.Infof("%s", strings.Trim(output, " \t\r\n"))
+				return nil
 			}
 
-			if !success {
+			logrus.Warnf("host not ready [%s] (%v)", host.PublicIp, err)
+			if time.Now().Before(start.Add(self.MaxWait)) {
+				time.Sleep(2 * time.Second)
+			} else {
 				return errors.New("ready check failed. tries exceeded")
 			}
 		}
-	}
-	return nil
+	})
 }
 
 type ReadyStage struct {

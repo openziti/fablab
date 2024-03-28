@@ -42,6 +42,11 @@ func syncBinaries(_ *cobra.Command, _ []string) {
 	if err != nil {
 		logrus.WithError(err).Fatal("error initializing run")
 	}
+
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building configuration (%v)", err)
+	}
+
 	ctx.GetModel().Scope.PutVariable("sync.target", "bin")
 	if err := ctx.GetModel().Sync(ctx); err != nil {
 		logrus.Fatalf("error synchronizing all hosts (%s)", err)

@@ -59,4 +59,6 @@ func (self *stopAction) run(_ *cobra.Command, args []string) {
 	if err := component.StopInParallel(args[0], self.concurrency).Execute(ctx); err != nil {
 		logrus.WithError(err).Fatalf("error stoping components")
 	}
+	c := ctx.GetModel().SelectComponents(args[0])
+	logrus.Infof("%d components stopped", len(c))
 }

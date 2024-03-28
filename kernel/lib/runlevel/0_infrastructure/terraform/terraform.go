@@ -33,7 +33,12 @@ import (
 )
 
 func Express() model.Stage {
-	return &Terraform{}
+	return &Terraform{
+		Retries: 3,
+		ReadyCheck: &semaphore_0.ReadyStage{
+			MaxWait: 90 * time.Second,
+		},
+	}
 }
 
 type Terraform struct {

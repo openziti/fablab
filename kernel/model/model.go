@@ -482,9 +482,20 @@ func (region *Region) RangeSortedHosts(f func(id string, host *Host)) {
 	}
 }
 
+type EC2Volume struct {
+	Type   string
+	SizeGB uint32
+	IOPS   uint32
+}
+
+type EC2Host struct {
+	Volume EC2Volume
+}
+
 type Host struct {
 	Scope
 	Id                   string
+	EC2                  EC2Host
 	Region               *Region
 	PublicIp             string
 	PrivateIp            string
@@ -648,6 +659,7 @@ func (host *Host) KillProcesses(signal string, filter func(string) bool) error {
 		for _, pid := range pidList {
 			killCmd += fmt.Sprintf(" %d", pid)
 		}
+		killCmd += " || /bin/true"
 
 		output, err := host.ExecLogged(killCmd)
 		if err != nil {
@@ -1018,6 +1030,17 @@ func (stage actionStage) execute(run Run) error {
 	return nil
 }
 
+func (m *Model) ExecuteAction(actionName string) Action {
+	return ActionFunc(func(run Run) error {
+		action, found := m.GetAction(actionName)
+		if !found {
+			return fmt.Errorf("no '%s' action defined", actionName)
+		}
+		figlet.FigletMini("action: " + actionName)
+		return action.Execute(run)
+	})
+}
+
 func (m *Model) AddActivationStage(stage Stage) {
 	m.Activation = append(m.Activation, stage)
 }
@@ -1094,9 +1117,16 @@ func (m *Model) Sync(run Run) error {
 		}
 	}
 
-	err := m.ForEachComponent("*", 1, func(c *Component) error {
-		if hostInitializer, ok := c.Type.(HostInitializingComponent); ok {
-			return hostInitializer.InitializeHost(run, c)
+	err := m.ForEachHost("*", 100, func(host *Host) error {
+		for _, c := range host.Components {
+			hostInitializer, ok := c.Type.(HostInitializingComponent)
+			if !ok {
+				continue
+			}
+
+			if err := hostInitializer.InitializeHost(run, c); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
