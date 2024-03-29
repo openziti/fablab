@@ -33,6 +33,12 @@ const (
 // ComponentType contains the custom logic for a component. This can
 // range from provisioning to configuration to running
 type ComponentType interface {
+	// Label returns a short, user-friendly string describing the component typ
+	Label() string
+
+	// GetVersion returns the version of the component software
+	GetVersion() string
+
 	// Dump returns a JSON marshallable object allowing the strategy data to be dumped for inspection
 	Dump() any
 

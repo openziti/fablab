@@ -57,8 +57,17 @@ func (self *sshCmd) ssh(_ *cobra.Command, args []string) {
 
 	m := model.GetModel()
 	hosts := m.SelectHosts(args[0])
-	if len(hosts) != 1 {
-		logrus.Fatalf("your regionSpec and hostSpec matched [%d] hosts. must match exactly 1", len(hosts))
+	if len(hosts) > 1 {
+		logrus.Fatalf("your host selector matched [%d] hosts. must match exactly 1", len(hosts))
+	}
+	if len(hosts) == 0 {
+		logrus.Info("no hosts matched, checking for components")
+		c := m.SelectComponents(args[0])
+		if len(c) == 1 {
+			hosts = []*model.Host{c[0].GetHost()}
+		} else {
+			logrus.Fatalf("your host selector matched 0 hosts and [%d] components. must match exactly 1", len(c))
+		}
 	}
 
 	sshCfg := hosts[0].NewSshConfigFactory()

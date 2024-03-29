@@ -19,40 +19,35 @@ package rsync
 import (
 	"context"
 	"fmt"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	"path/filepath"
 	"strings"
 	"sync"
 )
 
-func Rsync(concurrency int) model.Stage {
-	return &rsyncStage{
-		concurrency: concurrency,
+func RsyncStaged() model.Stage {
+	return &stagedRsyncStage{
+		hostSelector: "*",
 	}
 }
 
-func (rsync *rsyncStage) Execute(run model.Run) error {
-	return run.GetModel().ForEachHost("*", rsync.concurrency, func(host *model.Host) error {
-		config := NewConfig(host)
-		if err := synchronizeHost(config); err != nil {
-			return fmt.Errorf("error synchronizing host [%s/%s] (%s)", host.GetRegion().GetId(), host.GetId(), err)
-		}
-		return nil
-	})
-}
-
-type rsyncStage struct {
-	concurrency int
-}
-
-func RsyncStaged() model.Stage {
-	return &stagedRsyncStage{}
+func RsyncSelected(hosts, src, dst string) model.Stage {
+	return &stagedRsyncStage{
+		hostSelector: hosts,
+		src:          src,
+		dst:          dst,
+	}
 }
 
 type stagedRsyncStage struct {
+	hostSelector string
+	src          string
+	dst          string
 }
 
 // rsync to first host
@@ -62,20 +57,25 @@ func (rsync *stagedRsyncStage) Execute(run model.Run) error {
 	group, ctx := errgroup.WithContext(context.Background())
 	hosts := map[string]*model.Host{}
 
-	run.GetModel().RangeSortedRegions(func(id string, region *model.Region) {
-		region.RangeSortedHosts(func(id string, host *model.Host) {
-			hosts[host.GetPath()] = host
-		})
-	})
+	for _, host := range run.GetModel().SelectHosts(rsync.hostSelector) {
+		hosts[host.GetPath()] = host
+	}
 
 	localSyncer := &localRsyncer{
 		rsyncContext: &rsyncContext{
 			hosts: hosts,
 			group: group,
 			ctx:   ctx,
+			src:   rsync.src,
+			dst:   rsync.dst,
 		},
 		regions: map[string]struct{}{},
 	}
+
+	localSyncer.init(run.GetModel())
+
+	pfxlog.Logger().Infof("rsyncing %d hosts %s -> %s",
+		len(hosts), localSyncer.src, localSyncer.dst)
 
 	group.Go(localSyncer.run)
 
@@ -88,6 +88,37 @@ type rsyncContext struct {
 	group   *errgroup.Group
 	ctx     context.Context
 	syncing int
+	src     string
+	dst     string
+}
+
+func (self *rsyncContext) init(m *model.Model) {
+	if self.src == "" {
+		syncTarget := m.GetStringVariableOr("sync.target", "all")
+		extraPath := ""
+
+		self.src = model.KitBuild()
+		if syncTarget != "all" {
+			extraPath = syncTarget + "/"
+			self.src = filepath.Join(self.src, syncTarget)
+		}
+		self.dst = "fablab/" + extraPath
+	}
+
+	if self.src != "" && !strings.HasSuffix(self.src, "/") {
+		self.src += "/"
+	}
+
+	if self.dst != "" && !strings.HasSuffix(self.dst, "/") {
+		self.dst += "/"
+	}
+}
+
+func (self *rsyncContext) getDestPath(h *model.Host) string {
+	if !strings.HasPrefix(self.dst, "/") {
+		return fmt.Sprintf("/home/%s/%s", h.GetSshUser(), self.dst)
+	}
+	return self.dst
 }
 
 func (self *rsyncContext) GetNextHostPreferringRegion(regionId string) (*model.Host, int, int) {
@@ -146,7 +177,7 @@ func (self *localRsyncer) run() error {
 		}
 		logrus.Infof("syncing local -> %v. Left: %v, current: %v", host.PublicIp, left, current)
 		config := NewConfig(host)
-		if err := synchronizeHost(config); err != nil {
+		if err := synchronizeHost(self.rsyncContext, config); err != nil {
 			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
 		}
 		left, current = self.markDone()
@@ -188,7 +219,7 @@ func (self *remoteRsyncer) run() error {
 		}
 		srcConfig := NewConfig(self.host)
 		dstConfig := NewConfig(host)
-		if err := synchronizeHostToHost(srcConfig, dstConfig); err != nil {
+		if err := synchronizeHostToHost(self.rsyncContext, srcConfig, dstConfig); err != nil {
 			return errors.Wrapf(err, "error synchronizing host [%s/%s]", host.GetRegion().GetId(), host.GetId())
 		}
 		left, current = self.markDone()
@@ -208,8 +239,9 @@ func (self *remoteRsyncer) run() error {
 	}
 }
 
-func synchronizeHost(config *Config) error {
-	if output, err := libssh.RemoteExec(config.sshConfigFactory, "mkdir -p /home/ubuntu/fablab/bin"); err == nil {
+func synchronizeHost(ctx *rsyncContext, config *Config) error {
+	mkdirCmd := fmt.Sprintf("mkdir -p %s", ctx.dst)
+	if output, err := libssh.RemoteExec(config.sshConfigFactory, mkdirCmd); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -217,17 +249,17 @@ func synchronizeHost(config *Config) error {
 		return err
 	}
 
-	extraPath := config.syncTarget
-
-	if err := RunRsync(config, model.KitBuild()+"/"+extraPath, fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/"+extraPath, config.sshConfigFactory.Hostname())); err != nil {
+	destination := fmt.Sprintf("%s:%s", config.loginPrefix(), ctx.getDestPath(config.host))
+	if err := RunRsync(config, ctx.src, destination); err != nil {
 		return fmt.Errorf("rsyncStage failed (%w)", err)
 	}
 
 	return nil
 }
 
-func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
-	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, "mkdir -p /home/ubuntu/fablab/bin"); err == nil {
+func synchronizeHostToHost(ctx *rsyncContext, srcConfig, dstConfig *Config) error {
+	mkdirCmd := fmt.Sprintf("mkdir -p %s", ctx.dst)
+	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, mkdirCmd); err == nil {
 		if output != "" {
 			logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
 		}
@@ -235,10 +267,10 @@ func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
 		return err
 	}
 
-	extraPath := dstConfig.syncTarget
+	destination := fmt.Sprintf("%s:%s", dstConfig.loginPrefix(), ctx.getDestPath(dstConfig.host))
 
-	dst := fmt.Sprintf("ubuntu@%s:/home/ubuntu/fablab/%s", dstConfig.sshConfigFactory.Hostname(), extraPath)
-	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' /home/ubuntu/fablab/%v* %v", extraPath, dst)
+	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' %s* %s",
+		ctx.getDestPath(srcConfig.host), destination)
 	output, err := libssh.RemoteExec(srcConfig.sshConfigFactory, cmd)
 	if err == nil && output != "" {
 		logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
@@ -247,26 +279,18 @@ func synchronizeHostToHost(srcConfig, dstConfig *Config) error {
 }
 
 type Config struct {
+	host             *model.Host
 	sshBin           string
 	sshConfigFactory libssh.SshConfigFactory
 	rsyncBin         string
-	syncTarget       string
 }
 
 func NewConfig(h *model.Host) *Config {
 	config := &Config{
+		host:             h,
 		sshBin:           h.GetStringVariableOr("distribution.ssh_bin", "ssh"),
 		sshConfigFactory: h.NewSshConfigFactory(),
 		rsyncBin:         h.GetStringVariableOr("distribution.rsync_bin", "rsync"),
-	}
-
-	config.syncTarget = h.GetStringVariableOr("sync.target", "all")
-	if config.syncTarget == "all" {
-		config.syncTarget = ""
-	}
-
-	if config.syncTarget != "" && !strings.HasSuffix(config.syncTarget, "/") {
-		config.syncTarget += "/"
 	}
 
 	return config
@@ -278,6 +302,10 @@ func (config *Config) sshIdentityFlag() string {
 	}
 
 	return ""
+}
+
+func (config *Config) loginPrefix() string {
+	return config.sshConfigFactory.User() + "@" + config.sshConfigFactory.Hostname()
 }
 
 func (config *Config) SshCommand() string {
