@@ -525,6 +525,31 @@ func (host *Host) DoExclusiveFallible(f func() error) error {
 	return f()
 }
 
+func (host *Host) ExecLoggedWithTimeout(timeout time.Duration, cmds ...string) (string, error) {
+	resultCh := make(chan struct {
+		output string
+		err    error
+	}, 1)
+
+	go func() {
+		result, err := host.ExecLogged(cmds...)
+		resultCh <- struct {
+			output string
+			err    error
+		}{
+			output: result,
+			err:    err,
+		}
+	}()
+
+	select {
+	case result := <-resultCh:
+		return result.output, result.err
+	case <-time.After(timeout):
+		return "", errors.Errorf("timed out after %v", timeout)
+	}
+}
+
 func (host *Host) ExecLogged(cmds ...string) (string, error) {
 	buf := &libssh.SyncBuffer{}
 	err := host.Exec(buf, cmds...)
@@ -1111,9 +1136,9 @@ func (m *Model) Build(run Run) error {
 }
 
 func (m *Model) Sync(run Run) error {
-	for _, stage := range m.Distribution {
+	for idx, stage := range m.Distribution {
 		if err := stage.Execute(run); err != nil {
-			return fmt.Errorf("error distributing (%w)", err)
+			return fmt.Errorf("error distributing stage %d - %T, (%w)", idx+1, stage, err)
 		}
 	}
 

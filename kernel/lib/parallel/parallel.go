@@ -2,9 +2,11 @@ package parallel
 
 import (
 	"context"
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib/util"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
+	"sync/atomic"
 )
 
 type Task func() error
@@ -13,6 +15,8 @@ func Execute(tasks []Task, concurrency int64) error {
 	if concurrency < 1 {
 		return errors.Errorf("invalid concurrency %v, must be at least 1", concurrency)
 	}
+
+	completed := atomic.Int64{}
 
 	sem := semaphore.NewWeighted(concurrency)
 	errorsC := make(chan error, len(tasks))
@@ -25,6 +29,13 @@ func Execute(tasks []Task, concurrency int64) error {
 		go func() {
 			defer func() {
 				sem.Release(1)
+				current := completed.Add(1)
+				if current%10 == 0 {
+					pfxlog.Logger().Infof("completed %d/%d tasks", current, len(tasks))
+				}
+				if int(current) == len(tasks) {
+					close(errorsC)
+				}
 			}()
 			if err := boundTask(); err != nil {
 				errorsC <- err
@@ -32,24 +43,18 @@ func Execute(tasks []Task, concurrency int64) error {
 		}()
 	}
 
-	if err := sem.Acquire(context.Background(), concurrency); err != nil {
-		return err
-	}
-
-	close(errorsC)
-
-	var errors []error
+	var errList []error
 	for err := range errorsC {
-		errors = append(errors, err)
+		errList = append(errList, err)
 	}
 
-	if len(errors) == 0 {
+	if len(errList) == 0 {
 		return nil
 	}
 
-	if len(errors) == 1 {
-		return errors[0]
+	if len(errList) == 1 {
+		return errList[0]
 	}
 
-	return util.MultipleErrors(errors)
+	return util.MultipleErrors(errList)
 }

@@ -269,7 +269,7 @@ func synchronizeHostToHost(ctx *rsyncContext, srcConfig, dstConfig *Config) erro
 
 	destination := fmt.Sprintf("%s:%s", dstConfig.loginPrefix(), ctx.getDestPath(dstConfig.host))
 
-	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' %s* %s",
+	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' %s %s",
 		ctx.getDestPath(srcConfig.host), destination)
 	output, err := libssh.RemoteExec(srcConfig.sshConfigFactory, cmd)
 	if err == nil && output != "" {
