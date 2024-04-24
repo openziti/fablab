@@ -36,7 +36,7 @@ var refreshCmd = &cobra.Command{
 
 func refresh(_ *cobra.Command, _ []string) {
 	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%v)", err)
+		logrus.WithError(err).Fatal("unable to bootstrap")
 	}
 
 	ctx, err := model.NewRun()
@@ -47,19 +47,19 @@ func refresh(_ *cobra.Command, _ []string) {
 	figlet.Figlet("configuration")
 
 	if err := ctx.GetModel().Build(ctx); err != nil {
-		logrus.Fatalf("error building (%v)", err)
+		logrus.WithError(err).Fatal("error building")
 	}
 
 	figlet.Figlet("distribution")
 
 	if err := ctx.GetModel().Sync(ctx); err != nil {
-		logrus.Fatalf("error distributing (%v)", err)
+		logrus.WithError(err).Fatal("error distributing")
 	}
 
 	figlet.Figlet("activation")
 
 	if err := ctx.GetModel().Activate(ctx); err != nil {
-		logrus.Fatalf("error activating (%v)", err)
+		logrus.WithError(err).Fatalf("error activating")
 	}
 
 	figlet.Figlet("FABUL0US!1!")
