@@ -3,10 +3,10 @@ module github.com/openziti/fablab
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.51.18
+	github.com/aws/aws-sdk-go v1.52.6
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/jedib0t/go-pretty/v6 v6.5.8
+	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.6.10
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
@@ -18,9 +18,9 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.23.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/term v0.19.0
+	golang.org/x/term v0.20.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -41,7 +41,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
