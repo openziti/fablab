@@ -179,11 +179,13 @@ func (t *terraformVisitor) visit(path string, e fs.DirEntry, err error) error {
 		}
 
 		err = lib.RenderTemplateFS(t.resource, path, outputPath, t.model, struct {
-			Model        *model.Model
-			TerraformLib string
+			Model         *model.Model
+			TerraformLib  string
+			PathSeparator string
 		}{
-			Model:        t.model,
-			TerraformLib: terraformRun(),
+			Model:         t.model,
+			TerraformLib:  terraformRun(),
+			PathSeparator: string(os.PathSeparator),
 		})
 		if err != nil {
 			return errors.Wrap(err, "error rendering template")
