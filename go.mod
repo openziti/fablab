@@ -3,7 +3,7 @@ module github.com/openziti/fablab
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.54.7
+	github.com/aws/aws-sdk-go v1.54.13
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jedib0t/go-pretty/v6 v6.5.9
