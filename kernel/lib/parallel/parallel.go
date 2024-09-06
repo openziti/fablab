@@ -12,6 +12,11 @@ import (
 type Task func() error
 
 func Execute(tasks []Task, concurrency int64) error {
+	if len(tasks) == 0 {
+		pfxlog.Logger().Warn("ran parallel set of tasks, but no tasks provided")
+		return nil
+	}
+
 	if concurrency < 1 {
 		return errors.Errorf("invalid concurrency %v, must be at least 1", concurrency)
 	}
