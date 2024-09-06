@@ -23,6 +23,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -36,6 +37,9 @@ func TemplateFuncMap(m *model.Model) template.FuncMap {
 				return "ondemand"
 			}
 			return h.InstanceResourceType
+		},
+		"replace": func(s, old, new string) string {
+			return strings.Replace(s, old, new, -1)
 		},
 	}
 }

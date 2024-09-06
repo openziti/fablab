@@ -1,6 +1,6 @@
 module github.com/openziti/fablab
 
-go 1.19
+go 1.23
 
 require (
 	github.com/aws/aws-sdk-go v1.54.7
