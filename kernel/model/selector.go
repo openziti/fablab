@@ -17,6 +17,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/openziti/fablab/kernel/lib/parallel"
 	"github.com/openziti/foundation/v2/stringz"
 	"github.com/pkg/errors"
@@ -36,6 +37,25 @@ func (m *Model) IsBound() bool {
 func (m *Model) GetAction(name string) (Action, bool) {
 	action, found := m.actions[name]
 	return action, found
+}
+
+func (m *Model) Exec(r Run, actionNames ...string) error {
+	var actions []Action
+	for _, actionName := range actionNames {
+		action, found := m.actions[actionName]
+		if !found {
+			return errors.Errorf("action %s not found", actionName)
+		}
+		actions = append(actions, action)
+	}
+
+	for idx, action := range actions {
+		if err := action.Execute(r); err != nil {
+			return fmt.Errorf("error executing action %s (%w)", actionNames[idx], err)
+		}
+	}
+
+	return nil
 }
 
 func (m *Model) GetActions() []string {
@@ -126,6 +146,14 @@ func (m *Model) SelectComponents(spec string) []*Component {
 		})
 	})
 	return components
+}
+
+func (m *Model) MustSelectComponent(spec string) *Component {
+	component, err := m.SelectComponent(spec)
+	if err != nil {
+		panic(err)
+	}
+	return component
 }
 
 func (m *Model) SelectComponent(spec string) (*Component, error) {
