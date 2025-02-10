@@ -3,7 +3,7 @@ module github.com/openziti/fablab
 go 1.23
 
 require (
-	github.com/aws/aws-sdk-go v1.55.5
+	github.com/aws/aws-sdk-go v1.55.6
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jedib0t/go-pretty/v6 v6.6.5
@@ -18,8 +18,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.32.0
-	golang.org/x/sync v0.10.0
+	golang.org/x/crypto v0.33.0
+	golang.org/x/sync v0.11.0
 	golang.org/x/term v0.29.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
