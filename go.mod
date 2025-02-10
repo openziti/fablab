@@ -40,7 +40,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
