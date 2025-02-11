@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/jedib0t/go-pretty/v6 v6.6.5
+	github.com/jedib0t/go-pretty/v6 v6.6.6
 	github.com/michaelquigley/figlet v0.0.0-20191015203154-054d06db54b4
 	github.com/michaelquigley/pfxlog v0.6.10
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
@@ -34,11 +34,11 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
