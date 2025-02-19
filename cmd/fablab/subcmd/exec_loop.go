@@ -95,6 +95,7 @@ func (self *execLoopCmd) runExec(_ *cobra.Command, args []string) {
 	start := time.Now()
 
 	for {
+		iterationStart := time.Now()
 		figlet.Figlet(fmt.Sprintf("ITERATION-%03d", iterations))
 		for _, action := range actions {
 			if err = action.Execute(ctx); err != nil {
@@ -105,7 +106,8 @@ func (self *execLoopCmd) runExec(_ *cobra.Command, args []string) {
 			pfxlog.Logger().Infof("finished after %v iteration(s) in %v", iterations, time.Since(start))
 			return
 		}
-		pfxlog.Logger().Infof("iteration: %v, time elapsed: %v", iterations, time.Since(start))
+		pfxlog.Logger().Infof("iteration: %v, iteration time: %v, total time: %v",
+			iterations, time.Since(iterationStart), time.Since(start))
 		iterations++
 	}
 }
