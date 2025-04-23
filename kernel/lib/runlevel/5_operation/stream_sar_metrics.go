@@ -20,19 +20,29 @@ import (
 	"fmt"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
+	"github.com/openziti/fablab/kernel/lib/actions"
 	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"sync/atomic"
 )
 
-func StreamSarMetrics(host *model.Host, intervalSeconds, reportIntervalCount int, runPhase Phase, cleanupPhase Phase) model.Stage {
+func StreamSarMetrics(hostSpec string, intervalSeconds, reportIntervalCount int, closeNotify <-chan struct{}) model.Stage {
+	return model.StageActionF(func(run model.Run) error {
+		workflow := actions.Workflow()
+		for _, host := range run.GetModel().SelectHosts(hostSpec) {
+			workflow.AddAction(StreamSarMetricsForHost(host, intervalSeconds, reportIntervalCount, closeNotify))
+		}
+		return workflow.Execute(run)
+	})
+}
+
+func StreamSarMetricsForHost(host *model.Host, intervalSeconds, reportIntervalCount int, closeNotify <-chan struct{}) model.Stage {
 	return &streamSarMetrics{
 		host:                host,
 		intervalSeconds:     intervalSeconds,
 		reportIntervalCount: reportIntervalCount,
-		closer:              runPhase.GetCloser(),
-		joiner:              cleanupPhase.AddJoiner(),
+		closer:              closeNotify,
 	}
 }
 
@@ -40,7 +50,6 @@ type streamSarMetrics struct {
 	host                *model.Host
 	intervalSeconds     int
 	reportIntervalCount int
-	joiner              chan struct{}
 	closer              <-chan struct{}
 	closed              atomic.Bool
 }
@@ -64,8 +73,7 @@ func (s *streamSarMetrics) waitForClose() {
 
 func (s *streamSarMetrics) runSar(ssh libssh.SshConfigFactory) {
 	defer func() {
-		close(s.joiner)
-		logrus.Debugf("joiner closed")
+		logrus.Debugf("runSar complete")
 	}()
 
 	for !s.closed.Load() {
@@ -77,10 +85,11 @@ func (s *streamSarMetrics) runSar(ssh libssh.SshConfigFactory) {
 
 func (s *streamSarMetrics) reportMetrics(ssh libssh.SshConfigFactory) error {
 	log := pfxlog.Logger().WithField("addr", ssh.Address())
-	sar := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.reportIntervalCount)
-	output, err := libssh.RemoteExec(ssh, sar)
+	sarCmd := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.reportIntervalCount)
+	output, err := libssh.RemoteExec(ssh, sarCmd)
 	if err != nil {
-		log.WithError(err).Warn("sar exited")
+		log.WithError(err).Warnf("sar exited: %s", output)
+		return err
 	}
 
 	summary, err := lib.SummarizeSar([]byte(output))

@@ -141,8 +141,8 @@ func RemoteExec(sshConfig SshConfigFactory, cmd string) (string, error) {
 }
 
 func RemoteExecAll(sshConfig SshConfigFactory, cmds ...string) (string, error) {
-	var b bytes.Buffer
-	err := RemoteExecAllTo(sshConfig, &b, cmds...)
+	b := &SyncBuffer{}
+	err := RemoteExecAllTo(sshConfig, b, cmds...)
 	return b.String(), err
 }
 
