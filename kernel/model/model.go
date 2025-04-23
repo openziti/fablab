@@ -1035,6 +1035,10 @@ func (self StageActionF) Execute(run Run) error {
 	return self(run)
 }
 
+func RunAction(action string) Action {
+	return actionStage(action)
+}
+
 type actionStage string
 
 func (stage actionStage) Execute(run Run) error {

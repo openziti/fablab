@@ -34,7 +34,7 @@ func SummarizeSar(data []byte) (*model.HostSummary, error) {
 	reader := bufio.NewReader(bytes.NewBuffer(data[:]))
 	title, err := reader.ReadString('\n')
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error (%w)", err)
+		return nil, fmt.Errorf("unexpected error reading header line (%w)", err)
 	}
 	titleTokens := strings.FieldsFunc(title, func(c rune) bool {
 		return unicode.IsSpace(c)
@@ -46,9 +46,13 @@ func SummarizeSar(data []byte) (*model.HostSummary, error) {
 	dateStr = titleTokens[3]
 	logrus.Debugf("date [%s]", dateStr)
 
+	if parts := strings.Split(dateStr, "/"); len(parts[2]) == 2 {
+		dateStr = fmt.Sprintf("%v/%v/%v", parts[0], parts[1], time.Now().Year())
+	}
+
 	blankLine, err := reader.ReadString('\n')
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error (%w)", err)
+		return nil, fmt.Errorf("unexpected error reading blank line after header(%w)", err)
 	}
 	if blankLine != "\n" {
 		return nil, fmt.Errorf("expected blank line")
@@ -70,7 +74,7 @@ func SummarizeSar(data []byte) (*model.HostSummary, error) {
 
 		dataLine, err := reader.ReadString('\n')
 		if err != nil {
-			return nil, fmt.Errorf("unexpected error (%w)", err)
+			return nil, fmt.Errorf("unexpected error reading date from header (%w)", err)
 		}
 		dataTimestampStr := dataLine[:11]
 		logrus.Debugf("data time [%s]", dataTimestampStr)
@@ -363,8 +367,14 @@ func processTimeslice(dateStr, timestampStr string, header, data []string) (*mod
 }
 
 func dateTimeStrToMs(dateStr, timeStr string) (int64, error) {
-	fullStr := fmt.Sprintf("%s %s", dateStr, timeStr)
-	t, err := time.Parse("01/02/2006 03:04:05 PM", fullStr)
+	fullStr := strings.TrimSpace(fmt.Sprintf("%s %s", dateStr, timeStr))
+	var dateFmt string
+	if strings.HasSuffix(fullStr, "AM") || strings.HasSuffix(fullStr, "PM") {
+		dateFmt = "01/02/2006 03:04:05 PM"
+	} else {
+		dateFmt = "01/02/2006 15:04:05"
+	}
+	t, err := time.Parse(dateFmt, fullStr)
 	if err != nil {
 		return -1, fmt.Errorf("error parsing time [%s] (%w)", fullStr, err)
 	}
