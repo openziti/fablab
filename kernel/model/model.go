@@ -836,6 +836,10 @@ func Bind(action Action) ActionBinder {
 	}
 }
 
+func BindF(f func(run Run) error) ActionBinder {
+	return Bind(ActionFunc(f))
+}
+
 type Action interface {
 	Execute(run Run) error
 }

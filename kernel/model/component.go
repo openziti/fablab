@@ -49,6 +49,13 @@ type ComponentType interface {
 	Stop(run Run, c *Component) error
 }
 
+// A VersionableComponent has a version that can be set. This is an optional interface as
+// some components can only report their version
+type VersionableComponent interface {
+	// SetVersion sets the version of the component to the requested version
+	SetVersion(version string)
+}
+
 // A ServerComponent is one which can be started and left running in the background
 type ServerComponent interface {
 	Start(run Run, c *Component) error
