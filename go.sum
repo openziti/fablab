@@ -238,8 +238,8 @@ github.com/oapi-codegen/runtime v1.0.0 h1:P4rqFX5fMFWqRzY9M/3YF9+aPSPPB06IzP2P7o
 github.com/oapi-codegen/runtime v1.0.0/go.mod h1:LmCUMQuPB4M/nLXilQXhHw+BLZdDb18B34OO356yJ/A=
 github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852 h1:Yl0tPBa8QPjGmesFh1D0rDy+q1Twx6FyU7VWHi8wZbI=
 github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852/go.mod h1:eqOVx5Vwu4gd2mmMZvVZsgIqNSaW3xxRThUJ0k/TPk4=
-github.com/openziti/foundation/v2 v2.0.60 h1:YWXbtqptZwSwATF6NQ76phpzVHzRycuAf+B5Fhch/Wg=
-github.com/openziti/foundation/v2 v2.0.60/go.mod h1:zhNVpu5e295IRDSTblhpagoJHIwyL1y00V4wyxinNjw=
+github.com/openziti/foundation/v2 v2.0.61 h1:+wwRS83MjGj2Yde7bDZs49IszPzvK2Xi/glwmRWPNUs=
+github.com/openziti/foundation/v2 v2.0.61/go.mod h1:zhNVpu5e295IRDSTblhpagoJHIwyL1y00V4wyxinNjw=
 github.com/orcaman/concurrent-map/v2 v2.0.1 h1:jOJ5Pg2w1oeB6PeDurIYf6k9PQ+aTITr/6lP/L/zp6c=
 github.com/orcaman/concurrent-map/v2 v2.0.1/go.mod h1:9Eq3TG2oBe5FirmYWQfYO5iH1q0Jv47PLaNK++uCdOM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
