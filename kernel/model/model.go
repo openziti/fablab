@@ -1063,6 +1063,18 @@ func (stage actionStage) execute(run Run) error {
 	return nil
 }
 
+func (m *Model) AddActionBinder(actionName string, action ActionBinder) {
+	m.Actions[actionName] = action
+}
+
+func (m *Model) AddAction(actionName string, action Action) {
+	m.Actions[actionName] = Bind(action)
+}
+
+func (m *Model) AddActionF(actionName string, action ActionFunc) {
+	m.Actions[actionName] = Bind(action)
+}
+
 func (m *Model) ExecuteAction(actionName string) Action {
 	return ActionFunc(func(run Run) error {
 		action, found := m.GetAction(actionName)
@@ -1075,6 +1087,10 @@ func (m *Model) ExecuteAction(actionName string) Action {
 }
 
 func (m *Model) AddActivationStage(stage Stage) {
+	m.Activation = append(m.Activation, stage)
+}
+
+func (m *Model) AddActivationStageF(stage StageActionF) {
 	m.Activation = append(m.Activation, stage)
 }
 

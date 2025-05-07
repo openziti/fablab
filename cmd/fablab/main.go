@@ -30,22 +30,20 @@ func init() {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		runLocalBinary := false
-		if os.Args[1] == "completion" || os.Args[1] == "clean" {
+	runLocalBinary := false
+	if len(os.Args) == 1 || os.Args[1] == "completion" || os.Args[1] == "clean" || os.Args[1] == "use" {
+		runLocalBinary = true
+	} else if len(os.Args) > 2 {
+		if os.Args[1] == "list" && os.Args[2] == "instances" {
 			runLocalBinary = true
-		} else if len(os.Args) > 2 {
-			if os.Args[1] == "list" && os.Args[2] == "instances" {
-				runLocalBinary = true
-			}
 		}
+	}
 
-		if runLocalBinary {
-			if err := subcmd.Execute(); err != nil {
-				logrus.Fatalf("failure (%v)", err)
-			}
-			return
+	if runLocalBinary {
+		if err := subcmd.Execute(); err != nil {
+			logrus.Fatalf("failure (%v)", err)
 		}
+		return
 	}
 
 	cfg := model.GetConfig()
