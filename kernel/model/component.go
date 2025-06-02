@@ -150,7 +150,7 @@ func (component *Component) init(id string, host *Host) {
 		component.Id = id
 		component.Host = host
 		component.Index = host.GetModel().GetNextComponentIndex()
-		component.Scope.initialize(component, true)
+		component.initialize(component, true)
 		if component.Data == nil {
 			component.Data = Data{}
 		}

@@ -25,6 +25,7 @@ import (
 func init() {
 	RootCmd.AddCommand(syncCmd)
 	syncCmd.AddCommand(syncBinariesCmd)
+	syncCmd.AddCommand(syncConfigCmd)
 }
 
 var syncCmd = &cobra.Command{
@@ -69,7 +70,7 @@ func syncBinaries(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("error building configuration (%v)", err)
 	}
 
-	ctx.GetModel().Scope.PutVariable("sync.target", "bin")
+	ctx.GetModel().PutVariable("sync.target", "bin")
 	if err := ctx.GetModel().Sync(ctx); err != nil {
 		logrus.Fatalf("error synchronizing all hosts (%s)", err)
 	}
@@ -79,7 +80,7 @@ var syncConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "synchronize only the config files in a run kit onto the network",
 	Args:  cobra.ExactArgs(0),
-	Run:   syncBinaries,
+	Run:   syncConfig,
 }
 
 func syncConfig(_ *cobra.Command, _ []string) {
@@ -96,7 +97,7 @@ func syncConfig(_ *cobra.Command, _ []string) {
 		logrus.Fatalf("error building configuration (%v)", err)
 	}
 
-	ctx.GetModel().Scope.PutVariable("sync.target", "cfg")
+	ctx.GetModel().PutVariable("sync.target", "cfg")
 	if err := ctx.GetModel().Sync(ctx); err != nil {
 		logrus.Fatalf("error synchronizing all hosts (%s)", err)
 	}

@@ -209,7 +209,7 @@ func (self *remoteRsyncer) run() error {
 		if didAltRegion {
 			return nil
 		}
-		host, left, current := self.rsyncContext.GetNextHostPreferringRegion(self.host.Region.Id)
+		host, left, current := self.GetNextHostPreferringRegion(self.host.Region.Id)
 		if host == nil {
 			return nil
 		}

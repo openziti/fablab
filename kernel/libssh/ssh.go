@@ -270,10 +270,7 @@ func FilterProcessList(output string, filter func(string) bool) ([]int, error) {
 }
 
 func killMatch(s, search, anti string) bool {
-	match := false
-	if strings.Contains(s, search) {
-		match = true
-	}
+	match := strings.Contains(s, search)
 	if anti != "" && strings.Contains(s, anti) {
 		match = false
 	}

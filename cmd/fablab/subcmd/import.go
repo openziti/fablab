@@ -44,7 +44,7 @@ func NewImportCommand() *ImportCommand {
 		},
 	}
 
-	result.Command.RunE = result.runImport
+	result.RunE = result.runImport
 
 	return result
 }

@@ -84,8 +84,8 @@ type labeledTask struct {
 	task     Task
 }
 
-func (l labeledTask) Type() string {
-	return l.taskType
+func (self labeledTask) Type() string {
+	return self.taskType
 }
 
 func (self labeledTask) Execute() error {

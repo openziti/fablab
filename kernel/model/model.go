@@ -312,7 +312,7 @@ func (m *Model) init() {
 		if m.Data == nil {
 			m.Data = Data{}
 		}
-		m.Scope.initialize(m, false)
+		m.initialize(m, false)
 	}
 	m.RangeSortedRegions(func(id string, region *Region) {
 		region.init(id, m)
@@ -377,7 +377,7 @@ func (region *Region) init(id string, model *Model) {
 		region.Id = id
 		region.Model = model
 		region.Index = model.GetNextRegionIndex()
-		region.Scope.initialize(region, true)
+		region.initialize(region, true)
 		if region.Data == nil {
 			region.Data = Data{}
 		}
@@ -726,7 +726,7 @@ func (host *Host) init(id string, region *Region) {
 		if host.Index == 0 {
 			host.Index = region.Model.GetNextHostIndex()
 		}
-		host.Scope.initialize(host, true)
+		host.initialize(host, true)
 		if host.Data == nil {
 			host.Data = Data{}
 		}
