@@ -172,6 +172,11 @@ func (scope *Scope) MustStringVariable(name string) string {
 	return result
 }
 
+func (scope *Scope) BoolVariable(name string) bool {
+	value, _ := scope.GetBoolVariable(name)
+	return value
+}
+
 func (scope *Scope) GetRequiredStringVariable(holder errorz.ErrorHolder, name string) string {
 	value, found := scope.GetVariable(name)
 	if !found {

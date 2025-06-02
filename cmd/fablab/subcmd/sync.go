@@ -24,6 +24,8 @@ import (
 
 func init() {
 	RootCmd.AddCommand(syncCmd)
+	syncCmd.AddCommand(syncBinariesCmd)
+	syncCmd.AddCommand(syncConfigCmd)
 }
 
 var syncCmd = &cobra.Command{
@@ -42,6 +44,60 @@ func sync(_ *cobra.Command, _ []string) {
 	if err != nil {
 		logrus.WithError(err).Fatal("error initializing run")
 	}
+	if err := ctx.GetModel().Sync(ctx); err != nil {
+		logrus.Fatalf("error synchronizing all hosts (%s)", err)
+	}
+}
+
+var syncBinariesCmd = &cobra.Command{
+	Use:   "binaries",
+	Short: "synchronize only the binaries in a run kit onto the network",
+	Args:  cobra.ExactArgs(0),
+	Run:   syncBinaries,
+}
+
+func syncBinaries(_ *cobra.Command, _ []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
+
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building configuration (%v)", err)
+	}
+
+	ctx.GetModel().PutVariable("sync.target", "bin")
+	if err := ctx.GetModel().Sync(ctx); err != nil {
+		logrus.Fatalf("error synchronizing all hosts (%s)", err)
+	}
+}
+
+var syncConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "synchronize only the config files in a run kit onto the network",
+	Args:  cobra.ExactArgs(0),
+	Run:   syncConfig,
+}
+
+func syncConfig(_ *cobra.Command, _ []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	ctx, err := model.NewRun()
+	if err != nil {
+		logrus.WithError(err).Fatal("error initializing run")
+	}
+
+	if err := ctx.GetModel().Build(ctx); err != nil {
+		logrus.Fatalf("error building configuration (%v)", err)
+	}
+
+	ctx.GetModel().PutVariable("sync.target", "cfg")
 	if err := ctx.GetModel().Sync(ctx); err != nil {
 		logrus.Fatalf("error synchronizing all hosts (%s)", err)
 	}

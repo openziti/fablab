@@ -133,7 +133,7 @@ func (self *listHostsAction) execute(cmd *cobra.Command, args []string) {
 				if !first {
 					components.WriteString("\n")
 				}
-				components.WriteString(fmt.Sprintf("%s: %s", component.Id, cType))
+				_, _ = fmt.Fprintf(components, "%s: %s", component.Id, cType)
 				first = false
 			}
 		} else {
@@ -149,7 +149,7 @@ func (self *listHostsAction) execute(cmd *cobra.Command, args []string) {
 				if !first {
 					components.WriteString("\n")
 				}
-				components.WriteString(fmt.Sprintf("%s: %4d", cType, count))
+				_, _ = fmt.Fprintf(components, "%s: %4d", cType, count)
 				first = false
 			}
 		}

@@ -148,6 +148,21 @@ func (m *Model) SelectComponents(spec string) []*Component {
 	return components
 }
 
+func (m *Model) FilterComponents(spec string, filter func(c *Component) bool) []*Component {
+	matcher := compileSelector(spec)
+	var components []*Component
+	m.RangeSortedRegions(func(id string, region *Region) {
+		region.RangeSortedHosts(func(id string, host *Host) {
+			host.RangeSortedComponents(func(id string, component *Component) {
+				if matcher(component) && filter(component) {
+					components = append(components, component)
+				}
+			})
+		})
+	})
+	return components
+}
+
 func (m *Model) MustSelectComponent(spec string) *Component {
 	component, err := m.SelectComponent(spec)
 	if err != nil {

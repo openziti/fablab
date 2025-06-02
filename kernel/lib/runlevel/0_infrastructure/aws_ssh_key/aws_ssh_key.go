@@ -25,7 +25,7 @@ func Express() model.Stage {
 
 type awsKeyManager struct{}
 
-func (l awsKeyManager) Bootstrap(m *model.Model) error {
+func (stage awsKeyManager) Bootstrap(m *model.Model) error {
 	if !m.HasVariable("credentials.aws.ssh_key_name") {
 		environment := m.MustStringVariable("environment")
 		instanceId := model.ActiveInstanceId()

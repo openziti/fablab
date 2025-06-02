@@ -39,7 +39,7 @@ func TemplateFuncMap(m *model.Model) template.FuncMap {
 			return h.InstanceResourceType
 		},
 		"replace": func(s, old, new string) string {
-			return strings.Replace(s, old, new, -1)
+			return strings.ReplaceAll(s, old, new)
 		},
 	}
 }

@@ -312,7 +312,7 @@ func (m *Model) init() {
 		if m.Data == nil {
 			m.Data = Data{}
 		}
-		m.Scope.initialize(m, false)
+		m.initialize(m, false)
 	}
 	m.RangeSortedRegions(func(id string, region *Region) {
 		region.init(id, m)
@@ -377,7 +377,7 @@ func (region *Region) init(id string, model *Model) {
 		region.Id = id
 		region.Model = model
 		region.Index = model.GetNextRegionIndex()
-		region.Scope.initialize(region, true)
+		region.initialize(region, true)
 		if region.Data == nil {
 			region.Data = Data{}
 		}
@@ -726,7 +726,7 @@ func (host *Host) init(id string, region *Region) {
 		if host.Index == 0 {
 			host.Index = region.Model.GetNextHostIndex()
 		}
-		host.Scope.initialize(host, true)
+		host.initialize(host, true)
 		if host.Data == nil {
 			host.Data = Data{}
 		}
@@ -1063,6 +1063,18 @@ func (stage actionStage) execute(run Run) error {
 	return nil
 }
 
+func (m *Model) AddActionBinder(actionName string, action ActionBinder) {
+	m.Actions[actionName] = action
+}
+
+func (m *Model) AddAction(actionName string, action Action) {
+	m.Actions[actionName] = Bind(action)
+}
+
+func (m *Model) AddActionF(actionName string, action ActionFunc) {
+	m.Actions[actionName] = Bind(action)
+}
+
 func (m *Model) ExecuteAction(actionName string) Action {
 	return ActionFunc(func(run Run) error {
 		action, found := m.GetAction(actionName)
@@ -1075,6 +1087,10 @@ func (m *Model) ExecuteAction(actionName string) Action {
 }
 
 func (m *Model) AddActivationStage(stage Stage) {
+	m.Activation = append(m.Activation, stage)
+}
+
+func (m *Model) AddActivationStageF(stage StageActionF) {
 	m.Activation = append(m.Activation, stage)
 }
 
