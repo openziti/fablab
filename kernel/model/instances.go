@@ -107,6 +107,13 @@ func PersistConfig(config *FablabConfig) error {
 		config.Default = "default"
 	}
 
+	if config.Instances[config.Default] == nil {
+		for k := range config.Instances {
+			config.Default = k
+			break
+		}
+	}
+
 	cfgDir, err := ConfigDir()
 	if err != nil {
 		return errors.Wrap(err, "couldn't get config dir while persisting fablab configuration")
