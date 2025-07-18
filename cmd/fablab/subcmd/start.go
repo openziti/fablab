@@ -59,4 +59,7 @@ func (self *startAction) run(_ *cobra.Command, args []string) {
 	if err := component.StartInParallel(args[0], self.concurrency).Execute(ctx); err != nil {
 		logrus.WithError(err).Fatalf("error starting components")
 	}
+
+	c := ctx.GetModel().SelectComponents(args[0])
+	logrus.Infof("%d components started", len(c))
 }

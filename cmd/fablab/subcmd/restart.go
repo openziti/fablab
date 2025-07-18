@@ -24,29 +24,29 @@ import (
 )
 
 func init() {
-	RootCmd.AddCommand(newStopCmd())
+	RootCmd.AddCommand(newRestartCmd())
 }
 
-func newStopCmd() *cobra.Command {
-	action := &stopAction{}
+func newRestartCmd() *cobra.Command {
+	action := &restartAction{}
 
 	var cmd = &cobra.Command{
-		Use:   "stop <component-spec> [-c concurrency]",
-		Short: "stop components",
+		Use:   "restart <component-spec> [-c concurrency]",
+		Short: "restart components",
 		Args:  cobra.ExactArgs(1),
 		Run:   action.run,
 	}
 
-	cmd.Flags().IntVarP(&action.concurrency, "concurrency", "c", 10, "Number of components to stop in parallel")
+	cmd.Flags().IntVarP(&action.concurrency, "concurrency", "c", 10, "Number of components to restart in parallel")
 
 	return cmd
 }
 
-type stopAction struct {
+type restartAction struct {
 	concurrency int
 }
 
-func (self *stopAction) run(_ *cobra.Command, args []string) {
+func (self *restartAction) run(_ *cobra.Command, args []string) {
 	if err := model.Bootstrap(); err != nil {
 		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
@@ -59,6 +59,11 @@ func (self *stopAction) run(_ *cobra.Command, args []string) {
 	if err = component.StopInParallel(args[0], self.concurrency).Execute(ctx); err != nil {
 		logrus.WithError(err).Fatalf("error stopping components")
 	}
+
+	if err = component.StartInParallel(args[0], self.concurrency).Execute(ctx); err != nil {
+		logrus.WithError(err).Fatalf("error starting components")
+	}
+
 	c := ctx.GetModel().SelectComponents(args[0])
-	logrus.Infof("%d components stopped", len(c))
+	logrus.Infof("%d components restarted", len(c))
 }
