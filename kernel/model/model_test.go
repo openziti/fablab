@@ -18,8 +18,9 @@ package model
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetVariable(t *testing.T) {
@@ -36,7 +37,7 @@ func TestGetVariable(t *testing.T) {
 		},
 	}
 
-	m.init()
+	assert.NoError(t, m.init())
 
 	value, found := m.GetVariable("a.b.c")
 	assert.True(t, found)

@@ -19,24 +19,30 @@ package model
 import (
 	"embed"
 	"fmt"
-	"github.com/openziti/fablab/kernel/lib/figlet"
-	"github.com/openziti/fablab/kernel/libssh"
-	"github.com/openziti/foundation/v2/info"
-	cmap "github.com/orcaman/concurrent-map/v2"
-	"github.com/pkg/errors"
-	"github.com/pkg/sftp"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/openziti/fablab/kernel/lib/figlet"
+	"github.com/openziti/fablab/kernel/libssh"
+	"github.com/openziti/fablab/kernel/model/aws"
+	"github.com/openziti/foundation/v2/info"
+	"github.com/openziti/foundation/v2/util"
+	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -228,6 +234,7 @@ type Model struct {
 	Disposal            Stages
 	MetricsHandlers     []MetricsHandler
 	Resources           Resources
+	AWS                 aws.Model
 
 	actions map[string]Action
 
@@ -236,6 +243,8 @@ type Model struct {
 	regionIds    IdPool
 	hostIds      IdPool
 	componentIds IdPool
+
+	componentTypeMap map[string]reflect.Type
 }
 
 func (m *Model) GetModel() *Model {
@@ -305,18 +314,76 @@ func (m *Model) GetChildren() []Entity {
 	return result
 }
 
-func (m *Model) init() {
+func (m *Model) init() error {
+	if err := m.initSecurityGroups(); err != nil {
+		return err
+	}
+
 	if m.initialized.CompareAndSwap(false, true) {
+
 		m.VarConfig.SetDefaults()
 
 		if m.Data == nil {
 			m.Data = Data{}
 		}
 		m.initialize(m, false)
+
+		if err := m.AWS.Init(m); err != nil {
+			return err
+		}
 	}
+
+	var err error
 	m.RangeSortedRegions(func(id string, region *Region) {
-		region.init(id, m)
+		if err == nil {
+			err = region.init(id, m)
+		}
 	})
+
+	return err
+}
+
+// initSecurityGroups scans all components implementing SecurityGroupComponent and automatically
+// registers their security groups using the component type's label.
+// Returns an error if a component type label conflicts with a user-defined security group,
+// or if the same label is used by different component types.
+func (m *Model) initSecurityGroups() error {
+	if m.componentTypeMap == nil {
+		m.componentTypeMap = map[string]reflect.Type{}
+	}
+
+	if m.AWS.SecurityGroups == nil {
+		m.AWS.SecurityGroups = map[string]*aws.SecurityGroup{}
+	}
+
+	for _, c := range m.SelectComponents("*") {
+		if c.Type == nil {
+			continue
+		}
+		if v, ok := c.Type.(SecurityGroupComponent); ok {
+			t, labelExists := m.componentTypeMap[c.Type.Label()]
+			if !labelExists {
+				m.componentTypeMap[c.Type.Label()] = reflect.ValueOf(c.Type).Type()
+
+				if _, labelUsed := m.AWS.SecurityGroups[c.Type.Label()]; labelUsed {
+					return fmt.Errorf("component type label for security group '%s' conflicts with user defined label", c.Type.Label())
+				}
+				m.AWS.SecurityGroups[c.Type.Label()] = util.Ptr(v.GetSecurityGroup())
+			} else if t != reflect.TypeOf(c.Type) {
+				return fmt.Errorf("component type label '%s' is used by both type %T and %s",
+					c.Type.Label(), c.Type, t.String())
+			}
+		}
+	}
+
+	return nil
+}
+
+// MangleName prefixes the given name with the environment identifier to ensure uniqueness.
+// This implements the aws.Env interface and is used for AWS resource naming.
+// The environment is read from the "environment" variable, defaulting to "default".
+func (m *Model) MangleName(s string) string {
+	return fmt.Sprintf("%s_%s", m.GetStringVariableOr("environment", "default"), s)
 }
 
 func (m *Model) Accept(visitor EntityVisitor) {
@@ -372,7 +439,7 @@ func (region *Region) CloneRegion(scaleIndex uint32) *Region {
 	return result
 }
 
-func (region *Region) init(id string, model *Model) {
+func (region *Region) init(id string, model *Model) error {
 	if region.initialized.CompareAndSwap(false, true) {
 		region.Id = id
 		region.Model = model
@@ -387,9 +454,14 @@ func (region *Region) init(id string, model *Model) {
 		}
 	}
 
+	var err error
 	region.RangeSortedHosts(func(id string, host *Host) {
-		host.init(id, region)
+		if err == nil {
+			err = host.init(id, region)
+		}
 	})
+
+	return err
 }
 
 func (region *Region) GetId() string {
@@ -482,20 +554,10 @@ func (region *Region) RangeSortedHosts(f func(id string, host *Host)) {
 	}
 }
 
-type EC2Volume struct {
-	Type   string
-	SizeGB uint32
-	IOPS   uint32
-}
-
-type EC2Host struct {
-	Volume EC2Volume
-}
-
 type Host struct {
 	Scope
 	Id                   string
-	EC2                  EC2Host
+	AWS                  aws.EC2Host
 	Region               *Region
 	PublicIp             string
 	PrivateIp            string
@@ -718,8 +780,8 @@ func (host *Host) CloneHost(scaleIndex uint32) *Host {
 	return result
 }
 
-func (host *Host) init(id string, region *Region) {
-	logrus.Debugf("initialing host: %v.%v", region.GetId(), id)
+func (host *Host) init(id string, region *Region) error {
+	logrus.Debugf("initializing host: %v.%v", region.GetId(), id)
 	if host.initialized.CompareAndSwap(false, true) {
 		host.Id = id
 		host.Region = region
@@ -733,11 +795,20 @@ func (host *Host) init(id string, region *Region) {
 		if host.Components == nil {
 			host.Components = map[string]*Component{}
 		}
+
+		if host.AWS.SecurityGroup != "" && region.Model.AWS.SecurityGroups[host.AWS.SecurityGroup] == nil {
+			return fmt.Errorf("invalid host AWS security group [%s]", host.AWS.SecurityGroup)
+		}
 	}
 
+	var err error
 	host.RangeSortedComponents(func(id string, component *Component) {
-		component.init(id, host)
+		if err == nil {
+			err = component.init(id, host)
+		}
 	})
+
+	return err
 }
 
 func (host *Host) GetId() string {
@@ -821,6 +892,34 @@ func (host *Host) RangeSortedComponents(f func(id string, component *Component))
 	for _, k := range keys {
 		f(k, host.Components[k])
 	}
+}
+
+// SecurityGroupIds returns the list of security group IDs that should be applied to this host.
+// It collects security groups from:
+// - The host's AWS.SecurityGroup if specified
+// - Component AWS.SecurityGroup fields if specified
+// - Component type labels for components implementing SecurityGroupComponent
+// If no security groups are specified, it defaults to ["fablab"].
+func (host *Host) SecurityGroupIds() []string {
+	m := map[string]struct{}{}
+
+	if host.AWS.SecurityGroup != "" {
+		m[host.AWS.SecurityGroup] = struct{}{}
+	}
+
+	for _, component := range host.Components {
+		if component.AWS.SecurityGroup != "" {
+			m[component.AWS.SecurityGroup] = struct{}{}
+		} else if _, ok := component.Type.(SecurityGroupComponent); ok {
+			m[component.Type.Label()] = struct{}{}
+		}
+	}
+
+	if len(m) == 0 {
+		m["fablab"] = struct{}{}
+	}
+
+	return slices.Collect(maps.Keys(m))
 }
 
 type Hosts map[string]*Host

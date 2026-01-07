@@ -2,9 +2,10 @@ package model
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type testScaleStrategy struct {
@@ -241,14 +242,14 @@ func Test_Templating(t *testing.T) {
 		},
 	}
 
-	model.init()
+	req := require.New(t)
+	req.NoError(model.init())
 
 	factory := &ScaleFactory{
 		Strategy:      testScaleStrategy{},
 		EntityFactory: DefaultScaleEntityFactory{},
 	}
 
-	req := require.New(t)
 	req.Equal(9, len(model.SelectHosts(".scaled")))
 	req.Equal(18, len(model.SelectComponents(".scaled")))
 
