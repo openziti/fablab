@@ -165,7 +165,9 @@ func (self DefaultScaleEntityFactory) CreateScaledRegion(source *Region, scaleIn
 
 	templater := &Templater{data: cloned}
 	newKey := templater.TemplatizeString(source.Id)
-	cloned.init(newKey, source.GetModel())
+	if err := cloned.init(newKey, source.GetModel()); err != nil {
+		return nil, err
+	}
 	templater.TemplatizeRegion(cloned)
 
 	if templater.HasError() {
@@ -180,7 +182,9 @@ func (self DefaultScaleEntityFactory) CreateScaledHost(source *Host, scaleIndex 
 
 	templater := &Templater{data: cloned}
 	newKey := templater.TemplatizeString(source.Id)
-	cloned.init(newKey, source.GetRegion())
+	if err := cloned.init(newKey, source.GetRegion()); err != nil {
+		return nil, err
+	}
 	templater.TemplatizeHost(cloned)
 
 	if templater.HasError() {
@@ -195,7 +199,9 @@ func (self DefaultScaleEntityFactory) CreateScaledComponent(source *Component, s
 
 	templater := &Templater{data: cloned}
 	newKey := templater.TemplatizeString(source.Id)
-	cloned.init(newKey, source.GetHost())
+	if err := cloned.init(newKey, source.GetHost()); err != nil {
+		return nil, err
+	}
 	templater.TemplatizeComponent(cloned)
 
 	if templater.HasError() {

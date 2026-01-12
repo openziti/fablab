@@ -18,8 +18,10 @@ package model
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"sync/atomic"
+
+	"github.com/openziti/fablab/kernel/model/aws"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -94,6 +96,17 @@ type InitializingComponent interface {
 	Init(r Run, c *Component) error
 }
 
+// SecurityGroupComponent is a component type that defines custom AWS security group rules.
+// When implemented, the component's type label is automatically registered as a security group,
+// allowing instances to reference it by the component type label.
+type SecurityGroupComponent interface {
+	ComponentType
+
+	// GetSecurityGroup returns the security group configuration for this component type.
+	// The returned security group will be automatically registered using the component's Label().
+	GetSecurityGroup() aws.SecurityGroup
+}
+
 // An InitializingComponentType has a hook to allow it to be setup while the model is being initialized.
 type InitializingComponentType interface {
 	ComponentType
@@ -127,6 +140,7 @@ type Component struct {
 	Scope
 	Id          string
 	Host        *Host
+	AWS         aws.Component
 	Type        ComponentType
 	Index       uint32
 	ScaleIndex  uint32
@@ -145,7 +159,7 @@ func (component *Component) CloneComponent(scaleIndex uint32) *Component {
 	return result
 }
 
-func (component *Component) init(id string, host *Host) {
+func (component *Component) init(id string, host *Host) error {
 	if component.initialized.CompareAndSwap(false, true) {
 		component.Id = id
 		component.Host = host
@@ -157,7 +171,13 @@ func (component *Component) init(id string, host *Host) {
 		if v, ok := component.Type.(InitializingComponentType); ok {
 			v.InitType(component)
 		}
+
+		if component.AWS.SecurityGroup != "" && host.Region.Model.AWS.SecurityGroups[component.AWS.SecurityGroup] == nil {
+			return fmt.Errorf("invalid component AWS security group [%s]", component.AWS.SecurityGroup)
+		}
 	}
+
+	return nil
 }
 
 func (component *Component) GetId() string {

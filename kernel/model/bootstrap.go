@@ -17,9 +17,10 @@
 package model
 
 import (
+	"reflect"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"reflect"
 )
 
 func AddBootstrapExtension(ext BootstrapExtension) {
@@ -35,7 +36,9 @@ func Bootstrap() error {
 		return errors.New("model id not set, exiting")
 	}
 
-	model.init()
+	if err = model.init(); err != nil {
+		return err
+	}
 
 	if err = BootstrapInstance(); err != nil {
 		return errors.Wrap(err, "unable to bootstrap instance config")
@@ -93,7 +96,9 @@ func bootstrapModel() error {
 		}
 
 		// re-initialize after running structural factories, as there may be new uninitialized elements
-		model.init()
+		if err := model.init(); err != nil {
+			return err
+		}
 
 		model.BindLabel(l)
 

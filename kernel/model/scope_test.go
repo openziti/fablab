@@ -18,9 +18,10 @@ package model
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestVariablesPut(t *testing.T) {
@@ -41,12 +42,12 @@ func TestVariablesPut(t *testing.T) {
 
 func TestVariableResolver(t *testing.T) {
 	m := newTestModel()
-	m.init()
+	req := require.New(t)
+	req.NoError(m.init())
 	region := m.Regions["region1"]
 	host := region.Hosts["host1"]
 	component := host.Components["component1"]
 
-	req := require.New(t)
 	val, found := m.GetStringVariable("test.key")
 	req.True(found)
 	req.Equal("model.hello", val)
@@ -111,12 +112,12 @@ func TestVariableResolverBindingsOverride(t *testing.T) {
 		}
 		fmt.Printf("%v: %v[id=%v] key=%v result=%v, found=%v%v\n", resolver, entity.GetType(), entity.GetId(), name, result, found, msg)
 	}
-	m.init()
+	req := require.New(t)
+	req.NoError(m.init())
 	region := m.Regions["region1"]
 	host := region.Hosts["host1"]
 	component := host.Components["component1"]
 
-	req := require.New(t)
 	fmt.Println("\nmodel:")
 	val, found := m.GetStringVariable("test.key")
 	req.True(found)

@@ -17,8 +17,9 @@
 package model
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestVariableResolvingModelDefaults(t *testing.T) {
@@ -35,11 +36,11 @@ func TestVariableResolvingModelDefaults(t *testing.T) {
 
 	bindings = Variables{}
 
-	m.init()
+	req := require.New(t)
+	req.NoError(m.init())
 
 	val, found := m.GetVariable("a.b")
 
-	req := require.New(t)
 	req.True(found)
 	req.Equal(val, true)
 }
@@ -69,11 +70,11 @@ func TestBindBindingsRequiredToModel(t *testing.T) {
 		"c": "c-value",
 	}
 
-	m.init()
+	req := require.New(t)
+	req.NoError(m.init())
 
 	val, found := m.GetVariable("a.b")
 
-	req := require.New(t)
 	req.True(found)
 	req.Equal(val, bValue)
 }
