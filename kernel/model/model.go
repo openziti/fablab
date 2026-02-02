@@ -315,10 +315,6 @@ func (m *Model) GetChildren() []Entity {
 }
 
 func (m *Model) init() error {
-	if err := m.initSecurityGroups(); err != nil {
-		return err
-	}
-
 	if m.initialized.CompareAndSwap(false, true) {
 
 		m.VarConfig.SetDefaults()
@@ -327,10 +323,6 @@ func (m *Model) init() error {
 			m.Data = Data{}
 		}
 		m.initialize(m, false)
-
-		if err := m.AWS.Init(m); err != nil {
-			return err
-		}
 	}
 
 	var err error
@@ -339,6 +331,10 @@ func (m *Model) init() error {
 			err = region.init(id, m)
 		}
 	})
+
+	if err = m.initSecurityGroups(); err != nil {
+		return err
+	}
 
 	return err
 }
@@ -374,6 +370,10 @@ func (m *Model) initSecurityGroups() error {
 					c.Type.Label(), c.Type, t.String())
 			}
 		}
+	}
+
+	if err := m.AWS.Init(m); err != nil {
+		return err
 	}
 
 	return nil
