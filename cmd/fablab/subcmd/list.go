@@ -2,12 +2,13 @@ package subcmd
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sort"
-	"strings"
 )
 
 func init() {
@@ -15,6 +16,7 @@ func init() {
 	listCmd.AddCommand(newListHostsCmd())
 	listCmd.AddCommand(newListComponentsCmd())
 	listCmd.AddCommand(listActionsCmd)
+	listCmd.AddCommand(listSecurityGroupsCmd)
 	RootCmd.AddCommand(listCmd)
 }
 
@@ -65,6 +67,13 @@ var listActionsCmd = &cobra.Command{
 	Short: "list actions",
 	Args:  cobra.MaximumNArgs(1),
 	Run:   listActions,
+}
+
+var listSecurityGroupsCmd = &cobra.Command{
+	Use:   "security-groups",
+	Short: "list security groups",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   listSecurityGroups,
 }
 
 func listInstances(_ *cobra.Command, _ []string) {
@@ -210,5 +219,24 @@ func listActions(*cobra.Command, []string) {
 
 	for _, action := range m.GetActions() {
 		fmt.Println(action)
+	}
+}
+
+func listSecurityGroups(*cobra.Command, []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
+	}
+
+	m := model.GetModel()
+
+	for key, sg := range m.AWS.SecurityGroups {
+		fmt.Printf("name: %s\n", key)
+		fmt.Printf("\tid: %s\n", sg.Id)
+		fmt.Printf("\tname: %s\n", sg.Name())
+		fmt.Printf("\texcludeDefaultRules: %v\n", sg.ExcludeDefaultRules)
+		fmt.Printf("\trules: (%d)\n", len(sg.Rules))
+		for _, rule := range sg.Rules {
+			fmt.Printf("\t\t%s %s %d %+v\n", rule.Direction, rule.Protocol, rule.Port, rule.CidrBlocks)
+		}
 	}
 }

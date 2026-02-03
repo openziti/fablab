@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync/atomic"
 )
 
 // Env represents an environment that can mangle names for AWS resource uniqueness.
@@ -32,12 +33,18 @@ type SecurityGroup struct {
 	env Env
 	// ExcludeDefaultRules when true prevents automatic addition of SSH and egress rules
 	ExcludeDefaultRules bool
+
+	initialized atomic.Bool
 }
 
 // init initializes the security group with default rules and validates all rule configurations.
 // If ExcludeDefaultRules is false, it adds SSH ingress (port 22) and unrestricted egress rules.
 // Returns an error if any rule has an invalid direction, protocol, or missing CIDR blocks.
 func (self *SecurityGroup) init(id string, env Env) error {
+	if !self.initialized.CompareAndSwap(false, true) {
+		return nil
+	}
+
 	self.Id = id
 	self.env = env
 
@@ -60,7 +67,7 @@ func (self *SecurityGroup) init(id string, env Env) error {
 		}
 
 		if rule.Protocol != "udp" && rule.Protocol != "tcp" && rule.Protocol != "-1" {
-			return fmt.Errorf("invalid rule protocol: %v", rule.Protocol)
+			return fmt.Errorf("for rule with direction: %s and port: %d, invalid protocol: %v", rule.Direction, rule.Port, rule.Protocol)
 		}
 
 		if len(rule.CidrBlocks) == 0 {
