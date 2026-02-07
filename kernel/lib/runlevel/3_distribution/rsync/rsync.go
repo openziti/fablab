@@ -19,15 +19,22 @@ package rsync
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	"path/filepath"
-	"strings"
-	"sync"
+)
+
+const (
+	defaultSyncRetries      = 3
+	defaultSyncRetryBackoff = 5 * time.Second
 )
 
 func RsyncStaged() model.Stage {
@@ -240,6 +247,22 @@ func (self *remoteRsyncer) run() error {
 }
 
 func synchronizeHost(ctx *rsyncContext, config *Config) error {
+	var lastErr error
+	for attempt := 1; attempt <= defaultSyncRetries; attempt++ {
+		lastErr = synchronizeHostOnce(ctx, config)
+		if lastErr == nil {
+			return nil
+		}
+		if attempt < defaultSyncRetries {
+			logrus.WithError(lastErr).Warnf("rsync to %s failed (attempt %d/%d), retrying in %v",
+				config.host.PublicIp, attempt, defaultSyncRetries, defaultSyncRetryBackoff)
+			time.Sleep(defaultSyncRetryBackoff)
+		}
+	}
+	return lastErr
+}
+
+func synchronizeHostOnce(ctx *rsyncContext, config *Config) error {
 	mkdirCmd := fmt.Sprintf("mkdir -p %s", ctx.dst)
 	if output, err := libssh.RemoteExec(config.sshConfigFactory, mkdirCmd); err == nil {
 		if output != "" {
@@ -258,6 +281,22 @@ func synchronizeHost(ctx *rsyncContext, config *Config) error {
 }
 
 func synchronizeHostToHost(ctx *rsyncContext, srcConfig, dstConfig *Config) error {
+	var lastErr error
+	for attempt := 1; attempt <= defaultSyncRetries; attempt++ {
+		lastErr = synchronizeHostToHostOnce(ctx, srcConfig, dstConfig)
+		if lastErr == nil {
+			return nil
+		}
+		if attempt < defaultSyncRetries {
+			logrus.WithError(lastErr).Warnf("rsync %s -> %s failed (attempt %d/%d), retrying in %v",
+				srcConfig.host.PublicIp, dstConfig.host.PublicIp, attempt, defaultSyncRetries, defaultSyncRetryBackoff)
+			time.Sleep(defaultSyncRetryBackoff)
+		}
+	}
+	return lastErr
+}
+
+func synchronizeHostToHostOnce(ctx *rsyncContext, srcConfig, dstConfig *Config) error {
 	mkdirCmd := fmt.Sprintf("mkdir -p %s", ctx.dst)
 	if output, err := libssh.RemoteExec(dstConfig.sshConfigFactory, mkdirCmd); err == nil {
 		if output != "" {
