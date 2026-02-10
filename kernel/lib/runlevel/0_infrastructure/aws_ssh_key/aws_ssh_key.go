@@ -1,20 +1,21 @@
 package aws_ssh_key
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"os"
+	"path"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"os"
-	"path"
 )
 
 var KeyManager = awsKeyManager{}
@@ -65,11 +66,12 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 	awsAccessKey := m.MustStringVariable("credentials.aws.access_key")
 	awsSecretKey := m.MustStringVariable("credentials.aws.secret_key")
 
-	awsCreds := credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")
+	awsCreds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
 
 	var privateKey []byte
 	var publicKey []byte
 
+	ctx := context.Background()
 	keyPath := m.MustStringVariable("credentials.ssh.key_path")
 	logrus.Infof("checking for  private key in %v", keyPath)
 	var err error
@@ -83,23 +85,19 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 		logrus.Infof("failed to load private key from %v (%v), generating new key", keyPath, err)
 
 		for _, region := range m.Regions {
-			awsConfig := &aws.Config{
+			cfg := aws.Config{
 				Credentials: awsCreds,
-				Region:      &region.Region,
+				Region:      region.Region,
 			}
-			awsSession, err := session.NewSession(awsConfig)
-			if err != nil {
-				return err
-			}
-			ec2Client := ec2.New(awsSession)
+			ec2Client := ec2.NewFromConfig(cfg)
 
-			_, err = ec2Client.DescribeKeyPairs(&ec2.DescribeKeyPairsInput{
-				KeyNames: []*string{&keyName},
+			_, err = ec2Client.DescribeKeyPairs(ctx, &ec2.DescribeKeyPairsInput{
+				KeyNames: []string{keyName},
 			})
 
 			if err == nil {
 				logrus.Infof("removing key %v from region %v, as we don't have the private key anymore", keyPath, region.Region)
-				if _, err = ec2Client.DeleteKeyPair(&ec2.DeleteKeyPairInput{KeyName: &keyName}); err != nil {
+				if _, err = ec2Client.DeleteKeyPair(ctx, &ec2.DeleteKeyPairInput{KeyName: &keyName}); err != nil {
 					return errors.Wrapf(err, "failed to remove private key %v from region %v", keyName, region.Region)
 				}
 			}
@@ -107,18 +105,14 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 	}
 
 	for _, region := range m.Regions {
-		awsConfig := &aws.Config{
+		cfg := aws.Config{
 			Credentials: awsCreds,
-			Region:      &region.Region,
+			Region:      region.Region,
 		}
-		awsSession, err := session.NewSession(awsConfig)
-		if err != nil {
-			return err
-		}
-		ec2Client := ec2.New(awsSession)
+		ec2Client := ec2.NewFromConfig(cfg)
 
-		_, err = ec2Client.DescribeKeyPairs(&ec2.DescribeKeyPairsInput{
-			KeyNames: []*string{&keyName},
+		_, err = ec2Client.DescribeKeyPairs(ctx, &ec2.DescribeKeyPairsInput{
+			KeyNames: []string{keyName},
 		})
 
 		if err == nil {
@@ -129,7 +123,7 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 		if publicKey == nil {
 			logrus.Infof("creating key '%v' in region %v", keyName, region.Region)
 			keyPairInput := &ec2.CreateKeyPairInput{KeyName: &keyName}
-			output, err := ec2Client.CreateKeyPair(keyPairInput)
+			output, err := ec2Client.CreateKeyPair(ctx, keyPairInput)
 			if err != nil {
 				return err
 			}
@@ -149,7 +143,7 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 				KeyName:           &keyName,
 				PublicKeyMaterial: publicKey,
 			}
-			if _, err := ec2Client.ImportKeyPair(keyPairInput); err != nil {
+			if _, err := ec2Client.ImportKeyPair(ctx, keyPairInput); err != nil {
 				return err
 			}
 		}
