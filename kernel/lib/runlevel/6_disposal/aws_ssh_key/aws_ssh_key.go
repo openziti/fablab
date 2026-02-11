@@ -1,10 +1,11 @@
 package aws_ssh_key
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -29,21 +30,18 @@ func (stage awsKeyManager) Execute(run model.Run) error {
 	awsAccessKey := m.MustStringVariable("credentials.aws.access_key")
 	awsSecretKey := m.MustStringVariable("credentials.aws.secret_key")
 
-	awsCreds := credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")
+	awsCreds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
 
+	ctx := context.Background()
 	for _, region := range m.Regions {
 		logrus.Infof("removing key '%v' from region %v", keyName, region.Region)
-		awsConfig := &aws.Config{
+		cfg := aws.Config{
 			Credentials: awsCreds,
-			Region:      &region.Region,
+			Region:      region.Region,
 		}
-		awsSession, err := session.NewSession(awsConfig)
-		if err != nil {
-			return err
-		}
-		ec2Client := ec2.New(awsSession)
+		ec2Client := ec2.NewFromConfig(cfg)
 		input := &ec2.DeleteKeyPairInput{KeyName: &keyName}
-		if _, err = ec2Client.DeleteKeyPair(input); err != nil {
+		if _, err := ec2Client.DeleteKeyPair(ctx, input); err != nil {
 			return err
 		}
 	}
