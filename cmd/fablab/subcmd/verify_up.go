@@ -17,7 +17,7 @@
 package subcmd
 
 import (
-	"github.com/michaelquigley/pfxlog"
+	"github.com/openziti/fablab/kernel/lib/actions/component"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -25,25 +25,33 @@ import (
 )
 
 func init() {
-	RootCmd.AddCommand(verifyUpCmd)
+	RootCmd.AddCommand(newVerifyUpCmd())
 }
 
-var verifyUpCmd = &cobra.Command{
-	Use:   "verify-up <componentSpec>",
-	Short: "verifies that the selected components are up and running",
-	Args:  cobra.ExactArgs(1),
-	Run:   verifyUp,
-}
+func newVerifyUpCmd() *cobra.Command {
+	action := &verifyUpAction{}
 
-func verifyUp(_ *cobra.Command, args []string) {
-	if err := model.Bootstrap(); err != nil {
-		logrus.Fatalf("unable to bootstrap (%s)", err)
+	var cmd = &cobra.Command{
+		Use:   "verify-up <componentSpec> [-c concurrency] [-t timeout]",
+		Short: "verifies that the selected components are up and running",
+		Args:  cobra.ExactArgs(1),
+		Run:   action.run,
 	}
 
-	m := model.GetModel()
-	components := m.SelectComponents(args[0])
-	if len(components) == 0 {
-		logrus.Fatal("your component spec matched 0 components, it should match at least 1")
+	cmd.Flags().IntVarP(&action.concurrency, "concurrency", "c", 10, "Number of components to verify in parallel")
+	cmd.Flags().DurationVarP(&action.timeout, "timeout", "t", time.Minute, "Timeout per component")
+
+	return cmd
+}
+
+type verifyUpAction struct {
+	concurrency int
+	timeout     time.Duration
+}
+
+func (self *verifyUpAction) run(_ *cobra.Command, args []string) {
+	if err := model.Bootstrap(); err != nil {
+		logrus.Fatalf("unable to bootstrap (%s)", err)
 	}
 
 	run, err := model.NewRun()
@@ -51,25 +59,10 @@ func verifyUp(_ *cobra.Command, args []string) {
 		logrus.WithError(err).Fatal("error initializing run")
 	}
 
-	deadline := time.Now().Add(time.Minute)
-
-	for _, c := range components {
-		log := pfxlog.Logger().WithField("componentId", c.Id)
-
-		running := false
-		for !running {
-			if time.Now().After(deadline) {
-				log.Fatal("timed out waiting for component to be running")
-			}
-			running, err = c.IsRunning(run)
-			if err != nil {
-				log.WithError(err).Fatal("unable to check component status")
-			}
-			if !running {
-				log.Info("component not running yet, waiting 1 second")
-			}
-			time.Sleep(time.Second)
-		}
-		log.Info("component is running")
+	if err := component.VerifyUpInParallel(args[0], self.timeout, self.concurrency).Execute(run); err != nil {
+		logrus.WithError(err).Fatalf("error verifying components")
 	}
+
+	c := run.GetModel().SelectComponents(args[0])
+	logrus.Infof("%d components verified running", len(c))
 }
