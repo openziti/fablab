@@ -18,7 +18,6 @@ package distribution
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
@@ -32,18 +31,19 @@ func Locations(hostSpec string, paths ...string) model.Stage {
 
 func (self *locations) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
-		ssh := host.NewSshConfigFactory()
-		var cmds []string
-		for _, path := range self.paths {
-			mkdir := fmt.Sprintf("mkdir -p %s", path)
-			cmds = append(cmds, mkdir)
-		}
-		if _, err := libssh.RemoteExecAll(ssh, cmds...); err == nil {
-			logrus.Infof("%s => %s", host.PublicIp, self.paths)
-			return nil
-		} else {
-			return fmt.Errorf("error creating paths [%s] on host [%s] (%w)", self.paths, host.PublicIp, err)
-		}
+		return retryOnHost(host, func() error {
+			var cmds []string
+			for _, path := range self.paths {
+				mkdir := fmt.Sprintf("mkdir -p %s", path)
+				cmds = append(cmds, mkdir)
+			}
+			if _, err := host.ExecLogged(cmds...); err == nil {
+				logrus.Infof("%s => %s", host.PublicIp, self.paths)
+				return nil
+			} else {
+				return fmt.Errorf("error creating paths [%s] on host [%s] (%w)", self.paths, host.PublicIp, err)
+			}
+		})
 	})
 }
 
