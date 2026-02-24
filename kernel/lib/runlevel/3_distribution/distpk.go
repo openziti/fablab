@@ -2,10 +2,32 @@ package distribution
 
 import (
 	"fmt"
-	"github.com/openziti/fablab/kernel/libssh"
+	"time"
+
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 )
+
+const (
+	defaultDistRetries      = 3
+	defaultDistRetryBackoff = 5 * time.Second
+)
+
+func retryOnHost(host *model.Host, f func() error) error {
+	var lastErr error
+	for attempt := 1; attempt <= defaultDistRetries; attempt++ {
+		lastErr = f()
+		if lastErr == nil {
+			return nil
+		}
+		if attempt < defaultDistRetries {
+			logrus.WithError(lastErr).Warnf("distribution to host [%s] failed (attempt %d/%d), retrying in %v",
+				host.PublicIp, attempt, defaultDistRetries, defaultDistRetryBackoff)
+			time.Sleep(defaultDistRetryBackoff)
+		}
+	}
+	return lastErr
+}
 
 func DistributeSshKey(hostSpec string) model.Stage {
 	return &distSshKey{
@@ -15,28 +37,27 @@ func DistributeSshKey(hostSpec string) model.Stage {
 
 func (self *distSshKey) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(self.hostSpec, 25, func(host *model.Host) error {
-		ssh := host.NewSshConfigFactory()
-		keyPath := fmt.Sprintf("/home/%v/.ssh/id_rsa", ssh.User())
+		return retryOnHost(host, func() error {
+			keyPath := fmt.Sprintf("/home/%v/.ssh/id_rsa", host.GetSshUser())
+			sshKeyPath := host.NewSshConfigFactory().KeyPath()
 
-		if _, err := libssh.RemoteExecAll(ssh, fmt.Sprintf("rm -f %v", keyPath)); err == nil {
+			if _, err := host.ExecLogged(fmt.Sprintf("rm -f %v", keyPath)); err != nil {
+				return fmt.Errorf("error removing old PK on host [%s] (%w)", host.PublicIp, err)
+			}
 			logrus.Infof("%s => %s", host.PublicIp, "removed old PK")
-		} else {
-			return fmt.Errorf("error removing old PK on host [%s] (%w)", host.PublicIp, err)
-		}
 
-		if err := libssh.SendFile(ssh, ssh.KeyPath(), keyPath); err != nil {
-			logrus.Errorf("[%s] unable to send %s => %s", host.PublicIp, ssh.KeyPath(), keyPath)
-			return fmt.Errorf("[%s] unable to send %s => %s (%w)", host.PublicIp, ssh.KeyPath(), keyPath, err)
-		}
+			if err := host.SendFile(sshKeyPath, keyPath); err != nil {
+				return fmt.Errorf("[%s] unable to send %s => %s (%w)", host.PublicIp, sshKeyPath, keyPath, err)
+			}
+			logrus.Infof("[%s] %s => %s", host.PublicIp, sshKeyPath, keyPath)
 
-		logrus.Infof("[%s] %s => %s", host.PublicIp, ssh.KeyPath(), keyPath)
-
-		if _, err := libssh.RemoteExecAll(ssh, fmt.Sprintf("chmod 0400 %v", keyPath)); err == nil {
+			if _, err := host.ExecLogged(fmt.Sprintf("chmod 0400 %v", keyPath)); err != nil {
+				return fmt.Errorf("error setting pk permissions on host [%s] (%w)", host.PublicIp, err)
+			}
 			logrus.Infof("%s => %s", host.PublicIp, "set pk permissions")
+
 			return nil
-		} else {
-			return fmt.Errorf("error setting pk permissions on host [%s] (%w)", host.PublicIp, err)
-		}
+		})
 	})
 }
 

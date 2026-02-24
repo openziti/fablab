@@ -1,7 +1,7 @@
 package distribution
 
 import (
-	"github.com/openziti/fablab/kernel/libssh"
+	"fmt"
 	"os"
 	"strings"
 
@@ -21,27 +21,27 @@ func DistributeDataWithReplaceCallbacks(hostSpec, data, dest string, filemode os
 
 func (df *distDataWithReplaceCallbacks) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
-		ssh := host.NewSshConfigFactory()
+		return retryOnHost(host, func() error {
+			dataRaw := df.data
 
-		dataRaw := df.data
+			for k, v := range df.callbacks {
+				dataRaw = strings.ReplaceAll(dataRaw, k, v(host))
+			}
 
-		for k, v := range df.callbacks {
-			dataRaw = strings.ReplaceAll(dataRaw, k, v(host))
-		}
+			if err := host.SendData([]byte(dataRaw), df.dest); err != nil {
+				logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
+				return err
+			}
 
-		if err := libssh.SendData(ssh, []byte(dataRaw), df.dest); err != nil {
-			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
-			return err
-		}
+			if _, err := host.ExecLogged(fmt.Sprintf("chmod %04o %s", df.filemode, df.dest)); err != nil {
+				logrus.Errorf("[%s] unable to chmod %s", host.PublicIp, df.dest)
+				return err
+			}
 
-		if err := libssh.Chmod(ssh, df.dest, df.filemode); err != nil {
-			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
-			return err
-		}
+			logrus.Infof("[%s] data => %s", host.PublicIp, df.dest)
 
-		logrus.Infof("[%s] data => %s", host.PublicIp, df.dest)
-
-		return nil
+			return nil
+		})
 	})
 }
 
@@ -63,20 +63,21 @@ func DistributeData(hostSpec string, data []byte, dest string) model.Stage {
 
 func (df *distData) Execute(run model.Run) error {
 	return run.GetModel().ForEachHost(df.hostSpec, 25, func(host *model.Host) error {
-		ssh := host.NewSshConfigFactory()
-		if err := libssh.SendData(ssh, df.data, df.dest); err != nil {
-			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
-			return err
-		}
+		return retryOnHost(host, func() error {
+			if err := host.SendData(df.data, df.dest); err != nil {
+				logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
+				return err
+			}
 
-		if err := libssh.Chmod(ssh, df.dest, os.FileMode(0644)); err != nil {
-			logrus.Errorf("[%s] unable to send data => %s", host.PublicIp, df.dest)
-			return err
-		}
+			if _, err := host.ExecLogged(fmt.Sprintf("chmod 0644 %s", df.dest)); err != nil {
+				logrus.Errorf("[%s] unable to chmod %s", host.PublicIp, df.dest)
+				return err
+			}
 
-		logrus.Infof("[%s] data => %s", host.PublicIp, df.dest)
+			logrus.Infof("[%s] data => %s", host.PublicIp, df.dest)
 
-		return nil
+			return nil
+		})
 	})
 }
 
