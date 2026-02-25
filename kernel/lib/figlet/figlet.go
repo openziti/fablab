@@ -35,3 +35,4 @@ func FigletMini(text string) {
 	}
 	figletlib.PrintMsg(text, font, 96, font.Settings(), "left")
 }
+
