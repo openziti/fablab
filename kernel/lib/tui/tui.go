@@ -221,17 +221,27 @@ func (m *tuiModel) View() string {
 	iterStr := fmt.Sprintf(" Iteration: %03d", m.iteration)
 	totalStr := fmt.Sprintf("Total: %s", formatDuration(now.Sub(m.totalStart)))
 	iterTimeStr := fmt.Sprintf("Iter: %s", formatDuration(now.Sub(m.iterStart)))
+	leftContent := fmt.Sprintf("%s  |  %s  |  %s", iterStr, totalStr, iterTimeStr)
 
 	var statusRight string
 	if m.done {
 		if m.err != nil {
-			statusRight = doneErrorStyle.Render(fmt.Sprintf(" FAILED: %v ", m.err))
+			errText := fmt.Sprintf("  FAILED: %v", m.err)
+			// Truncate error to prevent wrapping over iteration/time info.
+			if avail := m.width - lipgloss.Width(leftContent); avail > 3 {
+				if len(errText) > avail {
+					errText = errText[:avail-1] + "…"
+				}
+			} else {
+				errText = ""
+			}
+			statusRight = doneErrorStyle.Render(errText)
 		} else {
-			statusRight = doneSuccessStyle.Render(" COMPLETED — press q to exit ")
+			statusRight = doneSuccessStyle.Render("  COMPLETED — press q to exit ")
 		}
 	}
 
-	statusContent := fmt.Sprintf("%s  |  %s  |  %s  %s", iterStr, totalStr, iterTimeStr, statusRight)
+	statusContent := leftContent + statusRight
 	statusBar := statusBarStyle.Width(m.width).Render(statusContent)
 	b.WriteString(statusBar)
 	b.WriteString("\n")
