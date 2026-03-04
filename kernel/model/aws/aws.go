@@ -131,9 +131,14 @@ type NetworkRule struct {
 // CidrBlockList returns a Terraform-formatted array string of CIDR blocks.
 // CIDR blocks containing "/" are quoted as literals, others are treated as Terraform variables.
 func (self *NetworkRule) CidrBlockList() string {
+	blockList := self.CidrBlocks
+	if len(blockList) == 0 {
+		blockList = []string{"0.0.0.0/0"}
+	}
+
 	var buf bytes.Buffer
 	buf.WriteString("[")
-	for idx, cidr := range self.CidrBlocks {
+	for idx, cidr := range blockList {
 		if idx > 0 {
 			buf.WriteString(",")
 		}
