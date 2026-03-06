@@ -2,11 +2,14 @@ package parallel
 
 import (
 	"context"
+	"fmt"
+	"sync/atomic"
+	"time"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib/util"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
-	"sync/atomic"
 )
 
 type Task func() error
@@ -65,10 +68,10 @@ func Execute(tasks []Task, concurrency int64) error {
 }
 
 func TaskWithLabel(taskType string, label string, task Task) LabeledTask {
-	return labeledTask{
+	return &labeledTask{
 		taskType: taskType,
 		label:    label,
-		task:     task,
+		task:     taskWrapper{task: task},
 	}
 }
 
@@ -76,24 +79,46 @@ type LabeledTask interface {
 	Type() string
 	Execute() error
 	Label() string
+	WrapTask(func(executable Executable) Executable)
+	DependsOn(task LabeledTask, timeout time.Duration)
+}
+
+type Executable interface {
+	Execute(task LabeledTask) error
+}
+
+type taskWrapper struct {
+	task Task
+}
+
+func (t taskWrapper) Execute(LabeledTask) error {
+	return t.task()
 }
 
 type labeledTask struct {
 	taskType string
 	label    string
-	task     Task
+	task     Executable
 }
 
-func (self labeledTask) Type() string {
+func (self *labeledTask) DependsOn(task LabeledTask, timeout time.Duration) {
+	waitFor(self, task, timeout)
+}
+
+func (self *labeledTask) Type() string {
 	return self.taskType
 }
 
-func (self labeledTask) Execute() error {
-	return self.task()
+func (self *labeledTask) Execute() error {
+	return self.task.Execute(self)
 }
 
-func (self labeledTask) Label() string {
+func (self *labeledTask) Label() string {
 	return self.label
+}
+
+func (self *labeledTask) WrapTask(f func(executable Executable) Executable) {
+	self.task = f(self.task)
 }
 
 type ErrorAction int
@@ -182,4 +207,64 @@ func ExecuteLabeled(tasks []LabeledTask, concurrency int64, policy ErrorPolicy) 
 	}
 
 	return util.MultipleErrors(errList)
+}
+
+func getNotifier(task LabeledTask) <-chan struct{} {
+	var result chan struct{}
+
+	task.WrapTask(func(task Executable) Executable {
+		if notifier, ok := task.(*notifierTask); ok {
+			result = notifier.completeNotify
+			return task
+		}
+
+		notifier := &notifierTask{
+			wrapped:        task,
+			completeNotify: make(chan struct{}),
+		}
+		result = notifier.completeNotify
+		return notifier
+	})
+	return result
+}
+
+type notifierTask struct {
+	wrapped        Executable
+	completeNotify chan struct{}
+}
+
+func (self *notifierTask) Execute(task LabeledTask) error {
+	err := self.wrapped.Execute(task)
+	if err == nil {
+		close(self.completeNotify)
+	}
+	return err
+}
+
+func waitFor(task LabeledTask, dependency LabeledTask, timeout time.Duration) {
+	notifier := getNotifier(dependency)
+	task.WrapTask(func(task Executable) Executable {
+		return &waitForTask{
+			wrapped:        task,
+			completeNotify: notifier,
+			timeout:        timeout,
+			dependency:     dependency,
+		}
+	})
+}
+
+type waitForTask struct {
+	wrapped        Executable
+	completeNotify <-chan struct{}
+	timeout        time.Duration
+	dependency     LabeledTask
+}
+
+func (self *waitForTask) Execute(task LabeledTask) error {
+	select {
+	case <-self.completeNotify:
+	case <-time.After(self.timeout):
+		return fmt.Errorf("'%s' timed out waiting for '%s'", task.Label(), self.dependency.Label())
+	}
+	return self.wrapped.Execute(task)
 }
