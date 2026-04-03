@@ -78,7 +78,7 @@ var listSecurityGroupsCmd = &cobra.Command{
 
 func listInstances(_ *cobra.Command, _ []string) {
 	cfg := model.GetConfig()
-	activeInstanceId := cfg.Default
+	selected := cfg.GetSelectedInstance()
 
 	var instanceIds []string
 	for k := range cfg.Instances {
@@ -91,14 +91,18 @@ func listInstances(_ *cobra.Command, _ []string) {
 	fmt.Printf("[%d] instances:\n\n", len(instanceIds))
 	for _, instanceId := range instanceIds {
 		idLabel := instanceId
-		if instanceId == activeInstanceId {
-			idLabel += "*"
+		if instanceId == selected.Id {
+			if selected.Source != "default" {
+				idLabel += fmt.Sprintf("* (%s)", selected.Source)
+			} else {
+				idLabel += "*"
+			}
 		}
 		instanceConfig := cfg.Instances[instanceId]
 		if l, err := instanceConfig.LoadLabel(); err == nil {
-			fmt.Printf("%-12s %-24s [%s]\n", idLabel, l.Model, l.State)
+			fmt.Printf("%-24s %-24s [%s]\n", idLabel, l.Model, l.State)
 		} else {
-			fmt.Printf("%-12s %s\n", idLabel, err)
+			fmt.Printf("%-24s %s\n", idLabel, err)
 		}
 	}
 	if len(instanceIds) > 0 {

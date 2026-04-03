@@ -118,6 +118,43 @@ func BootstrapInstance() error {
 	return nil
 }
 
+// PinInstance creates a .fablab-instance file in the current directory that pins
+// the given instance as the active one for this directory tree.
+func PinInstance(instanceId string) error {
+	cfg := GetConfig()
+	if _, found := cfg.Instances[instanceId]; !found {
+		return errors.Errorf("unknown instance [%s]", instanceId)
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.Wrap(err, "unable to get working directory")
+	}
+
+	pinPath := filepath.Join(dir, PinFileName)
+	if err := os.WriteFile(pinPath, []byte(instanceId+"\n"), 0644); err != nil {
+		return errors.Wrapf(err, "unable to write pin file [%s]", pinPath)
+	}
+	return nil
+}
+
+// UnpinInstance removes the nearest .fablab-instance file found by walking up
+// from the current directory. It returns a message describing what was removed.
+func UnpinInstance() (string, error) {
+	pinnedId, pinPath, err := FindPinnedInstance()
+	if err != nil {
+		return "", errors.Wrap(err, "error searching for pin file")
+	}
+	if pinPath == "" {
+		return "", errors.New("no pin file found in current directory or any parent")
+	}
+
+	if err := os.Remove(pinPath); err != nil {
+		return "", errors.Wrapf(err, "unable to remove pin file [%s]", pinPath)
+	}
+	return fmt.Sprintf("removed pin file %s (was pinned to instance [%s])", pinPath, pinnedId), nil
+}
+
 func UserInstanceRoot() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
