@@ -61,6 +61,18 @@ func TestKillOutgoingCmd(t *testing.T) {
 	assert.Equal(t, "sudo ss -K -t state established dst 10.0.0.1:6262", killOutgoingCmd("10.0.0.1", 6262))
 }
 
+func TestBlockOutgoingHostCmd(t *testing.T) {
+	assert.Equal(t, "sudo iptables -A FABLAB_OUTPUT -d 10.0.0.1 -j DROP", blockOutgoingHostCmd("10.0.0.1"))
+}
+
+func TestUnblockOutgoingHostCmd(t *testing.T) {
+	assert.Equal(t, "sudo iptables -D FABLAB_OUTPUT -d 10.0.0.1 -j DROP", unblockOutgoingHostCmd("10.0.0.1"))
+}
+
+func TestKillOutgoingHostCmd(t *testing.T) {
+	assert.Equal(t, "sudo ss -K -t state established dst 10.0.0.1", killOutgoingHostCmd("10.0.0.1"))
+}
+
 func TestBlockUnblockSymmetry(t *testing.T) {
 	// Block and unblock commands should differ only by -A vs -D
 	block := blockIncomingCmd(8080)
@@ -72,4 +84,9 @@ func TestBlockUnblockSymmetry(t *testing.T) {
 	unblockOut := unblockOutgoingCmd("10.0.0.1", 6262)
 	assert.Contains(t, blockOut, "-A FABLAB_OUTPUT")
 	assert.Contains(t, unblockOut, "-D FABLAB_OUTPUT")
+
+	blockHost := blockOutgoingHostCmd("10.0.0.1")
+	unblockHost := unblockOutgoingHostCmd("10.0.0.1")
+	assert.Contains(t, blockHost, "-A FABLAB_OUTPUT")
+	assert.Contains(t, unblockHost, "-D FABLAB_OUTPUT")
 }

@@ -47,6 +47,18 @@ func unblockOutgoingCmd(ip string, port uint16) string {
 	return fmt.Sprintf("sudo iptables -D FABLAB_OUTPUT -p tcp -d %s --dport %d -j DROP", ip, port)
 }
 
+func blockOutgoingHostCmd(ip string) string {
+	return fmt.Sprintf("sudo iptables -A FABLAB_OUTPUT -d %s -j DROP", ip)
+}
+
+func unblockOutgoingHostCmd(ip string) string {
+	return fmt.Sprintf("sudo iptables -D FABLAB_OUTPUT -d %s -j DROP", ip)
+}
+
+func killOutgoingHostCmd(ip string) string {
+	return fmt.Sprintf("sudo ss -K -t state established dst %s", ip)
+}
+
 func unblockAllCmd() string {
 	return "sudo iptables -F FABLAB_INPUT 2>/dev/null || true" +
 		" && sudo iptables -F FABLAB_OUTPUT 2>/dev/null || true"
@@ -150,4 +162,43 @@ func (host *Host) DisruptOutgoing(ip string, port uint16) error {
 		return err
 	}
 	return host.BlockOutgoing(ip, port)
+}
+
+// BlockOutgoingHost adds an iptables rule to DROP all outgoing traffic to the given IP,
+// regardless of port or protocol.
+func (host *Host) BlockOutgoingHost(ip string) error {
+	if err := host.ensureFablabChains(); err != nil {
+		return err
+	}
+
+	if output, err := host.ExecLogged(blockOutgoingHostCmd(ip)); err != nil {
+		return fmt.Errorf("failed to block outgoing to %s on [%s]: %w (output: %s)", ip, host.PublicIp, err, output)
+	}
+	return nil
+}
+
+// UnblockOutgoingHost removes the iptables rule that DROPs all outgoing traffic to the given IP.
+// This is best-effort: if the rule doesn't exist, a warning is logged but no error is returned.
+func (host *Host) UnblockOutgoingHost(ip string) error {
+	if output, err := host.ExecLogged(unblockOutgoingHostCmd(ip)); err != nil {
+		logrus.WithField("hostId", host.Id).Warnf("failed to unblock outgoing to %s on [%s]: %v (output: %s)", ip, host.PublicIp, err, output)
+	}
+	return nil
+}
+
+// KillOutgoingHost kills all established TCP connections to the given remote IP using ss -K.
+func (host *Host) KillOutgoingHost(ip string) error {
+	if output, err := host.ExecLogged(killOutgoingHostCmd(ip)); err != nil {
+		return fmt.Errorf("failed to kill outgoing connections to %s on [%s]: %w (output: %s)", ip, host.PublicIp, err, output)
+	}
+	return nil
+}
+
+// DisruptOutgoingHost kills existing TCP connections to the given IP and blocks all new
+// outgoing traffic to it.
+func (host *Host) DisruptOutgoingHost(ip string) error {
+	if err := host.KillOutgoingHost(ip); err != nil {
+		return err
+	}
+	return host.BlockOutgoingHost(ip)
 }
