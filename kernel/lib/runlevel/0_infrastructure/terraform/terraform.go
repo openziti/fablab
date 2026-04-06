@@ -32,18 +32,24 @@ import (
 	"time"
 )
 
+// DefaultParallelism is the default number of concurrent terraform operations.
+const DefaultParallelism = 5
+
 func Express() model.Stage {
 	return &Terraform{
 		Retries: 3,
 		ReadyCheck: &semaphore_0.ReadyStage{
 			MaxWait: 90 * time.Second,
 		},
+		Parallelism: DefaultParallelism,
 	}
 }
 
+// Terraform is a stage that runs terraform apply to provision infrastructure.
 type Terraform struct {
-	Retries    uint8
-	ReadyCheck *semaphore_0.ReadyStage
+	Retries     uint8
+	ReadyCheck  *semaphore_0.ReadyStage
+	Parallelism int
 }
 
 func (t *Terraform) Execute(run model.Run) error {
@@ -111,7 +117,11 @@ func (t *Terraform) Init() error {
 }
 
 func (t *Terraform) apply() error {
-	prc := lib.NewProcess("terraform", "apply", "-auto-approve")
+	args := []string{"apply", "-auto-approve"}
+	if t.Parallelism > 0 {
+		args = append(args, fmt.Sprintf("-parallelism=%d", t.Parallelism))
+	}
+	prc := lib.NewProcess("terraform", args...)
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)
 	if err := prc.Run(); err != nil {

@@ -155,12 +155,12 @@ func (self *execLoopCmd) runExecWithTui(ctx model.Run, actions []model.Action, u
 			}
 		}
 		if until.isDone() {
-			pfxlog.Logger().Infof("finished after %v iteration(s) in %v", iterations, time.Since(start))
+			tui.ValidationLogger().Infof("finished after %v iteration(s) in %v", iterations, time.Since(start))
 			tui.SendDone(program, nil)
 			program.Wait()
 			return
 		}
-		pfxlog.Logger().Infof("iteration: %v, iteration time: %v, total time: %v",
+		tui.ValidationLogger().Infof("iteration: %v, iteration time: %v, total time: %v",
 			iterations, time.Since(iterStart), time.Since(start))
 		iterations++
 		tui.SendIteration(program, iterations)
