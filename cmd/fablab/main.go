@@ -32,9 +32,11 @@ func init() {
 func main() {
 	if len(os.Args) > 1 {
 		runLocalBinary := false
-		if os.Args[1] == "completion" || os.Args[1] == "clean" {
+		switch os.Args[1] {
+		case "completion", "clean", "pin", "unpin":
 			runLocalBinary = true
-		} else if len(os.Args) > 2 {
+		}
+		if !runLocalBinary && len(os.Args) > 2 {
 			if os.Args[1] == "list" && os.Args[2] == "instances" {
 				runLocalBinary = true
 			}
@@ -49,14 +51,15 @@ func main() {
 	}
 
 	cfg := model.GetConfig()
-	instance, ok := cfg.Instances[cfg.Default]
+	selectedId := cfg.GetSelectedInstanceId()
+	instance, ok := cfg.Instances[selectedId]
 	if !ok {
-		logrus.Fatalf("invalid default instance '%s'", cfg.Default)
+		logrus.Fatalf("invalid selected instance '%s'", selectedId)
 		return
 	}
 
 	if instance.Executable == "" {
-		logrus.Fatalf("default instance '%s' has no executable configured to delegate to", cfg.Default)
+		logrus.Fatalf("selected instance '%s' has no executable configured to delegate to", selectedId)
 		return
 	}
 

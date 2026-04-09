@@ -23,12 +23,21 @@ import (
 	"path/filepath"
 )
 
+// DefaultParallelism is the default number of concurrent terraform operations.
+const DefaultParallelism = 5
+
 func Dispose() model.Stage {
-	return &terraform{}
+	return &terraform{
+		Parallelism: DefaultParallelism,
+	}
 }
 
-func (terraform *terraform) Execute(model.Run) error {
-	prc := lib.NewProcess("terraform", "destroy", "-auto-approve")
+func (t *terraform) Execute(model.Run) error {
+	args := []string{"destroy", "-auto-approve"}
+	if t.Parallelism > 0 {
+		args = append(args, fmt.Sprintf("-parallelism=%d", t.Parallelism))
+	}
+	prc := lib.NewProcess("terraform", args...)
 	prc.Cmd.Dir = terraformRun()
 	prc.WithTail(lib.StdoutTail)
 	if err := prc.Run(); err != nil {
@@ -38,6 +47,7 @@ func (terraform *terraform) Execute(model.Run) error {
 }
 
 type terraform struct {
+	Parallelism int
 }
 
 func terraformRun() string {

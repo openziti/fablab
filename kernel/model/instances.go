@@ -1,19 +1,30 @@
 package model
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
 )
 
 const (
 	DefaultWritePermissions = 0700
 	ConfigFileName          = "config.yml"
+	PinFileName             = ".fablab-instance"
+	EnvInstanceVar          = "FABLAB_INSTANCE"
 )
 
 var CliInstanceId string
+
+// SelectedInstance holds the resolved instance ID along with the source that
+// determined the selection (e.g. "flag", "env", "pinned", "default").
+type SelectedInstance struct {
+	Id     string
+	Source string
+}
 
 type FablabConfig struct {
 	Instances  map[string]*InstanceConfig `yaml:"instances"`
@@ -21,14 +32,60 @@ type FablabConfig struct {
 	ConfigPath string                     `yaml:"-"`
 }
 
-func (self *FablabConfig) GetSelectedInstanceId() string {
+// GetSelectedInstance resolves the active instance using the priority chain:
+// CLI flag -> FABLAB_INSTANCE env var -> .fablab-instance pin file -> config default -> "default".
+func (self *FablabConfig) GetSelectedInstance() SelectedInstance {
 	if CliInstanceId != "" {
-		return CliInstanceId
+		return SelectedInstance{Id: CliInstanceId, Source: "flag"}
+	}
+	if envId := os.Getenv(EnvInstanceVar); envId != "" {
+		return SelectedInstance{Id: envId, Source: "env"}
+	}
+	if pinnedId, _, _ := FindPinnedInstance(); pinnedId != "" {
+		return SelectedInstance{Id: pinnedId, Source: "pinned"}
 	}
 	if self.Default != "" {
-		return self.Default
+		return SelectedInstance{Id: self.Default, Source: "default"}
 	}
-	return "default"
+	return SelectedInstance{Id: "default", Source: "default"}
+}
+
+// GetSelectedInstanceId returns the resolved active instance ID.
+func (self *FablabConfig) GetSelectedInstanceId() string {
+	return self.GetSelectedInstance().Id
+}
+
+// FindPinnedInstance walks up from the current working directory looking for a
+// .fablab-instance file. It returns the instance ID, the path of the pin file,
+// and any error encountered.
+func FindPinnedInstance() (string, string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to get working directory")
+	}
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to resolve absolute working directory")
+	}
+
+	for {
+		pinPath := filepath.Join(dir, PinFileName)
+		data, err := os.ReadFile(pinPath)
+		if err == nil {
+			id := strings.TrimSpace(string(data))
+			if id != "" {
+				return id, pinPath, nil
+			}
+		} else if !os.IsNotExist(err) {
+			logrus.Debugf("error reading pin file %s: %v", pinPath, err)
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", "", nil
 }
 
 type InstanceConfig struct {
