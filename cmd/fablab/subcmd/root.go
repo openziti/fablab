@@ -17,12 +17,13 @@
 package subcmd
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
-	"path/filepath"
 )
 
 func Execute() error {
@@ -36,6 +37,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose logging")
 	RootCmd.PersistentFlags().StringVarP(&model.CliInstanceId, "instance", "i", "", "specify the instance to use")
 	RootCmd.PersistentFlags().StringVar(&logFormatter, "log-formatter", "", "Specify log formatter [json|pfxlog|text]")
+	RootCmd.PersistentFlags().StringVar(&logFile, "log-file", "", "Tee log output to the specified file")
 }
 
 var RootCmd = &cobra.Command{
@@ -57,8 +59,36 @@ var RootCmd = &cobra.Command{
 		default:
 			// let logrus do its own thing
 		}
+
+		if logFile != "" {
+			f, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+			if err != nil {
+				logrus.WithError(err).Fatalf("failed to open log file %q", logFile)
+			}
+			logrus.AddHook(&fileLogHook{file: f})
+		}
 	},
 }
 
 var verbose bool
 var logFormatter string
+var logFile string
+
+// fileLogHook is a logrus hook that writes formatted log entries to a file.
+// It works alongside the TUI hook, which redirects logrus output to discard.
+type fileLogHook struct {
+	file *os.File
+}
+
+func (h *fileLogHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+func (h *fileLogHook) Fire(entry *logrus.Entry) error {
+	formatted, err := logrus.StandardLogger().Formatter.Format(entry)
+	if err != nil {
+		return err
+	}
+	_, err = h.file.Write(formatted)
+	return err
+}
