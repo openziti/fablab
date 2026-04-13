@@ -366,6 +366,7 @@ func SendData(factory SshConfigFactory, data []byte, remotePath string) error {
 	return nil
 }
 
+// SendFile uploads a local file to a remote path via SFTP.
 func SendFile(factory SshConfigFactory, localPath string, remotePath string) error {
 	localFile, err := os.ReadFile(localPath)
 
@@ -381,8 +382,10 @@ func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...st
 		return nil
 	}
 
+	// localPath is a container that holds all requested paths, so its mode is not derived
+	// from any single source; create it up front with a default mode.
 	if err := os.MkdirAll(localPath, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating local path")
+		return fmt.Errorf("error creating local path [%s] (%w)", localPath, err)
 	}
 
 	config := factory.Config()
@@ -405,7 +408,11 @@ func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...st
 			return err
 		}
 		if fileInfo.IsDir() {
-			if err = retrieveRemoteDir(client, nextPath, localPath); err != nil {
+			// A source directory's contents are copied into the container; the container
+			// itself must not take this directory's mode (setSourceMode=false), or a
+			// read-only source would block writing later sources and the container's mode
+			// would depend on source ordering. Nested subdirectories still take theirs.
+			if err = retrieveRemoteDir(client, nextPath, localPath, false); err != nil {
 				return err
 			}
 		} else if err = retrieveRemoteFile(client, nextPath, localPath); err != nil {
@@ -415,21 +422,60 @@ func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...st
 	return nil
 }
 
-func retrieveRemoteDir(client *sftp.Client, path string, localPath string) error {
-	files, err := client.ReadDir(path)
+// isSafeLocalName reports whether name is a single path component safe to join under a
+// local directory on the runtime OS. It rejects "", ".", ".." and any name that
+// filepath would split (e.g. "..\x" on Windows), preventing a remote-supplied name from
+// traversing out of the destination.
+func isSafeLocalName(name string) bool {
+	return name != "" && name != "." && name != ".." && filepath.Base(name) == name
+}
+
+// retrieveRemoteDir copies the contents of remoteDir into localPath. When setSourceMode
+// is true, localPath is treated as a mirror of remoteDir and takes remoteDir's mode (if
+// localPath was newly created); when false, localPath is a caller-supplied container
+// whose mode is left alone. Nested subdirectories are always mirrored.
+func retrieveRemoteDir(client *sftp.Client, remoteDir string, localPath string, setSourceMode bool) error {
+	dirInfo, err := client.Stat(remoteDir)
 	if err != nil {
 		return err
 	}
 
+	files, err := client.ReadDir(remoteDir)
+	if err != nil {
+		return err
+	}
+
+	// Only a directory we create takes the source mode; a pre-existing one keeps its own.
+	_, statErr := os.Stat(localPath)
+	created := statErr != nil
+
 	if err = os.MkdirAll(localPath, 0700); err != nil {
-		return errors.Wrapf(err, "unable to create local target director [%s]", localPath)
+		return errors.Wrapf(err, "unable to create local target directory [%s]", localPath)
 	}
 
 	for _, file := range files {
-		remotePath := filepath.Join(path, file.Name())
-		if file.IsDir() {
+		// The child name comes from the remote host, so it must be a single component on
+		// the runtime OS before being joined to a local path.
+		if !isSafeLocalName(file.Name()) {
+			return fmt.Errorf("unsafe remote entry name [%s] in [%s]", file.Name(), remoteDir)
+		}
+
+		// Remote paths are always slash-separated; filepath.Join would emit backslashes
+		// on Windows that a Linux SFTP server treats as literal filename characters.
+		remotePath := path.Join(remoteDir, file.Name())
+
+		isDir := file.IsDir()
+		if file.Mode()&os.ModeSymlink != 0 {
+			// Follow symlinks like scp -r: resolve the target to decide dir vs file.
+			if target, statErr := client.Stat(remotePath); statErr == nil {
+				isDir = target.IsDir()
+			}
+		}
+
+		if isDir {
+			// A nested subdirectory mirrors the remote tree, so it takes its source mode.
 			newLocalPath := filepath.Join(localPath, file.Name())
-			if err = retrieveRemoteDir(client, remotePath, newLocalPath); err != nil {
+			if err = retrieveRemoteDir(client, remotePath, newLocalPath, true); err != nil {
 				return err
 			}
 		} else {
@@ -439,27 +485,61 @@ func retrieveRemoteDir(client *sftp.Client, path string, localPath string) error
 		}
 	}
 
+	// Apply the source mode last (so a read-only source, e.g. 0555, does not block
+	// creating children first), and only to a mirror directory we created.
+	if setSourceMode && created {
+		if err = os.Chmod(localPath, dirInfo.Mode().Perm()); err != nil {
+			return errors.Wrapf(err, "unable to set mode on local target directory [%s]", localPath)
+		}
+	}
+
 	return nil
 }
 
-func retrieveRemoteFile(client *sftp.Client, path string, localPath string) error {
-	rf, err := client.Open(path)
+func retrieveRemoteFile(client *sftp.Client, remotePath string, localPath string) error {
+	// The local target name is derived from the remote name, so it must be a single
+	// component on the runtime OS; reject anything that could traverse out of localPath
+	// (e.g. a remote file literally named "..\x" on a Windows client).
+	name := path.Base(remotePath)
+	if !isSafeLocalName(name) {
+		return fmt.Errorf("unsafe remote file name [%s]", remotePath)
+	}
+	target := filepath.Join(localPath, name)
+
+	rf, err := client.Open(remotePath)
 	if err != nil {
-		return fmt.Errorf("error opening remote file [%s] (%w)", path, err)
+		return fmt.Errorf("error opening remote file [%s] (%w)", remotePath, err)
 	}
 	defer func() { _ = rf.Close() }()
 
-	lf, err := os.OpenFile(filepath.Join(localPath, filepath.Base(path)), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	fi, err := rf.Stat()
 	if err != nil {
-		return fmt.Errorf("error opening local file [%s] (%w)", path, err)
+		return fmt.Errorf("error stat'ing remote file [%s] (%w)", remotePath, err)
+	}
+
+	// Only a newly-created local file takes the remote mode; overwriting an existing
+	// file leaves its permissions alone, matching scp without -p.
+	_, statErr := os.Stat(target)
+	existed := statErr == nil
+
+	lf, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error opening local file [%s] (%w)", remotePath, err)
 	}
 	defer func() { _ = lf.Close() }()
 
 	n, err := io.Copy(lf, rf)
 	if err != nil {
-		return fmt.Errorf("error copying remote file to local [%s] (%w)", path, err)
+		return fmt.Errorf("error copying remote file to local [%s] (%w)", remotePath, err)
 	}
-	logrus.Infof("%s => %s [%s]", path, localPath, info.ByteCount(n))
+
+	if !existed {
+		if err := lf.Chmod(fi.Mode().Perm()); err != nil {
+			return fmt.Errorf("error setting mode on local file [%s] (%w)", remotePath, err)
+		}
+	}
+
+	logrus.Infof("%s => %s [%s]", remotePath, localPath, info.ByteCount(n))
 	return nil
 }
 
