@@ -376,6 +376,102 @@ func SendFile(factory SshConfigFactory, localPath string, remotePath string) err
 	return SendData(factory, localFile, remotePath)
 }
 
+// SendDirectory recursively uploads a local directory to a remote path via SFTP.
+func SendDirectory(factory SshConfigFactory, localPath string, remotePath string) error {
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	fileInfo, err := os.Stat(localPath)
+	if err != nil {
+		return fmt.Errorf("error stat'ing local path [%s] (%w)", localPath, err)
+	}
+	if !fileInfo.IsDir() {
+		return sendLocalFile(client, localPath, remotePath)
+	}
+	return sendLocalDir(client, localPath, remotePath)
+}
+
+func sendLocalDir(client *sftp.Client, localPath string, remotePath string) error {
+	if err := client.MkdirAll(remotePath); err != nil {
+		return fmt.Errorf("error creating remote directory [%s] (%w)", remotePath, err)
+	}
+
+	entries, err := os.ReadDir(localPath)
+	if err != nil {
+		return fmt.Errorf("error reading local directory [%s] (%w)", localPath, err)
+	}
+
+	for _, entry := range entries {
+		localChild := filepath.Join(localPath, entry.Name())
+		remoteChild := path.Join(remotePath, entry.Name())
+		if entry.IsDir() {
+			if err = sendLocalDir(client, localChild, remoteChild); err != nil {
+				return err
+			}
+		} else {
+			if err = sendLocalFile(client, localChild, remoteChild); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func sendLocalFile(client *sftp.Client, localPath string, remotePath string) error {
+	lf, err := os.Open(localPath)
+	if err != nil {
+		return fmt.Errorf("error opening local file [%s] (%w)", localPath, err)
+	}
+	defer func() { _ = lf.Close() }()
+
+	if err := client.MkdirAll(path.Dir(remotePath)); err != nil {
+		return fmt.Errorf("error creating remote directory for [%s] (%w)", remotePath, err)
+	}
+
+	rf, err := client.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	if err != nil {
+		return fmt.Errorf("error opening remote file [%s] (%w)", remotePath, err)
+	}
+	defer func() { _ = rf.Close() }()
+
+	n, err := io.Copy(rf, lf)
+	if err != nil {
+		return fmt.Errorf("error copying local file to remote [%s] (%w)", remotePath, err)
+	}
+	logrus.Infof("%s => %s [%s]", localPath, remotePath, info.ByteCount(n))
+	return nil
+}
+
+// RemoteGlob expands a glob pattern on a remote host via SFTP.
+func RemoteGlob(factory SshConfigFactory, pattern string) ([]string, error) {
+	config := factory.Config()
+
+	conn, err := ssh.Dial("tcp", factory.Address(), config)
+	if err != nil {
+		return nil, fmt.Errorf("error dialing ssh server (%w)", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client, err := sftp.NewClient(conn)
+	if err != nil {
+		return nil, fmt.Errorf("error creating sftp client (%w)", err)
+	}
+	defer func() { _ = client.Close() }()
+
+	return client.Glob(pattern)
+}
+
 func RetrieveRemoteFiles(factory SshConfigFactory, localPath string, paths ...string) error {
 	if len(paths) < 1 {
 		return nil
