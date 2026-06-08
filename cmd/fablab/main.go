@@ -17,12 +17,14 @@
 package main
 
 import (
+	"errors"
+	"os"
+	"os/exec"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/cmd/fablab/subcmd"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"os"
-	"os/exec"
 )
 
 func init() {
@@ -67,5 +69,11 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stderr
-	_ = cmd.Run()
+	if err := cmd.Run(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.ExitCode())
+		}
+		logrus.Fatalf("failed to run delegated executable '%s' (%v)", instance.Executable, err)
+	}
 }
