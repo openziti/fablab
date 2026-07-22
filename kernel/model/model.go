@@ -33,6 +33,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib/figlet"
 	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model/aws"
@@ -636,6 +637,10 @@ func (host *Host) NewSshConfigFactory() *libssh.SshConfigFactoryImpl {
 }
 
 func (host *Host) Exec(out io.Writer, cmds ...string) error {
+	return host.ExecWithLogLevel(out, logrus.InfoLevel, cmds...)
+}
+
+func (host *Host) ExecWithLogLevel(out io.Writer, level logrus.Level, cmds ...string) error {
 	host.sshLock.Lock()
 	defer host.sshLock.Unlock()
 
@@ -660,7 +665,7 @@ func (host *Host) Exec(out io.Writer, cmds ...string) error {
 		session.Stderr = out
 
 		if idx > 0 {
-			logrus.Infof("executing [%s]: '%s'", host.sshConfigFactory.Address(), cmd)
+			pfxlog.Logger().Logf(level, "executing [%s]: '%s'", host.sshConfigFactory.Address(), cmd)
 		}
 		err = session.Run(cmd)
 		_ = session.Close()
