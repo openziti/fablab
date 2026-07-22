@@ -68,7 +68,10 @@ func main() {
 	cmd := exec.Command(instance.Executable, os.Args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	// Propagate the delegated binary's exit code so callers (and shell && chains) see failures.
+	// Without this the launcher always exited 0 regardless of the model binary's result.
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
