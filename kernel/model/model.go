@@ -22,6 +22,7 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"math/rand/v2"
 	"os"
 	"path"
 	"path/filepath"
@@ -569,11 +570,16 @@ type Host struct {
 	Components           Components
 	Index                uint32
 	ScaleIndex           uint32
-	initialized          atomic.Bool
-	lock                 sync.Mutex
-	sshLock              sync.Mutex
-	sshClient            *ssh.Client
-	sshConfigFactory     libssh.SshConfigFactory
+	// SshSessionLimit caps how many SSH sessions this host opens concurrently on its
+	// shared connection. Set it at or below the server's MaxSessions so parallel
+	// operations stay under the server limit. A value <= 0 uses defaultSshSessionLimit.
+	SshSessionLimit  int
+	initialized      atomic.Bool
+	lock             sync.Mutex
+	sshLock          sync.Mutex
+	sshSem           chan struct{}
+	sshClient        *ssh.Client
+	sshConfigFactory libssh.SshConfigFactory
 }
 
 func (host *Host) DoExclusive(f func()) {
@@ -636,13 +642,59 @@ func (host *Host) NewSshConfigFactory() *libssh.SshConfigFactoryImpl {
 	return libssh.NewSshConfigFactory(host.GetSshUser(), keyPath, host.PublicIp)
 }
 
-func (host *Host) Exec(out io.Writer, cmds ...string) error {
-	return host.ExecWithLogLevel(out, logrus.InfoLevel, cmds...)
+// defaultSshSessionLimit bounds concurrent SSH sessions on a host's shared connection
+// when Host.SshSessionLimit is unset. It stays under OpenSSH's default MaxSessions (10)
+// to leave headroom.
+const defaultSshSessionLimit = 8
+
+// sshSessionLimit resolves the effective concurrent-session limit, applying the default
+// when configured is unset (<= 0).
+func sshSessionLimit(configured int) int {
+	if configured <= 0 {
+		return defaultSshSessionLimit
+	}
+	return configured
 }
 
-func (host *Host) ExecWithLogLevel(out io.Writer, level logrus.Level, cmds ...string) error {
+// sshOpenAttempts bounds how many times opening an SSH session/channel is retried when
+// the server transiently rejects it.
+const sshOpenAttempts = 5
+
+// openSshWithRetry runs open, retrying with a short jittered backoff while it fails with
+// a channel-open rejection (*ssh.OpenChannelError); any other error returns immediately.
+// The SshSessionLimit semaphore bounds steady-state concurrent sessions, but a session
+// that just closed can still be tearing down server-side, so the server briefly sees more
+// open channels than we do and rejects a new open. Backing off lets the slot free up.
+func openSshWithRetry[T any](open func() (T, error)) (T, error) {
+	var result T
+	var err error
+	for attempt := 0; attempt < sshOpenAttempts; attempt++ {
+		if attempt > 0 {
+			// jitter avoids many goroutines retrying in lockstep and re-colliding
+			time.Sleep(time.Duration(attempt)*25*time.Millisecond + time.Duration(rand.IntN(25))*time.Millisecond)
+		}
+		if result, err = open(); err == nil {
+			return result, nil
+		}
+		var openErr *ssh.OpenChannelError
+		if !errors.As(err, &openErr) {
+			return result, err
+		}
+	}
+	return result, err
+}
+
+// sshConn returns the host's shared ssh client, dialing it on first use. The lock is
+// held only for the lazy dial (and one-time semaphore setup), not for the duration of
+// any command or transfer, so callers can run sessions concurrently up to the
+// SshSessionLimit (ssh.Client multiplexes them internally).
+func (host *Host) sshConn() (*ssh.Client, error) {
 	host.sshLock.Lock()
 	defer host.sshLock.Unlock()
+
+	if host.sshSem == nil {
+		host.sshSem = make(chan struct{}, sshSessionLimit(host.SshSessionLimit))
+	}
 
 	if host.sshClient == nil {
 		if host.sshConfigFactory == nil {
@@ -651,13 +703,31 @@ func (host *Host) ExecWithLogLevel(out io.Writer, level logrus.Level, cmds ...st
 
 		client, err := ssh.Dial("tcp", host.sshConfigFactory.Address(), host.sshConfigFactory.Config())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		host.sshClient = client
 	}
 
+	return host.sshClient, nil
+}
+
+func (host *Host) Exec(out io.Writer, cmds ...string) error {
+	return host.ExecWithLogLevel(out, logrus.InfoLevel, cmds...)
+}
+
+func (host *Host) ExecWithLogLevel(out io.Writer, level logrus.Level, cmds ...string) error {
+	client, err := host.sshConn()
+	if err != nil {
+		return err
+	}
+
+	// Bound concurrent sessions on the shared connection; commands run sequentially, so
+	// one slot covers the whole call.
+	host.sshSem <- struct{}{}
+	defer func() { <-host.sshSem }()
+
 	for idx, cmd := range cmds {
-		session, err := host.sshClient.NewSession()
+		session, err := openSshWithRetry(client.NewSession)
 		if err != nil {
 			return err
 		}
@@ -689,22 +759,16 @@ func (host *Host) SendFile(localPath string, remotePath string) error {
 }
 
 func (host *Host) SendData(data []byte, remotePath string) error {
-	host.sshLock.Lock()
-	defer host.sshLock.Unlock()
-
-	if host.sshClient == nil {
-		if host.sshConfigFactory == nil {
-			host.sshConfigFactory = host.NewSshConfigFactory()
-		}
-
-		client, err := ssh.Dial("tcp", host.sshConfigFactory.Address(), host.sshConfigFactory.Config())
-		if err != nil {
-			return err
-		}
-		host.sshClient = client
+	sshClient, err := host.sshConn()
+	if err != nil {
+		return err
 	}
 
-	client, err := sftp.NewClient(host.sshClient)
+	// Bound concurrent sessions on the shared connection (the sftp subsystem is one).
+	host.sshSem <- struct{}{}
+	defer func() { <-host.sshSem }()
+
+	client, err := openSshWithRetry(func() (*sftp.Client, error) { return sftp.NewClient(sshClient) })
 	if err != nil {
 		return errors.Wrap(err, "error creating sftp client")
 	}
@@ -776,6 +840,7 @@ func (host *Host) CloneHost(scaleIndex uint32) *Host {
 		Components:           Components{},
 		Index:                host.Region.Model.GetNextHostIndex(),
 		ScaleIndex:           scaleIndex,
+		SshSessionLimit:      host.SshSessionLimit,
 	}
 
 	for key, component := range host.Components {

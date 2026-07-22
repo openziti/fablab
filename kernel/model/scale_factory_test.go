@@ -25,6 +25,20 @@ func (t testScaleStrategy) GetEntityCount(entity Entity) uint32 {
 	return 3
 }
 
+func Test_CloneHostPreservesSshSessionLimit(t *testing.T) {
+	model := &Model{Id: "test"}
+	region := &Region{Region: "us-west-1", Model: model}
+	host := &Host{
+		Region:          region,
+		PublicIp:        "1.2.3.4",
+		SshSessionLimit: 4,
+	}
+
+	clone := host.CloneHost(2)
+	require.Equal(t, 4, clone.SshSessionLimit, "scaled host must keep the source's configured session limit")
+	require.Equal(t, uint32(2), clone.ScaleIndex)
+}
+
 func Test_Templating(t *testing.T) {
 	model := &Model{
 		Id: "test",
