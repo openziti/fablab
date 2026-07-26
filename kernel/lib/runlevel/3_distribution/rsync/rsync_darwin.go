@@ -22,7 +22,7 @@ import (
 )
 
 func RunRsync(config *Config, sourcePath, targetPath string) error {
-	rsync := lib.NewProcess(config.rsyncBin, "-avz", "-e", config.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", sourcePath, targetPath)
+	rsync := lib.NewProcess(config.rsyncBin, "-avz", "-e", config.SshCommand()+" -o StrictHostKeyChecking=no", "--delete", fmt.Sprintf("--timeout=%d", rsyncStallTimeout), sourcePath, targetPath)
 	rsync.WithTail(lib.StdoutTail)
 	if err := rsync.Run(); err != nil {
 		return fmt.Errorf("rsync failed (%w)", err)
