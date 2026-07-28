@@ -17,18 +17,19 @@
 package libssh
 
 import (
+	"sync"
+	"time"
+
 	"github.com/natefinch/npipe"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
-	"sync"
-	"time"
 )
 
 var warnOnce = sync.Once{}
 var pipePresent = true
 
-func sshAuthMethodAgent() ssh.AuthMethod {
+func newSshAuthMethodAgent() ssh.AuthMethod {
 	if !pipePresent {
 		return nil
 	}

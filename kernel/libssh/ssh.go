@@ -586,6 +586,28 @@ type SshConfigFactoryImpl struct {
 	authMethods     []ssh.AuthMethod
 }
 
+// The agent client serializes requests internally, so a single authentication method can
+// be shared by every SSH config in the process. Keeping this process-scoped is important:
+// each agent auth method owns a connection to SSH_AUTH_SOCK, and creating one per config
+// eventually exhausts the agent's file descriptors in long-running fablab processes.
+type sshAgentAuthCache struct {
+	once   sync.Once
+	method ssh.AuthMethod
+}
+
+var sharedSshAgentAuth sshAgentAuthCache
+
+// sshAgentAuthMethodFactory is a variable to allow the cache behavior to be tested without
+// depending on a real platform SSH agent.
+var sshAgentAuthMethodFactory = newSshAuthMethodAgent
+
+func sshAuthMethodAgent() ssh.AuthMethod {
+	sharedSshAgentAuth.once.Do(func() {
+		sharedSshAgentAuth.method = sshAgentAuthMethodFactory()
+	})
+	return sharedSshAgentAuth.method
+}
+
 func NewSshConfigFactory(user, keyPath, host string) *SshConfigFactoryImpl {
 	factory := &SshConfigFactoryImpl{
 		user:    user,
@@ -627,7 +649,7 @@ func (factory *SshConfigFactoryImpl) Config() *ssh.ClientConfig {
 		}
 
 		if agentMethod := sshAuthMethodAgent(); agentMethod != nil {
-			methods = append(methods, sshAuthMethodAgent())
+			methods = append(methods, agentMethod)
 		}
 
 		factory.authMethods = methods
