@@ -18,13 +18,14 @@ package operation
 
 import (
 	"fmt"
+	"sync/atomic"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/lib/actions"
 	"github.com/openziti/fablab/kernel/libssh"
 	"github.com/openziti/fablab/kernel/model"
 	"github.com/sirupsen/logrus"
-	"sync/atomic"
 )
 
 func StreamSarMetrics(hostSpec string, intervalSeconds, reportIntervalCount int, closeNotify <-chan struct{}) model.Stage {
@@ -86,11 +87,13 @@ func (s *streamSarMetrics) runSar(ssh libssh.SshConfigFactory) {
 func (s *streamSarMetrics) reportMetrics(ssh libssh.SshConfigFactory) error {
 	log := pfxlog.Logger().WithField("addr", ssh.Address())
 	sarCmd := fmt.Sprintf("sar -u -r -q %d %d", s.intervalSeconds, s.reportIntervalCount)
-	output, err := libssh.RemoteExec(ssh, sarCmd)
-	if err != nil {
-		log.WithError(err).Warnf("sar exited: %s", output)
+
+	buf := &libssh.SyncBuffer{}
+	if err := s.host.ExecWithLogLevel(buf, logrus.DebugLevel, sarCmd); err != nil {
+		log.WithError(err).Warnf("sar exited with error: %s", buf.String())
 		return err
 	}
+	output := buf.String()
 
 	summary, err := lib.SummarizeSar([]byte(output))
 	if err != nil {
@@ -104,6 +107,6 @@ func (s *streamSarMetrics) reportMetrics(ssh libssh.SshConfigFactory) error {
 		m.AcceptHostMetrics(s.host, event)
 	}
 
-	log.Infof("%v sar metrics events reported", len(events))
+	log.Debugf("%v sar metrics events reported", len(events))
 	return nil
 }

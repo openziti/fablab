@@ -17,16 +17,31 @@
 package libssh
 
 import (
-	"net"
-	"os"
+	"testing"
 
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 )
 
-func newSshAuthMethodAgent() ssh.AuthMethod {
-	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+func TestSshAgentAuthMethodIsShared(t *testing.T) {
+	previousFactory := sshAgentAuthMethodFactory
+	t.Cleanup(func() {
+		sshAgentAuthMethodFactory = previousFactory
+		sharedSshAgentAuth = sshAgentAuthCache{}
+	})
+
+	createCount := 0
+	sshAgentAuthMethodFactory = func() ssh.AuthMethod {
+		createCount++
+		return ssh.Password("test")
 	}
-	return nil
+	sharedSshAgentAuth = sshAgentAuthCache{}
+
+	first := sshAuthMethodAgent()
+	require.NotNil(t, first)
+	for range 100 {
+		require.NotNil(t, sshAuthMethodAgent())
+	}
+
+	require.Equal(t, 1, createCount)
 }

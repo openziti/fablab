@@ -14,19 +14,17 @@
 	limitations under the License.
 */
 
-package libssh
+package model
 
 import (
-	"net"
-	"os"
+	"testing"
 
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
+	"github.com/stretchr/testify/require"
 )
 
-func newSshAuthMethodAgent() ssh.AuthMethod {
-	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-	}
-	return nil
+func TestSshSessionLimit(t *testing.T) {
+	require.Equal(t, defaultSshSessionLimit, sshSessionLimit(0), "unset uses the default")
+	require.Equal(t, defaultSshSessionLimit, sshSessionLimit(-1), "negative uses the default")
+	require.Equal(t, 1, sshSessionLimit(1))
+	require.Equal(t, 25, sshSessionLimit(25))
 }

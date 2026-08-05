@@ -308,8 +308,8 @@ func synchronizeHostToHostOnce(ctx *rsyncContext, srcConfig, dstConfig *Config) 
 
 	destination := fmt.Sprintf("%s:%s", dstConfig.loginPrefix(), ctx.getDestPath(dstConfig.host))
 
-	cmd := fmt.Sprintf("rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no' %s %s",
-		ctx.getDestPath(srcConfig.host), destination)
+	cmd := fmt.Sprintf("rsync -avz --delete --timeout=%d -e 'ssh -o StrictHostKeyChecking=no %s' %s %s",
+		rsyncStallTimeout, sshHardening, ctx.getDestPath(srcConfig.host), destination)
 	output, err := libssh.RemoteExec(srcConfig.sshConfigFactory, cmd)
 	if err == nil && output != "" {
 		logrus.Infof("output [%s]", strings.Trim(output, " \t\r\n"))
@@ -347,8 +347,18 @@ func (config *Config) loginPrefix() string {
 	return config.sshConfigFactory.User() + "@" + config.sshConfigFactory.Hostname()
 }
 
+// sshHardening makes the ssh used by distribution rsync fail fast when a host is
+// unreachable or its connection stalls, so a single wedged host cannot hang the
+// whole distribution indefinitely.
+const sshHardening = "-o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+
+// rsyncStallTimeout is the rsync --timeout in seconds: abort a transfer whose I/O
+// stalls this long (for example a target host with a full disk that still answers
+// ssh keepalives), bounding a hung distribution to minutes instead of hours.
+const rsyncStallTimeout = 300
+
 func (config *Config) SshCommand() string {
-	return config.sshBin + " " + config.sshIdentityFlag()
+	return config.sshBin + " " + config.sshIdentityFlag() + " " + sshHardening
 }
 
 func NewRsyncHost(hostSpec, src, dest string) model.Stage {
