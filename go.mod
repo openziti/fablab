@@ -14,7 +14,7 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/michaelquigley/figlet v0.1.0
-	github.com/michaelquigley/pfxlog v0.6.10
+	github.com/michaelquigley/pfxlog v1.0.0
 	github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
 	github.com/oliveagle/jsonpath v0.1.4
 	github.com/openziti/foundation/v2 v2.0.101
