@@ -18,9 +18,10 @@ package terraform
 
 import (
 	"fmt"
+	"path/filepath"
+
 	"github.com/openziti/fablab/kernel/lib"
 	"github.com/openziti/fablab/kernel/model"
-	"path/filepath"
 )
 
 // DefaultParallelism is the default number of concurrent terraform operations.
@@ -39,7 +40,8 @@ func (t *terraform) Execute(model.Run) error {
 	}
 	prc := lib.NewProcess("terraform", args...)
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	// with its output on a file, a terraform interrupted after fablab exits can still save its state
+	prc.WithTail(lib.StdoutTail).WithOutputFile(filepath.Join(terraformRun(), "terraform-destroy.log"))
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform destroy' (%w)", err)
 	}

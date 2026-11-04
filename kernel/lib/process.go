@@ -18,11 +18,15 @@ package lib
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
+	"os"
 	"os/exec"
 	"sync"
+	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func NewProcess(name string, cmd ...string) *Process {
@@ -38,7 +42,20 @@ func (prc *Process) WithTail(tail TailFunction) *Process {
 	return prc
 }
 
+// WithOutputFile has Run send the command's stdout and stderr to the file at path, created or
+// truncated, rather than to pipes, and tail that file into Output and the tail function. Because
+// the command doesn't write to anything this process reads, it keeps running and writing to the file
+// if this process exits first.
+func (prc *Process) WithOutputFile(path string) *Process {
+	prc.outputPath = path
+	return prc
+}
+
 func (prc *Process) Run() error {
+	if prc.outputPath != "" {
+		return prc.runWithOutputFile()
+	}
+
 	stdout, err := prc.Cmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("error getting stdout pipe (%s)", err)
@@ -71,12 +88,95 @@ func (prc *Process) Run() error {
 	return nil
 }
 
+// outputPollInterval is how long runWithOutputFile waits for the command to write more once it has
+// read everything written so far.
+const outputPollInterval = 100 * time.Millisecond
+
+// runWithOutputFile runs the command with its stdout and stderr on the file at outputPath, reading
+// the file as it grows until the command exits.
+func (prc *Process) runWithOutputFile() error {
+	out, err := os.Create(prc.outputPath)
+	if err != nil {
+		return fmt.Errorf("error creating output file (%w)", err)
+	}
+	in, err := os.Open(prc.outputPath)
+	if err != nil {
+		_ = out.Close()
+		return fmt.Errorf("error opening output file (%w)", err)
+	}
+	defer func() { _ = in.Close() }()
+
+	prc.Cmd.Stdout = out
+	prc.Cmd.Stderr = out
+
+	logrus.Infof("executing %v, output in %s", prc.Cmd.Args, prc.outputPath)
+
+	err = prc.Cmd.Start()
+	_ = out.Close()
+	if err != nil {
+		return fmt.Errorf("error starting cmd (%s)", err)
+	}
+
+	exitedC := make(chan error, 1)
+	go func() {
+		exitedC <- prc.Cmd.Wait()
+	}()
+
+	waitErr, readErr := prc.tailUntilExit(in, exitedC)
+	var errs []error
+	if waitErr != nil {
+		errs = append(errs, fmt.Errorf("error waiting (%s)", waitErr))
+	}
+	if readErr != nil {
+		errs = append(errs, fmt.Errorf("error reading output file %s, Output is incomplete (%w)", prc.outputPath, readErr))
+	}
+	return errors.Join(errs...)
+}
+
+// tailUntilExit emits what r holds as it grows, until exitedC delivers the command's exit and r has
+// nothing more. It returns the command's exit error, plus the read error if reading r failed first;
+// either way it waits for the exit.
+func (prc *Process) tailUntilExit(r io.Reader, exitedC <-chan error) (waitErr, readErr error) {
+	exited := false
+	buf := make([]byte, 64*1024)
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			prc.emit(buf[:n])
+		}
+		switch {
+		case err == nil:
+		case err != io.EOF:
+			if !exited {
+				waitErr = <-exitedC
+			}
+			return waitErr, err
+		case exited:
+			return waitErr, nil
+		default:
+			select {
+			case waitErr = <-exitedC:
+				exited = true
+			case <-time.After(outputPollInterval):
+			}
+		}
+	}
+}
+
 type Process struct {
-	Cmd       *exec.Cmd
-	Output    bytes.Buffer
-	outStream chan []byte
-	errStream chan []byte
-	tail      TailFunction
+	Cmd        *exec.Cmd
+	Output     bytes.Buffer
+	outStream  chan []byte
+	errStream  chan []byte
+	tail       TailFunction
+	outputPath string
+}
+
+func (prc *Process) emit(data []byte) {
+	prc.Output.Write(data)
+	if prc.tail != nil {
+		prc.tail(data)
+	}
 }
 
 func StdoutTail(data []byte) {
@@ -94,19 +194,13 @@ func (prc *Process) combiner(wg *sync.WaitGroup) {
 		select {
 		case data := <-prc.outStream:
 			if data != nil {
-				prc.Output.Write(data)
-				if prc.tail != nil {
-					prc.tail(data)
-				}
+				prc.emit(data)
 			} else {
 				outDone = true
 			}
 		case data := <-prc.errStream:
 			if data != nil {
-				prc.Output.Write(data)
-				if prc.tail != nil {
-					prc.tail(data)
-				}
+				prc.emit(data)
 			} else {
 				errDone = true
 			}
