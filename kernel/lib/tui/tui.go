@@ -45,6 +45,8 @@ type execDoneMsg struct {
 
 type tickMsg time.Time
 
+type paneRefreshMsg struct{}
+
 // Styles
 
 var (
@@ -77,22 +79,71 @@ const (
 	focusValidation = 1
 )
 
+// maxPaneLines is how many log entries a pane keeps for scrollback. Older entries are discarded.
+const maxPaneLines = 5000
+
+// paneRefreshInterval is how long a log entry waits before its pane is redrawn to show it.
+const paneRefreshInterval = 100 * time.Millisecond
+
+// logPane is a viewport showing the most recent maxPaneLines log entries routed to it. Appending an entry
+// is cheap; the viewport shows new entries only once refresh is called, which costs time proportional to the
+// entries retained.
+type logPane struct {
+	vp          viewport.Model
+	lines       []string
+	trimmedRows int
+	dirty       bool
+}
+
+// append adds an entry, discarding the oldest once more than maxPaneLines are held.
+func (p *logPane) append(text string) {
+	p.lines = append(p.lines, text)
+	if over := len(p.lines) - maxPaneLines; over > 0 {
+		for _, line := range p.lines[:over] {
+			p.trimmedRows += strings.Count(line, "\n") + 1
+		}
+		p.lines = p.lines[over:]
+	}
+	p.dirty = true
+}
+
+// refresh shows the entries appended since the last refresh, if any. A viewport at the bottom stays there;
+// one scrolled back keeps the rows it was showing in view until they are discarded.
+func (p *logPane) refresh() {
+	if !p.dirty {
+		return
+	}
+	wasAtBottom := p.vp.AtBottom()
+	yOffset := p.vp.YOffset - p.trimmedRows
+	p.setContent()
+	if wasAtBottom {
+		p.vp.GotoBottom()
+	} else {
+		p.vp.SetYOffset(yOffset)
+	}
+}
+
+func (p *logPane) setContent() {
+	p.vp.SetContent(strings.Join(p.lines, "\n"))
+	p.trimmedRows = 0
+	p.dirty = false
+}
+
 // Model
 
 type tuiModel struct {
-	iteration    int
-	totalStart   time.Time
-	iterStart    time.Time
-	actionsVP    viewport.Model
-	validationVP viewport.Model
-	actionsLines []string
-	validLines   []string
-	width        int
-	height       int
-	focus        int
-	done         bool
-	doneAt       time.Time
-	err          error
+	iteration      int
+	totalStart     time.Time
+	iterStart      time.Time
+	actions        logPane
+	validation     logPane
+	refreshPending bool
+	width          int
+	height         int
+	focus          int
+	done           bool
+	doneAt         time.Time
+	err            error
 }
 
 func newTuiModel() *tuiModel {
@@ -129,11 +180,11 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Forward key events to the focused viewport.
 		if m.focus == focusActions {
 			var cmd tea.Cmd
-			m.actionsVP, cmd = m.actionsVP.Update(msg)
+			m.actions.vp, cmd = m.actions.vp.Update(msg)
 			cmds = append(cmds, cmd)
 		} else {
 			var cmd tea.Cmd
-			m.validationVP, cmd = m.validationVP.Update(msg)
+			m.validation.vp, cmd = m.validation.vp.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
@@ -141,9 +192,9 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Forward mouse events to both viewports; each viewport checks
 		// whether the event falls within its bounds using YPosition.
 		var cmd tea.Cmd
-		m.actionsVP, cmd = m.actionsVP.Update(msg)
+		m.actions.vp, cmd = m.actions.vp.Update(msg)
 		cmds = append(cmds, cmd)
-		m.validationVP, cmd = m.validationVP.Update(msg)
+		m.validation.vp, cmd = m.validation.vp.Update(msg)
 		cmds = append(cmds, cmd)
 
 	case tea.WindowSizeMsg:
@@ -153,20 +204,21 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case logLineMsg:
 		if msg.pane == PaneValidation {
-			m.validLines = append(m.validLines, msg.text)
-			wasAtBottom := m.validationVP.AtBottom()
-			m.validationVP.SetContent(strings.Join(m.validLines, "\n"))
-			if wasAtBottom {
-				m.validationVP.GotoBottom()
-			}
+			m.validation.append(msg.text)
 		} else {
-			m.actionsLines = append(m.actionsLines, msg.text)
-			wasAtBottom := m.actionsVP.AtBottom()
-			m.actionsVP.SetContent(strings.Join(m.actionsLines, "\n"))
-			if wasAtBottom {
-				m.actionsVP.GotoBottom()
-			}
+			m.actions.append(msg.text)
 		}
+		if !m.refreshPending {
+			m.refreshPending = true
+			cmds = append(cmds, tea.Tick(paneRefreshInterval, func(time.Time) tea.Msg {
+				return paneRefreshMsg{}
+			}))
+		}
+
+	case paneRefreshMsg:
+		m.refreshPending = false
+		m.actions.refresh()
+		m.validation.refresh()
 
 	case iterationMsg:
 		m.iteration = msg.num
@@ -192,18 +244,18 @@ func (m *tuiModel) recalcLayout() {
 	actionsHeight := remaining / 2
 	validationHeight := remaining - actionsHeight
 
-	m.actionsVP.Width = m.width
-	m.actionsVP.Height = actionsHeight
-	m.actionsVP.YPosition = 2 // after status bar + actions title
-	m.validationVP.Width = m.width
-	m.validationVP.Height = validationHeight
-	m.validationVP.YPosition = 2 + actionsHeight + 1 // after actions viewport + validation title
+	m.actions.vp.Width = m.width
+	m.actions.vp.Height = actionsHeight
+	m.actions.vp.YPosition = 2 // after status bar + actions title
+	m.validation.vp.Width = m.width
+	m.validation.vp.Height = validationHeight
+	m.validation.vp.YPosition = 2 + actionsHeight + 1 // after actions viewport + validation title
 
 	// Re-set content to recalculate line wrapping.
-	m.actionsVP.SetContent(strings.Join(m.actionsLines, "\n"))
-	m.actionsVP.GotoBottom()
-	m.validationVP.SetContent(strings.Join(m.validLines, "\n"))
-	m.validationVP.GotoBottom()
+	m.actions.setContent()
+	m.actions.vp.GotoBottom()
+	m.validation.setContent()
+	m.validation.vp.GotoBottom()
 }
 
 func (m *tuiModel) View() string {
@@ -256,7 +308,7 @@ func (m *tuiModel) View() string {
 	b.WriteString("\n")
 
 	// Actions viewport
-	b.WriteString(m.actionsVP.View())
+	b.WriteString(m.actions.vp.View())
 	b.WriteString("\n")
 
 	// Validation pane title
@@ -269,7 +321,7 @@ func (m *tuiModel) View() string {
 	b.WriteString("\n")
 
 	// Validation viewport
-	b.WriteString(m.validationVP.View())
+	b.WriteString(m.validation.vp.View())
 
 	return b.String()
 }
