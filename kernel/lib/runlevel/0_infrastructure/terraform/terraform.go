@@ -18,6 +18,12 @@ package terraform_0
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/michaelquigley/pfxlog"
 	"github.com/openziti/fablab/kernel/lib"
 	semaphore_0 "github.com/openziti/fablab/kernel/lib/runlevel/0_infrastructure/semaphore"
@@ -25,11 +31,6 @@ import (
 	"github.com/openziti/fablab/resources"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 // DefaultParallelism is the default number of concurrent terraform operations.
@@ -109,7 +110,7 @@ func (t *Terraform) generate(m *model.Model) error {
 func (t *Terraform) Init() error {
 	prc := lib.NewProcess("terraform", "init")
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	prc.WithTail(lib.StdoutTail).WithOutputFile(filepath.Join(terraformRun(), "terraform-init.log"))
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform init' (%w)", err)
 	}
@@ -123,7 +124,8 @@ func (t *Terraform) apply() error {
 	}
 	prc := lib.NewProcess("terraform", args...)
 	prc.Cmd.Dir = terraformRun()
-	prc.WithTail(lib.StdoutTail)
+	// with its output on a file, a terraform interrupted after fablab exits can still save its state
+	prc.WithTail(lib.StdoutTail).WithOutputFile(filepath.Join(terraformRun(), "terraform-apply.log"))
 	if err := prc.Run(); err != nil {
 		return fmt.Errorf("error running 'terraform apply' (%w)", err)
 	}
